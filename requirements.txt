@@ -1,0 +1,44 @@
+# Pinned so the benchmark reproduces on another machine.
+#
+# torch and torchvision must come from the CPU index — every latency, RAM and
+# FLOP number in this project is a CPU number:
+#   pip install torch==2.8.0 torchvision==0.23.0 --index-url https://download.pytorch.org/whl/cpu
+#   pip install -r requirements.txt
+
+# core
+torch==2.8.0
+torchvision==0.23.0
+numpy==2.5.2
+pillow==12.3.0
+pyyaml==6.0.3
+
+# open-vocabulary backbone
+open_clip_torch==3.3.0
+timm==1.0.28
+
+# reference baselines (patchcore, padim)
+anomalib==2.6.0
+lightning==2.6.5
+kornia==0.8.3
+torchmetrics==1.9.0
+
+# efficiency benchmark
+onnx==1.22.0
+onnxruntime==1.29.0
+psutil==7.2.2
+fvcore==0.1.5.post20221221
+thop==0.1.1.post2209072238
+
+# evaluation, analysis, figures
+scikit-learn==1.9.0
+pandas==2.3.3
+matplotlib==3.11.1
+seaborn==0.13.2
+
+# demo
+streamlit==1.62.0
+fastapi==0.141.1
+uvicorn==0.52.4
+
+# dev
+pytest==9.1.1

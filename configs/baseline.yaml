@@ -1,0 +1,31 @@
+# Reference baselines we compare against.
+# `method` selects which one runs: patchcore (anomalib) or clip_zeroshot.
+
+extends: base.yaml
+
+experiment:
+  name: baseline
+
+model:
+  kind: baseline
+  method: patchcore         # patchcore | padim | clip_zeroshot
+
+  patchcore:
+    backbone: wide_resnet50_2
+    layers: [layer2, layer3]
+    coreset_sampling_ratio: 0.1
+    num_neighbors: 9
+
+  clip_zeroshot:
+    prompt_templates:
+      normal:
+        - "a photo of a {object}"
+        - "a photo of a flawless {object}"
+        - "a close-up photo of a normal {object}"
+      anomalous:
+        - "a photo of a {object} with a defect"
+        - "a photo of a damaged {object}"
+        - "a close-up photo of a {object} with a flaw"
+
+dataset:
+  shots: 0                  # baselines see no labelled defect shots

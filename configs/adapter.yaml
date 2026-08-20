@@ -1,0 +1,28 @@
+# Prototype memory + lightweight Tip-Adapter-style head.
+# Only the adapter trains; the backbone stays frozen.
+
+extends: prototype.yaml
+
+experiment:
+  name: adapter
+
+model:
+  kind: adapter
+
+  adapter:
+    init_from_memory: true  # cache keys start as the stored prototypes
+    alpha: 1.0              # weight of the adapter logits
+    beta: 5.5               # sharpness of the affinity kernel
+    trainable: true
+    residual: true
+
+  training:
+    epochs: 20
+    batch_size: 8
+    lr: 0.001
+    weight_decay: 0.01
+    optimiser: adamw
+    scheduler: cosine
+
+dataset:
+  shots: 5

@@ -1,0 +1,64 @@
+# --- datasets: download scripts only, never the data ---
+data/
+datasets/
+*.tar
+*.tar.gz
+*.tar.xz
+*.zip
+*.7z
+
+# --- feature banks / cached embeddings / prototype memory dumps ---
+feature_banks/
+*.npy
+*.npz
+*.faiss
+*.memmap
+*.pkl
+
+# --- checkpoints and exported models ---
+checkpoints/
+*.ckpt
+*.pt
+*.pth
+*.onnx
+*.engine
+*.bin
+*.safetensors
+
+# --- results: ignored except manifests (see results/.gitignore) ---
+logs/
+lightning_logs/
+wandb/
+runs/
+outputs/
+
+# --- secrets ---
+.env
+.env.*
+*.key
+*.token
+secrets.yaml
+
+# --- python ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+build/
+dist/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.ipynb_checkpoints/
+.coverage
+htmlcov/
+
+# --- editors / os ---
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+desktop.ini

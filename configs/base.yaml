@@ -1,0 +1,35 @@
+# Shared defaults for every experiment.
+# Experiment configs inherit with `extends: base.yaml` and only state what
+# they change. ${data_root} / ${results_root} are resolved at load time from
+# FEWSHOT_DATA_ROOT / FEWSHOT_RESULTS_ROOT, so no path here is machine specific.
+
+experiment:
+  name: base
+  seed: 42
+  output_dir: ${results_root}/runs
+
+dataset:
+  name: mvtec_ad
+  root: ${data_root}/mvtec_ad
+  category: bottle
+  image_size: [224, 224]
+  shots: 5                  # 0 | 1 | 5 | 10
+  split_manifest: ${results_root}/manifests/splits
+  num_workers: 0
+
+backbone:
+  name: ViT-B-16            # ablations: ViT-B-32, ViT-L-14
+  pretrained: openai
+  precision: fp32           # fp32 | int8
+  frozen: true
+
+eval:
+  metrics: [image_auroc, pixel_auroc, f1_max]
+  batch_size: 16
+
+profiling:
+  enabled: true
+  device: cpu               # the whole benchmark is CPU-only by design
+  warmup_iters: 5
+  measure_iters: 20
+  track: [latency_ms, peak_ram_mb, flops, params]

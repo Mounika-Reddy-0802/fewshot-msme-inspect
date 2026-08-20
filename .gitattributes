@@ -1,0 +1,6 @@
+# Keep line endings stable across the two of us and Colab.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.docx binary
+*.ipynb text eol=lf

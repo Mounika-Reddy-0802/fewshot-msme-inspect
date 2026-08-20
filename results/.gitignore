@@ -1,0 +1,6 @@
+# Ignore every result artifact...
+*
+!.gitignore
+# ...except the manifests, seeds and figure manifests, which must be tracked.
+!manifests/
+!manifests/**

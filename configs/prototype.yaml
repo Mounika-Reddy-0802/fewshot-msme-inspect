@@ -1,0 +1,25 @@
+# Frozen backbone + appendable prototype memory.
+# Adding a new class appends prototypes; it never retrains what is already there.
+
+extends: base.yaml
+
+experiment:
+  name: prototype
+
+model:
+  kind: prototype
+
+  memory:
+    append_only: true
+    normalise: true         # l2-normalise before storing and before scoring
+    similarity: cosine
+    reduction: mean         # mean | max over the shots of a class
+    patch_level: true       # keep patch tokens for pixel-level scoring
+    max_prototypes_per_class: null
+
+  scoring:
+    top_k: 1                # neighbours averaged into the anomaly score
+    temperature: 0.07
+
+dataset:
+  shots: 5
