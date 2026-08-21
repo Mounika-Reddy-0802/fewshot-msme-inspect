@@ -18,7 +18,10 @@ dataset:
   num_workers: 0
 
 backbone:
-  name: ViT-B-16            # ablations: ViT-B-32, ViT-L-14
+  # The `-quickgelu` suffix is not cosmetic: the OpenAI CLIP weights were
+  # trained with QuickGELU, and pairing them with a plain `ViT-B-16` silently
+  # builds the model with the wrong activation. open_clip only warns about it.
+  name: ViT-B-16-quickgelu  # ablations: ViT-B-32-quickgelu, ViT-L-14-quickgelu
   pretrained: openai
   precision: fp32           # fp32 | int8
   frozen: true

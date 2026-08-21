@@ -57,3 +57,12 @@ def test_unknown_placeholder_is_an_error(tmp_path):
 def test_every_shipped_config_is_covered():
     shipped = {p.name for p in CONFIG_DIR.glob("*.yaml")} - {"base.yaml"}
     assert shipped == set(EXPERIMENT_CONFIGS)
+
+
+@pytest.mark.parametrize("name", EXPERIMENT_CONFIGS)
+def test_openai_weights_use_a_quickgelu_backbone(name):
+    """OpenAI CLIP weights need QuickGELU; open_clip only warns if they do not
+    match, and the resulting features are silently different."""
+    backbone = load_config(name)["backbone"]
+    if backbone["pretrained"] == "openai":
+        assert backbone["name"].endswith("-quickgelu"), backbone["name"]
