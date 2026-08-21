@@ -1,4 +1,4 @@
-# Pinned so the benchmark reproduces on another machine.
+# Pinned to the versions this project was actually built and validated against.
 #
 # torch and torchvision must come from the CPU index — every latency, RAM and
 # FLOP number in this project is a CPU number:
@@ -8,8 +8,8 @@
 # core
 torch==2.8.0
 torchvision==0.23.0
-numpy==2.5.2
-pillow==12.3.0
+numpy==2.2.6
+pillow==11.3.0
 pyyaml==6.0.3
 
 # open-vocabulary backbone
@@ -25,20 +25,20 @@ torchmetrics==1.9.0
 # efficiency benchmark
 onnx==1.22.0
 onnxruntime==1.29.0
-psutil==7.2.2
+psutil==7.2.1
 fvcore==0.1.5.post20221221
 thop==0.1.1.post2209072238
 
 # evaluation, analysis, figures
-scikit-learn==1.9.0
-pandas==2.3.3
-matplotlib==3.11.1
+scikit-learn==1.6.1
+pandas==2.3.1
+matplotlib==3.10.3
 seaborn==0.13.2
 
 # demo
-streamlit==1.62.0
-fastapi==0.141.1
-uvicorn==0.52.4
+streamlit==1.47.0
+fastapi==0.115.5
+uvicorn==0.24.0
 
 # dev
-pytest==9.1.1
+pytest==8.3.4
