@@ -38,3 +38,41 @@ def results_root() -> Path:
 def dataset_dir(name: str) -> Path:
     """Directory for one dataset, e.g. ``dataset_dir("mvtec_ad")``."""
     return data_root() / name
+
+
+MVTEC_CATEGORIES = (
+    "bottle", "cable", "capsule", "carpet", "grid", "hazelnut", "leather",
+    "metal_nut", "pill", "screw", "tile", "toothbrush", "transistor", "wood",
+    "zipper",
+)
+
+
+def find_category_root(
+    base: str | Path,
+    categories: tuple[str, ...] = MVTEC_CATEGORIES,
+    min_matches: int = 3,
+    max_depth: int = 4,
+) -> Path | None:
+    """Locate a dataset root by its category folders rather than by its name.
+
+    Hosted notebooks mount datasets wherever they like -- on Kaggle an attached
+    dataset lands under /kaggle/input/<whatever-the-uploader-called-it>. Looking
+    for a directory that has several known category folders side by side finds it
+    without pinning us to one dataset slug.
+
+    Returns the directory holding the categories, or None if nothing matches.
+    """
+    base = Path(base)
+    if not base.is_dir():
+        return None
+
+    wanted = set(categories)
+    base_depth = len(base.resolve().parts)
+
+    for root, dirs, _ in os.walk(base):
+        if len(Path(root).resolve().parts) - base_depth >= max_depth:
+            dirs[:] = []
+            continue
+        if len(wanted & set(dirs)) >= min_matches:
+            return Path(root)
+    return None

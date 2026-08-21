@@ -26,7 +26,7 @@ src/model/   frozen encoder, prototype memory, adapter head
 src/baselines/  reference baselines (anomalib, CLIP zero-shot)
 src/utils/   config loading, path resolution, seeding
 scripts/     runnable entry points
-notebooks/   colab_setup.ipynb mirrors this environment for free GPU bursts
+notebooks/   kaggle_setup.ipynb mirrors this environment for free GPU bursts
 tests/       fast checks that the config and seeding layer behave
 docs/        validation logs and notes
 results/     run artifacts (gitignored) except results/manifests/ (tracked)
@@ -64,6 +64,20 @@ Check the install:
 python scripts/validate_env.py
 pytest -q
 ```
+
+## GPU bursts
+
+Everything reported in the paper is measured locally on CPU. When something is
+just slow rather than interesting -- building feature banks, adapter sweeps --
+run it on a free Kaggle GPU session with
+[`notebooks/kaggle_setup.ipynb`](notebooks/kaggle_setup.ipynb), which reproduces
+this environment there.
+
+Kaggle needs three things switched on in the notebook's right-hand panel:
+Accelerator set to GPU, Internet set to On, and a `GITHUB_TOKEN` secret (the repo
+is private). Attaching an MVTec dataset with **Add Data** mounts it read-only
+under `/kaggle/input`, so no download is needed -- the notebook finds it by its
+category folders rather than by a hardcoded dataset name.
 
 ## Running an experiment
 
