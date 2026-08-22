@@ -23,6 +23,17 @@ CATEGORIES = (
 
 NORMAL = "good"
 
+# Published per-category counts: (train normals, test images). Used to tell a
+# finished download from one that stopped halfway -- a directory existing says
+# nothing about whether it is complete.
+OFFICIAL_COUNTS: dict[str, tuple[int, int]] = {
+    "bottle": (209, 83), "cable": (224, 150), "capsule": (219, 132),
+    "carpet": (280, 117), "grid": (264, 78), "hazelnut": (391, 110),
+    "leather": (245, 124), "metal_nut": (220, 115), "pill": (267, 167),
+    "screw": (320, 160), "tile": (230, 117), "toothbrush": (60, 42),
+    "transistor": (213, 100), "wood": (247, 79), "zipper": (240, 151),
+}
+
 
 @dataclass(frozen=True)
 class Sample:
@@ -83,3 +94,38 @@ def available_categories(root: str | Path) -> list[str]:
     if not root.is_dir():
         return []
     return [c for c in CATEGORIES if (root / c / "train" / NORMAL).is_dir()]
+
+
+def category_counts(root: str | Path, category: str) -> tuple[int, int]:
+    """Actual (train normals, test images) on disk. (0, 0) if absent."""
+    base = Path(root) / category
+    if not base.is_dir():
+        return (0, 0)
+    train = len(list((base / "train" / NORMAL).glob("*.png"))) if (base / "train" / NORMAL).is_dir() else 0
+    test = len(list((base / "test").rglob("*.png"))) if (base / "test").is_dir() else 0
+    return (train, test)
+
+
+def verify_category(root: str | Path, category: str) -> tuple[bool, str]:
+    """Check a downloaded category against the published counts.
+
+    A half-finished download leaves a perfectly valid-looking directory tree, so
+    presence is not evidence of completeness -- only the counts are.
+    """
+    if category not in OFFICIAL_COUNTS:
+        return False, f"{category}: not an MVTec AD category"
+    expected = OFFICIAL_COUNTS[category]
+    actual = category_counts(root, category)
+    if actual == (0, 0):
+        return False, f"{category}: missing"
+    if actual != expected:
+        return False, (
+            f"{category}: incomplete -- have {actual[0]}/{actual[1]} "
+            f"train/test, expected {expected[0]}/{expected[1]}"
+        )
+    return True, f"{category}: complete ({actual[0]} train, {actual[1]} test)"
+
+
+def complete_categories(root: str | Path) -> list[str]:
+    """Only the categories that fully match the published counts."""
+    return [c for c in CATEGORIES if verify_category(root, c)[0]]

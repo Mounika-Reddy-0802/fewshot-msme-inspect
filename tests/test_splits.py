@@ -121,3 +121,37 @@ def test_schema_mismatch_is_refused(fake_root, tmp_path):
     path.write_text(json.dumps(manifest), encoding="utf-8")
     with pytest.raises(ValueError, match="schema"):
         load_split(path)
+
+
+def test_verify_detects_a_complete_category(fake_root, monkeypatch):
+    """20 train / 9 test in the fixture; pretend that is what MVTec publishes."""
+    from src.data import mvtec
+
+    monkeypatch.setitem(mvtec.OFFICIAL_COUNTS, "bottle", (20, 9))
+    ok, message = mvtec.verify_category(fake_root, "bottle")
+    assert ok, message
+
+
+def test_verify_catches_a_truncated_download(fake_root, monkeypatch):
+    """A half-finished download leaves a valid-looking tree -- only the counts
+    reveal it. This is exactly how `leather` arrived with 20 of 245 images."""
+    from src.data import mvtec
+
+    monkeypatch.setitem(mvtec.OFFICIAL_COUNTS, "bottle", (245, 9))
+    ok, message = mvtec.verify_category(fake_root, "bottle")
+    assert not ok
+    assert "incomplete" in message and "20" in message
+
+
+def test_verify_reports_a_missing_category(tmp_path):
+    from src.data.mvtec import verify_category
+
+    ok, message = verify_category(tmp_path, "screw")
+    assert not ok and "missing" in message
+
+
+def test_complete_categories_excludes_truncated_ones(fake_root, monkeypatch):
+    from src.data import mvtec
+
+    monkeypatch.setitem(mvtec.OFFICIAL_COUNTS, "bottle", (245, 9))
+    assert mvtec.complete_categories(fake_root) == []
