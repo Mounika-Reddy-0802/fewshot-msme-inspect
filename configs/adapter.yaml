@@ -10,7 +10,7 @@ model:
   kind: adapter
 
   adapter:
-    init_from_memory: true  # cache keys start as the stored prototypes
+    init_from_memory: true  # (NOT YET READ -- always true)
 
     # alpha mixes the two branches and is a weight in [0, 1]:
     #   0.0 = cache only (ignore the prompts)
@@ -24,6 +24,8 @@ model:
     top_k: 1                # cache entries aggregated per query patch
     trainable: false        # true = Tip-Adapter-F, fine-tuned keys (week 5)
 
+  # Tip-Adapter-F only. Nothing reads this block yet -- the adapter is
+  # training-free until the fine-tuned variant lands in week 5.
   training:
     epochs: 20
     batch_size: 8

@@ -134,6 +134,7 @@ def evaluate_split(
     image_size: tuple[int, int] = (224, 224),
     method: str = "memory",
     adapter_config=None,
+    temperature: float = 0.07,
 ) -> SplitResult:
     """Run one (category, shots, seed) split and return its metrics.
 
@@ -154,7 +155,7 @@ def evaluate_split(
     if shots == 0:
         if encoder is None:
             raise ValueError("zero-shot needs the encoder for text prompts")
-        patch_scores = zero_shot_scores(encoder, query_patches, category)
+        patch_scores = zero_shot_scores(encoder, query_patches, category, temperature)
         h, w = bank.grid
         maps = patch_scores.reshape(-1, h, w)
         image_scores = patch_scores.max(dim=1).values

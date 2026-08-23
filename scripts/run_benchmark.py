@@ -129,6 +129,8 @@ def main() -> int:
                     top_k=config["model"]["scoring"]["top_k"],
                     method=method,
                     adapter_config=config["model"].get("adapter"),
+                    temperature=config["model"]["scoring"]["temperature"],
+                    image_size=tuple(config["dataset"]["image_size"]),
                 )
                 rows.append(result.as_row())
                 produced += 1
