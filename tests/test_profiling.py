@@ -99,3 +99,21 @@ def test_profile_row_is_flat_and_named_by_batch_size():
     assert row["latency_bs1_per_image_ms"] == 10.0
     assert row["latency_bs8_per_image_ms"] == 5.0
     assert all(not isinstance(v, (list, dict)) for v in row.values())
+
+
+def test_memory_search_latency_grows_with_the_bank():
+    """Inference cost is not the backbone alone -- the search scales with stored
+    prototypes, so a 10-shot system is not free relative to a 1-shot one."""
+    from src.eval.profiling import measure_memory_latency
+
+    small = measure_memory_latency(dim=64, num_patches=49, prototypes=49, warmup=1, iters=5)
+    large = measure_memory_latency(dim=64, num_patches=49, prototypes=4900, warmup=1, iters=5)
+    assert small > 0 and large > 0
+    assert large > small
+
+
+def test_memory_search_latency_is_milliseconds():
+    from src.eval.profiling import measure_memory_latency
+
+    ms = measure_memory_latency(dim=64, num_patches=49, prototypes=490, warmup=1, iters=5)
+    assert 0 < ms < 1000, "a single small search should be well under a second"

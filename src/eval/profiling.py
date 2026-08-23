@@ -165,6 +165,33 @@ def count_flops(model, example: torch.Tensor) -> float | None:
         return None
 
 
+def measure_memory_latency(
+    dim: int,
+    num_patches: int,
+    prototypes: int,
+    warmup: int = 5,
+    iters: int = 20,
+) -> float:
+    """Median ms to score one image against a memory bank of this size.
+
+    Inference cost is not the backbone alone: every query patch is compared
+    against every stored prototype, so the search grows with the number of shots.
+    Charging a 10-shot system the same latency as a 1-shot one would understate
+    what few-shot actually costs.
+    """
+    import torch as _torch
+
+    from src.model.memory import PrototypeMemory
+
+    memory = PrototypeMemory(dim=dim, grid=(num_patches, 1))
+    memory.add_class("x", _torch.randn(prototypes, dim))
+    query = _torch.randn(1, num_patches, dim)
+
+    return measure_latency(
+        lambda: memory.score(query, "x"), batch_size=1, warmup=warmup, iters=iters
+    ).median_ms
+
+
 def profile_encoder(
     encoder,
     batch_sizes: tuple[int, ...] = (1, 8),

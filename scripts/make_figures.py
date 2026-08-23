@@ -110,25 +110,38 @@ def figure_frontier(rows, profiles, out_dir, dpi):
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    latency = {
-        p["backbone"]: float(p["latency_bs1_per_image_ms"])
-        for p in profiles
-        if p.get("latency_bs1_per_image_ms")
-    }
-    if not latency:
+    # Total inference cost is the backbone forward plus the memory search, and
+    # the search grows with the number of stored prototypes. Charging every shot
+    # count the same latency would put them all at one x and make the frontier
+    # a meaningless vertical line.
+    backbone_ms, search_ms = {}, {}
+    for p in profiles:
+        if not p.get("latency_bs1_per_image_ms"):
+            continue
+        backbone_ms[p["backbone"]] = float(p["latency_bs1_per_image_ms"])
+        for shots in (1, 5, 10):
+            key = f"memory_ms_{shots}shot"
+            if p.get(key):
+                search_ms[(p["backbone"], shots)] = float(p[key])
+    if not backbone_ms:
         return None, []
+
+    def total_cost(backbone, shots):
+        return backbone_ms[backbone] + search_ms.get((backbone, shots), 0.0)
 
     grouped = defaultdict(list)
     for row in rows:
-        if row["backbone"] in latency:
+        if row["backbone"] in backbone_ms:
             grouped[(row["backbone"], row["shots"])].append(row["image_auroc"])
 
     points, used = [], []
     for (backbone, shots), values in grouped.items():
-        cost, accuracy = latency[backbone], mean(values)
+        cost, accuracy = total_cost(backbone, shots), mean(values)
         points.append((cost, accuracy, f"{backbone} {shots}-shot"))
         used.append({"backbone": backbone, "shots": shots,
-                     "ms_per_image": cost, "image_auroc": accuracy})
+                     "backbone_ms": backbone_ms[backbone],
+                     "memory_search_ms": search_ms.get((backbone, shots), 0.0),
+                     "total_ms_per_image": cost, "image_auroc": accuracy})
 
     fig, ax = plt.subplots(figsize=(6.8, 4.6))
     backbones = sorted({b for b, _ in grouped})
@@ -148,7 +161,7 @@ def figure_frontier(rows, profiles, out_dir, dpi):
                 "--", color="#666", linewidth=1.2, zorder=2,
                 label="Pareto front")
 
-    ax.set_xlabel("CPU latency (ms per image, batch size 1)")
+    ax.set_xlabel("CPU latency (ms per image, batch size 1: backbone + memory search)")
     ax.set_ylabel("image AUROC")
     ax.set_title("Accuracy against CPU cost\n(MVTec AD, frozen backbone + prototype memory, no GPU)",
                  fontsize=10)

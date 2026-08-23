@@ -19,7 +19,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from src.eval.profiling import describe_machine, pin_threads, profile_encoder  # noqa: E402
+from src.eval.profiling import (  # noqa: E402
+    describe_machine,
+    measure_memory_latency,
+    pin_threads,
+    profile_encoder,
+)
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
 from src.utils.config import load_config  # noqa: E402
 from src.utils.paths import results_root  # noqa: E402
@@ -77,13 +82,28 @@ def main() -> int:
         row = profile.as_row()
         row["grid"] = f"{encoder.grid_size[0]}x{encoder.grid_size[1]}"
         row["embed_dim"] = encoder.embed_dim
+
+        # the memory search is part of inference cost and grows with the shots
+        for shots in (1, 5, 10):
+            row[f"memory_ms_{shots}shot"] = round(
+                measure_memory_latency(
+                    encoder.embed_dim,
+                    encoder.num_patches,
+                    encoder.num_patches * shots,
+                    warmup=warmup,
+                    iters=iters,
+                ),
+                3,
+            )
         rows.append(row)
 
         gflops = f"{row['gflops']:.1f}" if row["gflops"] else "n/a"
         print(
             f"  params {row['parameters'] / 1e6:.0f}M  {gflops} GFLOPs  "
             f"bs1 {row['latency_bs1_per_image_ms']:.0f} ms/img  "
-            f"RAM {row['peak_ram_mb']:.0f} MB"
+            f"RAM {row['peak_ram_mb']:.0f} MB  "
+            f"memory search {row['memory_ms_1shot']:.1f}/{row['memory_ms_10shot']:.1f} ms "
+            f"(1/10 shot)"
         )
 
     if not rows:
