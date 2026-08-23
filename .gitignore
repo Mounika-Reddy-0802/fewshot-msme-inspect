@@ -58,6 +58,9 @@ env/
 .coverage
 htmlcov/
 
+# --- local working notes, not part of the deliverable ---
+GIT_RULES.md
+
 # --- editors / os ---
 .vscode/
 .idea/
