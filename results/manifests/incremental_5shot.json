@@ -1,0 +1,30 @@
+{
+  "backbone": "ViT-B-16-quickgelu",
+  "shots": 5,
+  "seed": 0,
+  "classes": 15,
+  "prototypes": 14700,
+  "memory_bytes": 30105600,
+  "total_add_ms": 6.54,
+  "mean_add_ms": 0.436,
+  "bytes_per_class": 2007040,
+  "append_only_verified": true,
+  "mean_image_auroc": 0.8622,
+  "per_class_auroc": {
+    "bottle": 0.9571,
+    "cable": 0.7976,
+    "capsule": 0.8333,
+    "carpet": 0.9651,
+    "grid": 0.7552,
+    "hazelnut": 0.8054,
+    "leather": 1.0,
+    "metal_nut": 0.9272,
+    "pill": 0.892,
+    "screw": 0.6745,
+    "tile": 0.9726,
+    "toothbrush": 0.7167,
+    "transistor": 0.7621,
+    "wood": 0.9667,
+    "zipper": 0.9078
+  }
+}

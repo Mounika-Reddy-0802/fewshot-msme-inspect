@@ -147,6 +147,28 @@ def main() -> int:
         "final_memory_bytes": memory.memory_bytes(),
     }, indent=2) + "\n", encoding="utf-8")
     print(f"written to {out}")
+
+    # The append-only claim is a headline result, so a compact record of it is
+    # committed rather than left in a gitignored results directory.
+    manifest = repo_root() / "results" / "manifests" / f"incremental_{args.shots}shot.json"
+    manifest.parent.mkdir(parents=True, exist_ok=True)
+    manifest.write_text(json.dumps({
+        "backbone": backbone,
+        "shots": args.shots,
+        "seed": args.seed,
+        "classes": len(memory),
+        "prototypes": memory.total_prototypes(),
+        "memory_bytes": memory.memory_bytes(),
+        "total_add_ms": round(total_ms, 2),
+        "mean_add_ms": round(total_ms / len(history), 3),
+        "bytes_per_class": memory.memory_bytes() // len(memory),
+        "append_only_verified": not drifted,
+        "mean_image_auroc": round(
+            sum(h["image_auroc"] for h in history) / len(history), 4
+        ),
+        "per_class_auroc": {h["added"]: h["image_auroc"] for h in history},
+    }, indent=2) + chr(10), encoding="utf-8")
+    print(f"manifest   to {manifest}")
     return 1 if drifted else 0
 
 
