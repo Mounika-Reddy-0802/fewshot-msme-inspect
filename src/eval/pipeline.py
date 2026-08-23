@@ -167,6 +167,8 @@ def evaluate_split(
             from src.model.adapter import AdapterConfig, TipAdapter
 
             config = adapter_config or AdapterConfig(top_k=top_k)
+            if not isinstance(config, AdapterConfig):
+                config = AdapterConfig.from_mapping(config)
             text = category_text_embeddings(encoder, category) if encoder else None
             head = TipAdapter.from_memory(memory, category, config, text)
             scored = head(query_patches)

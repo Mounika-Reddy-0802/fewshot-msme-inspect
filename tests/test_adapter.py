@@ -177,3 +177,35 @@ def test_trainable_keys_carry_gradient():
     adapter(_patches(2)).image.sum().backward()
     assert adapter.keys.grad is not None
     assert torch.isfinite(adapter.keys.grad).all()
+
+
+# --- config plumbing --------------------------------------------------------
+
+def test_from_mapping_ignores_keys_this_version_does_not_use():
+    """`init_from_memory` and friends live in the YAML but are not constructor
+    arguments; an unknown key must not blow up config loading."""
+    config = AdapterConfig.from_mapping({"alpha": 0.5, "init_from_memory": True})
+    assert config.alpha == 0.5
+    assert config.beta == AdapterConfig().beta
+
+
+def test_from_mapping_of_nothing_is_the_default():
+    assert AdapterConfig.from_mapping(None) == AdapterConfig()
+    assert AdapterConfig.from_mapping({}) == AdapterConfig()
+
+
+def test_from_mapping_still_validates():
+    with pytest.raises(ValueError, match="alpha"):
+        AdapterConfig.from_mapping({"alpha": 2.0})
+
+
+def test_shipped_adapter_config_does_not_discard_the_cache():
+    """configs/adapter.yaml once said alpha: 1.0, meaning "weight of the adapter
+    logits" in Tip-Adapter's convention. Under this implementation alpha is a
+    mixing weight, so 1.0 would ignore the support images completely. Guard it."""
+    from src.utils.config import load_config
+
+    block = load_config("adapter.yaml")["model"]["adapter"]
+    config = AdapterConfig.from_mapping(block)
+    assert config.alpha < 1.0, "alpha=1.0 ignores the cache entirely"
+    assert config.alpha > 0.0, "alpha=0.0 ignores the prompts entirely"

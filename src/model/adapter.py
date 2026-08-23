@@ -43,6 +43,14 @@ class AdapterConfig:
     top_k: int = 1          # cache entries aggregated per query patch
     trainable: bool = False
 
+    @classmethod
+    def from_mapping(cls, mapping: dict | None) -> AdapterConfig:
+        """Build from a config block, ignoring keys this version does not use."""
+        if not mapping:
+            return cls()
+        known = {"alpha", "beta", "top_k", "trainable"}
+        return cls(**{k: v for k, v in mapping.items() if k in known})
+
     def __post_init__(self) -> None:
         if not 0.0 <= self.alpha <= 1.0:
             raise ValueError(f"alpha must be in [0, 1], got {self.alpha}")

@@ -128,6 +128,7 @@ def main() -> int:
                     encoder=encoder,
                     top_k=config["model"]["scoring"]["top_k"],
                     method=method,
+                    adapter_config=config["model"].get("adapter"),
                 )
                 rows.append(result.as_row())
                 produced += 1

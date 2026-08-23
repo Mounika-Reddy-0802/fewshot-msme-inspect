@@ -11,10 +11,18 @@ model:
 
   adapter:
     init_from_memory: true  # cache keys start as the stored prototypes
-    alpha: 1.0              # weight of the adapter logits
-    beta: 5.5               # sharpness of the affinity kernel
-    trainable: true
-    residual: true
+
+    # alpha mixes the two branches and is a weight in [0, 1]:
+    #   0.0 = cache only (ignore the prompts)
+    #   1.0 = prompts only (ignore the cache)
+    # This is NOT Tip-Adapter's unbounded cache-logit scale, which is also
+    # called alpha and conventionally set to 1.0. Setting 1.0 here would
+    # silently discard the support images entirely.
+    alpha: 0.3
+
+    beta: 5.5               # sharpness of exp(-beta * (1 - cosine similarity))
+    top_k: 1                # cache entries aggregated per query patch
+    trainable: false        # true = Tip-Adapter-F, fine-tuned keys (week 5)
 
   training:
     epochs: 20
