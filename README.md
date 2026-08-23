@@ -21,17 +21,50 @@ Baselines: PatchCore / PaDiM via anomalib, plus CLIP zero-shot prompting.
 ## Layout
 
 ```
-configs/     one YAML per experiment style; base.yaml holds the shared defaults
-src/model/   frozen encoder, prototype memory, adapter head
+configs/        one YAML per experiment style; base.yaml holds the shared defaults
+src/data/       MVTec loader, seeded few-shot split generator
+src/model/      encoder.py   frozen OpenCLIP, pooled + patch features
+                memory.py    append-only prototype memory
+                adapter.py   Tip-Adapter cache head
+src/eval/       features.py  feature bank cache
+                pipeline.py  end-to-end split evaluation
+                metrics.py   image/pixel AUROC, F1-max
+                profiling.py latency, RAM, FLOPs, params
 src/baselines/  reference baselines (anomalib, CLIP zero-shot)
-src/utils/   config loading, path resolution, seeding
-scripts/     runnable entry points
-notebooks/   kaggle_setup.ipynb mirrors this environment for free GPU bursts
-tests/       fast checks that the config and seeding layer behave
-docs/        validation logs and notes
-results/     run artifacts (gitignored) except results/manifests/ (tracked)
-data/        datasets live here by default and are never committed
+src/utils/      config loading, path resolution, seeding
+scripts/        runnable entry points, one per stage of the pipeline
+notebooks/      kaggle_setup.ipynb mirrors this environment for free GPU bursts
+tests/          145 tests; the append-only and seeding guarantees are asserted here
+docs/           validation logs and notes
+results/        run artifacts (gitignored) except results/manifests/ (tracked)
+data/           datasets live here by default and are never committed
 ```
+
+## The pipeline
+
+Each stage writes what the next one reads, so they can be run independently and
+re-run cheaply.
+
+```bash
+python scripts/download_mvtec_category.py --all   # 5 GB, verifies against published counts
+python scripts/make_splits.py                     # 180 seeded manifests -> committed
+python scripts/run_benchmark.py --methods memory adapter
+python scripts/run_profiling.py --threads 14      # on an idle machine
+python scripts/run_incremental.py                 # append-only demonstration
+python scripts/make_figures.py                    # frontier figure + manifest
+```
+
+Two design decisions worth knowing before reading the code:
+
+**Features are extracted once.** The backbone is frozen, so an image's features
+never change. `run_benchmark.py` caches them per (backbone, category); every
+shot count, seed and scoring head then reuses one pass over the images. A warm
+re-run of the whole 180-cell grid takes seconds.
+
+**Shot counts are nested.** The 1-shot support set is a subset of the 5-shot set,
+which is a subset of the 10-shot set. Going from 1 to 5 shots therefore measures
+the four added images, not a different draw. Verified across all 45
+(category, seed) pairs.
 
 ## Setup
 
