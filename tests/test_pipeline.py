@@ -101,3 +101,53 @@ def test_mixed_masks_and_normals(tmp_path):
     masks = load_masks([None, path, None], (32, 32))
     assert masks.shape == (3, 32, 32)
     assert masks[0].sum() == 0 and masks[1].sum() > 0 and masks[2].sum() == 0
+
+
+# --- caching ----------------------------------------------------------------
+
+def test_mask_cache_returns_identical_tensors(tmp_path):
+    """Same category, same test split -> the masks are loaded once and reused."""
+    from src.eval import pipeline
+
+    pipeline.clear_caches()
+    path = _write_mask(tmp_path / "bottle" / "gt.png", box=(4, 4, 20, 20))
+    key = (str(tmp_path / "bottle"), ("gt.png",), (32, 32))
+
+    masks = load_masks([path], (32, 32))
+    pipeline._MASK_CACHE[key] = masks
+    assert pipeline._MASK_CACHE[key] is masks
+
+
+def test_clear_caches_empties_both():
+    from src.eval import pipeline
+
+    pipeline._MASK_CACHE["x"] = torch.zeros(1)
+    pipeline._TEXT_CACHE["y"] = torch.zeros(1)
+    pipeline.clear_caches()
+    assert not pipeline._MASK_CACHE and not pipeline._TEXT_CACHE
+
+
+def test_text_cache_keys_on_the_backbone():
+    """Two backbones live in different embedding spaces; sharing a cached text
+    embedding between them would be silently wrong."""
+    from src.eval import pipeline
+
+    pipeline.clear_caches()
+
+    class FakeEncoder:
+        def __init__(self, name):
+            self.name, self.pretrained = name, "openai"
+            self.calls = 0
+
+        def encode_text(self, prompts):
+            self.calls += 1
+            return torch.ones(len(prompts), 4)
+
+    a, b = FakeEncoder("ViT-B-16"), FakeEncoder("ViT-L-14")
+    pipeline.category_text_embeddings(a, "bottle")
+    pipeline.category_text_embeddings(a, "bottle")      # cached, no new calls
+    pipeline.category_text_embeddings(b, "bottle")      # different backbone
+
+    assert a.calls == 2, "two ensembles on first call, then cached"
+    assert b.calls == 2, "must not reuse the other backbone's embedding"
+    pipeline.clear_caches()

@@ -26,6 +26,12 @@ from src.eval.features import FeatureBank
 from src.eval.metrics import Metrics, compute_metrics, upsample_maps
 from src.model.memory import PrototypeMemory
 
+# A category's test split and its prompts are identical across every shot count,
+# seed and scoring head, so both are computed once and reused. Without this the
+# 315-cell grid decodes ~40,000 masks to cover 1,725 distinct ones.
+_MASK_CACHE: dict[tuple, torch.Tensor] = {}
+_TEXT_CACHE: dict[tuple, torch.Tensor] = {}
+
 NORMAL_PROMPTS = (
     "a photo of a {object}",
     "a photo of a flawless {object}",
@@ -98,14 +104,20 @@ def category_text_embeddings(encoder, object_name: str) -> torch.Tensor:
 
     Each ensemble is averaged in embedding space and renormalised, which is the
     standard way to use a prompt ensemble and is markedly more stable than
-    picking one wording.
+    picking one wording. Cached: the backbone is frozen, so this never changes.
     """
+    key = (encoder.name, encoder.pretrained, object_name)
+    if key in _TEXT_CACHE:
+        return _TEXT_CACHE[key]
+
     label = object_name.replace("_", " ")
     normal = encoder.encode_text([p.format(object=label) for p in NORMAL_PROMPTS])
     anomalous = encoder.encode_text([p.format(object=label) for p in ANOMALOUS_PROMPTS])
 
     text = torch.cat([normal.mean(dim=0, keepdim=True), anomalous.mean(dim=0, keepdim=True)])
-    return text / text.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    text = text / text.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+    _TEXT_CACHE[key] = text
+    return text
 
 
 def zero_shot_scores(
@@ -182,8 +194,12 @@ def evaluate_split(
 
     # pixel metrics need the map at mask resolution
     base = Path(root) / category
-    mask_paths = [base / t["mask"] if t["mask"] else None for t in manifest["test"]]
-    masks = load_masks(mask_paths, image_size)
+    mask_key = (str(base), tuple(t["mask"] or "" for t in manifest["test"]), image_size)
+    masks = _MASK_CACHE.get(mask_key)
+    if masks is None:
+        mask_paths = [base / t["mask"] if t["mask"] else None for t in manifest["test"]]
+        masks = load_masks(mask_paths, image_size)
+        _MASK_CACHE[mask_key] = masks
     pixel_scores = upsample_maps(maps, image_size, sigma=sigma)
 
     metrics = compute_metrics(
@@ -205,3 +221,10 @@ def evaluate_split(
         prototypes=prototypes,
         memory_bytes=memory_bytes,
     )
+
+
+def clear_caches() -> None:
+    """Drop the mask and text caches. Only needed if the encoder changes
+    underneath a long-lived process."""
+    _MASK_CACHE.clear()
+    _TEXT_CACHE.clear()
