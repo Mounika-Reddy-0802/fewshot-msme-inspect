@@ -46,6 +46,7 @@ class SplitResult:
     shots: int
     seed: int
     backbone: str
+    method: str
     metrics: Metrics
     support_size: int
     test_size: int
@@ -55,6 +56,7 @@ class SplitResult:
     def as_row(self) -> dict:
         return {
             "backbone": self.backbone,
+            "method": self.method,
             "category": self.category,
             "shots": self.shots,
             "seed": self.seed,
@@ -91,6 +93,21 @@ def load_masks(
     return torch.stack(masks)
 
 
+def category_text_embeddings(encoder, object_name: str) -> torch.Tensor:
+    """Prompt ensembles for one product, as a (2, D) tensor: normal, anomalous.
+
+    Each ensemble is averaged in embedding space and renormalised, which is the
+    standard way to use a prompt ensemble and is markedly more stable than
+    picking one wording.
+    """
+    label = object_name.replace("_", " ")
+    normal = encoder.encode_text([p.format(object=label) for p in NORMAL_PROMPTS])
+    anomalous = encoder.encode_text([p.format(object=label) for p in ANOMALOUS_PROMPTS])
+
+    text = torch.cat([normal.mean(dim=0, keepdim=True), anomalous.mean(dim=0, keepdim=True)])
+    return text / text.norm(dim=-1, keepdim=True).clamp_min(1e-12)
+
+
 def zero_shot_scores(
     encoder,
     patches: torch.Tensor,
@@ -102,16 +119,7 @@ def zero_shot_scores(
     Each patch is compared against a prompt ensemble for "normal" and one for
     "defective"; the anomaly score is the softmax weight on the defective side.
     """
-    label = object_name.replace("_", " ")
-    normal = encoder.encode_text([p.format(object=label) for p in NORMAL_PROMPTS])
-    anomalous = encoder.encode_text([p.format(object=label) for p in ANOMALOUS_PROMPTS])
-
-    # average each ensemble in embedding space, then renormalise
-    normal = normal.mean(dim=0, keepdim=True)
-    anomalous = anomalous.mean(dim=0, keepdim=True)
-    text = torch.cat([normal, anomalous])
-    text = text / text.norm(dim=-1, keepdim=True).clamp_min(1e-12)
-
+    text = category_text_embeddings(encoder, object_name)
     logits = (patches.float() @ text.T) / temperature      # (B, P, 2)
     return logits.softmax(dim=-1)[..., 1]
 
@@ -124,8 +132,18 @@ def evaluate_split(
     top_k: int = 1,
     sigma: float = 4.0,
     image_size: tuple[int, int] = (224, 224),
+    method: str = "memory",
+    adapter_config=None,
 ) -> SplitResult:
-    """Run one (category, shots, seed) split and return its metrics."""
+    """Run one (category, shots, seed) split and return its metrics.
+
+    ``method`` selects the head: "memory" for nearest-prototype scoring,
+    "adapter" for the Tip-Adapter cache kernel blended with text prompts. With
+    no support images both fall back to pure zero-shot prompting, since there is
+    nothing to build a cache from.
+    """
+    if method not in {"memory", "adapter"}:
+        raise ValueError(f"unknown method {method!r}, expected 'memory' or 'adapter'")
     category = manifest["category"]
     shots = manifest["shots"]
 
@@ -144,7 +162,17 @@ def evaluate_split(
     else:
         memory = PrototypeMemory(dim=bank.dim, grid=bank.grid, top_k=top_k)
         memory.add_class(category, bank.patches(manifest["support"]))
-        scored = memory.score(query_patches, category)
+
+        if method == "adapter":
+            from src.model.adapter import AdapterConfig, TipAdapter
+
+            config = adapter_config or AdapterConfig(top_k=top_k)
+            text = category_text_embeddings(encoder, category) if encoder else None
+            head = TipAdapter.from_memory(memory, category, config, text)
+            scored = head(query_patches)
+        else:
+            scored = memory.score(query_patches, category)
+
         maps, image_scores = scored.patches, scored.image
         prototypes = memory.total_prototypes()
         memory_bytes = memory.memory_bytes()
@@ -167,6 +195,7 @@ def evaluate_split(
         shots=shots,
         seed=manifest["seed"],
         backbone=bank.backbone,
+        method="zeroshot" if shots == 0 else method,
         metrics=metrics,
         support_size=len(manifest["support"]),
         test_size=len(test_paths),

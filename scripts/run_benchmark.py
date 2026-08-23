@@ -64,6 +64,10 @@ def main() -> int:
     parser.add_argument("--config", default="prototype.yaml")
     parser.add_argument("--backbone", default=None, help="overrides the config")
     parser.add_argument("--categories", nargs="+", default=None)
+    parser.add_argument("--methods", nargs="+", default=["memory"],
+                        choices=["memory", "adapter"],
+                        help="scoring heads to compare; features are shared, so "
+                             "running both costs almost nothing extra")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--workers", type=int, default=0)
     parser.add_argument("--threads", type=int, default=None,
@@ -113,19 +117,26 @@ def main() -> int:
         )
         extract_seconds = time.perf_counter() - t0
 
-        for manifest in manifests:
-            result = evaluate_split(
-                manifest, root, bank,
-                encoder=encoder,
-                top_k=config["model"]["scoring"]["top_k"],
-            )
-            rows.append(result.as_row())
+        produced = 0
+        for method in args.methods:
+            for manifest in manifests:
+                # 0-shot is text-only, identical under both heads: score it once
+                if manifest["shots"] == 0 and method != args.methods[0]:
+                    continue
+                result = evaluate_split(
+                    manifest, root, bank,
+                    encoder=encoder,
+                    top_k=config["model"]["scoring"]["top_k"],
+                    method=method,
+                )
+                rows.append(result.as_row())
+                produced += 1
 
         best = {}
-        for r in rows[-len(manifests):]:
-            best.setdefault(r["shots"], []).append(r["image_auroc"])
+        for r in rows[-produced:]:
+            best.setdefault((r["method"], r["shots"]), []).append(r["image_auroc"])
         summary = "  ".join(
-            f"{k}shot={sum(v) / len(v):.3f}" for k, v in sorted(best.items())
+            f"{m[:3]}{k}={sum(v) / len(v):.3f}" for (m, k), v in sorted(best.items())
         )
         print(
             f"[{i}/{len(categories)}] {category:<12} {how:<10} "
@@ -147,6 +158,7 @@ def main() -> int:
         "seed": config["experiment"]["seed"],
         "top_k": config["model"]["scoring"]["top_k"],
         "categories": categories,
+        "methods": args.methods,
         "rows": len(rows),
         "threads": torch.get_num_threads(),
         "total_seconds": round(total, 1),
