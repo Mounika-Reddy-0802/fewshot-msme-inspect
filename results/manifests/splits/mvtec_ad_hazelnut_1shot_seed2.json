@@ -1,0 +1,680 @@
+{
+  "schema_version": 1,
+  "dataset": "mvtec_ad",
+  "category": "hazelnut",
+  "shots": 1,
+  "seed": 2,
+  "support": [
+    "train/good/152.png"
+  ],
+  "test": [
+    {
+      "image": "test/crack/000.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/000_mask.png"
+    },
+    {
+      "image": "test/crack/001.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/001_mask.png"
+    },
+    {
+      "image": "test/crack/002.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/002_mask.png"
+    },
+    {
+      "image": "test/crack/003.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/003_mask.png"
+    },
+    {
+      "image": "test/crack/004.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/004_mask.png"
+    },
+    {
+      "image": "test/crack/005.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/005_mask.png"
+    },
+    {
+      "image": "test/crack/006.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/006_mask.png"
+    },
+    {
+      "image": "test/crack/007.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/007_mask.png"
+    },
+    {
+      "image": "test/crack/008.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/008_mask.png"
+    },
+    {
+      "image": "test/crack/009.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/009_mask.png"
+    },
+    {
+      "image": "test/crack/010.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/010_mask.png"
+    },
+    {
+      "image": "test/crack/011.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/011_mask.png"
+    },
+    {
+      "image": "test/crack/012.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/012_mask.png"
+    },
+    {
+      "image": "test/crack/013.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/013_mask.png"
+    },
+    {
+      "image": "test/crack/014.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/014_mask.png"
+    },
+    {
+      "image": "test/crack/015.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/015_mask.png"
+    },
+    {
+      "image": "test/crack/016.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/016_mask.png"
+    },
+    {
+      "image": "test/crack/017.png",
+      "label": 1,
+      "defect_type": "crack",
+      "mask": "ground_truth/crack/017_mask.png"
+    },
+    {
+      "image": "test/cut/000.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/000_mask.png"
+    },
+    {
+      "image": "test/cut/001.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/001_mask.png"
+    },
+    {
+      "image": "test/cut/002.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/002_mask.png"
+    },
+    {
+      "image": "test/cut/003.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/003_mask.png"
+    },
+    {
+      "image": "test/cut/004.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/004_mask.png"
+    },
+    {
+      "image": "test/cut/005.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/005_mask.png"
+    },
+    {
+      "image": "test/cut/006.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/006_mask.png"
+    },
+    {
+      "image": "test/cut/007.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/007_mask.png"
+    },
+    {
+      "image": "test/cut/008.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/008_mask.png"
+    },
+    {
+      "image": "test/cut/009.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/009_mask.png"
+    },
+    {
+      "image": "test/cut/010.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/010_mask.png"
+    },
+    {
+      "image": "test/cut/011.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/011_mask.png"
+    },
+    {
+      "image": "test/cut/012.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/012_mask.png"
+    },
+    {
+      "image": "test/cut/013.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/013_mask.png"
+    },
+    {
+      "image": "test/cut/014.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/014_mask.png"
+    },
+    {
+      "image": "test/cut/015.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/015_mask.png"
+    },
+    {
+      "image": "test/cut/016.png",
+      "label": 1,
+      "defect_type": "cut",
+      "mask": "ground_truth/cut/016_mask.png"
+    },
+    {
+      "image": "test/good/000.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/001.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/002.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/003.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/004.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/005.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/006.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/007.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/008.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/009.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/010.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/011.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/012.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/013.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/014.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/015.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/016.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/017.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/018.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/019.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/020.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/021.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/022.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/023.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/024.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/025.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/026.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/027.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/028.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/029.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/030.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/031.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/032.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/033.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/034.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/035.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/036.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/037.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/038.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/good/039.png",
+      "label": 0,
+      "defect_type": "good",
+      "mask": null
+    },
+    {
+      "image": "test/hole/000.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/000_mask.png"
+    },
+    {
+      "image": "test/hole/001.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/001_mask.png"
+    },
+    {
+      "image": "test/hole/002.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/002_mask.png"
+    },
+    {
+      "image": "test/hole/003.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/003_mask.png"
+    },
+    {
+      "image": "test/hole/004.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/004_mask.png"
+    },
+    {
+      "image": "test/hole/005.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/005_mask.png"
+    },
+    {
+      "image": "test/hole/006.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/006_mask.png"
+    },
+    {
+      "image": "test/hole/007.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/007_mask.png"
+    },
+    {
+      "image": "test/hole/008.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/008_mask.png"
+    },
+    {
+      "image": "test/hole/009.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/009_mask.png"
+    },
+    {
+      "image": "test/hole/010.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/010_mask.png"
+    },
+    {
+      "image": "test/hole/011.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/011_mask.png"
+    },
+    {
+      "image": "test/hole/012.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/012_mask.png"
+    },
+    {
+      "image": "test/hole/013.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/013_mask.png"
+    },
+    {
+      "image": "test/hole/014.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/014_mask.png"
+    },
+    {
+      "image": "test/hole/015.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/015_mask.png"
+    },
+    {
+      "image": "test/hole/016.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/016_mask.png"
+    },
+    {
+      "image": "test/hole/017.png",
+      "label": 1,
+      "defect_type": "hole",
+      "mask": "ground_truth/hole/017_mask.png"
+    },
+    {
+      "image": "test/print/000.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/000_mask.png"
+    },
+    {
+      "image": "test/print/001.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/001_mask.png"
+    },
+    {
+      "image": "test/print/002.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/002_mask.png"
+    },
+    {
+      "image": "test/print/003.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/003_mask.png"
+    },
+    {
+      "image": "test/print/004.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/004_mask.png"
+    },
+    {
+      "image": "test/print/005.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/005_mask.png"
+    },
+    {
+      "image": "test/print/006.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/006_mask.png"
+    },
+    {
+      "image": "test/print/007.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/007_mask.png"
+    },
+    {
+      "image": "test/print/008.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/008_mask.png"
+    },
+    {
+      "image": "test/print/009.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/009_mask.png"
+    },
+    {
+      "image": "test/print/010.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/010_mask.png"
+    },
+    {
+      "image": "test/print/011.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/011_mask.png"
+    },
+    {
+      "image": "test/print/012.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/012_mask.png"
+    },
+    {
+      "image": "test/print/013.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/013_mask.png"
+    },
+    {
+      "image": "test/print/014.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/014_mask.png"
+    },
+    {
+      "image": "test/print/015.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/015_mask.png"
+    },
+    {
+      "image": "test/print/016.png",
+      "label": 1,
+      "defect_type": "print",
+      "mask": "ground_truth/print/016_mask.png"
+    }
+  ],
+  "counts": {
+    "support": 1,
+    "train_normals_available": 391,
+    "test_total": 110,
+    "test_normal": 40,
+    "test_anomalous": 70,
+    "test_with_mask": 70
+  }
+}
