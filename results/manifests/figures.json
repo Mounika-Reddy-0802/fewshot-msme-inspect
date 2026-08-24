@@ -1,5 +1,5 @@
 {
-  "source_rows": 90,
+  "source_rows": 270,
   "backbones": [
     "ViT-B-16-quickgelu",
     "ViT-B-32-quickgelu"
@@ -27,6 +27,8 @@
     10
   ],
   "seeds": [
+    1,
+    2,
     42
   ],
   "figures": {
@@ -44,9 +46,9 @@
             10
           ],
           "mean_image_auroc": [
-            0.8708546110009752,
-            0.8863434668827134,
-            0.9085831501726006
+            0.8558213316143518,
+            0.8881495294329732,
+            0.9039790150933062
           ]
         },
         {
@@ -57,9 +59,9 @@
             10
           ],
           "mean_image_auroc": [
-            0.8390919865073229,
-            0.8889108239110014,
-            0.8991800711697574
+            0.8367013663424048,
+            0.884313860780257,
+            0.9038096679419995
           ]
         }
       ]
@@ -76,7 +78,7 @@
           "backbone_ms": 132.48,
           "memory_search_ms": 0.454,
           "total_ms_per_image": 132.934,
-          "image_auroc": 0.8708546110009752
+          "image_auroc": 0.8558213316143518
         },
         {
           "backbone": "ViT-B-16-quickgelu",
@@ -84,7 +86,7 @@
           "backbone_ms": 132.48,
           "memory_search_ms": 1.166,
           "total_ms_per_image": 133.646,
-          "image_auroc": 0.8863434668827134
+          "image_auroc": 0.8881495294329732
         },
         {
           "backbone": "ViT-B-16-quickgelu",
@@ -92,7 +94,7 @@
           "backbone_ms": 132.48,
           "memory_search_ms": 1.472,
           "total_ms_per_image": 133.952,
-          "image_auroc": 0.9085831501726006
+          "image_auroc": 0.9039790150933062
         },
         {
           "backbone": "ViT-B-32-quickgelu",
@@ -100,7 +102,7 @@
           "backbone_ms": 60.41,
           "memory_search_ms": 0.174,
           "total_ms_per_image": 60.583999999999996,
-          "image_auroc": 0.8390919865073229
+          "image_auroc": 0.8367013663424048
         },
         {
           "backbone": "ViT-B-32-quickgelu",
@@ -108,7 +110,7 @@
           "backbone_ms": 60.41,
           "memory_search_ms": 0.226,
           "total_ms_per_image": 60.635999999999996,
-          "image_auroc": 0.8889108239110014
+          "image_auroc": 0.884313860780257
         },
         {
           "backbone": "ViT-B-32-quickgelu",
@@ -116,7 +118,7 @@
           "backbone_ms": 60.41,
           "memory_search_ms": 0.265,
           "total_ms_per_image": 60.675,
-          "image_auroc": 0.8991800711697574
+          "image_auroc": 0.9038096679419995
         }
       ]
     }

@@ -91,30 +91,47 @@ on that category; one photo gets 0.973 on the same category.
 
 ---
 
-## 2. Backbone: an accuracy-cost trade, not a free lunch
+## 2. Backbone: the cheap one is not worse
 
-| backbone | patches | image 1/5/10 | pixel 1/5/10 | GFLOPs | ms/image |
-|---|---|---|---|---|---|
-| ViT-B/16 | 14x14 = 196 | **0.871** / 0.886 / **0.909** | 0.920 / 0.933 / 0.936 | 11.3 | 132 |
-| ViT-B/32 | 7x7 = 49 | 0.839 / **0.889** / 0.899 | 0.919 / **0.934** / **0.939** | **3.0** | **60** |
+Three seeds, 15 categories, paired (both backbones scored on identical splits).
 
-ViT-B/16 leads on image AUROC at 1 and 10 shots; the two are level at 5. On
-**pixel** AUROC they are indistinguishable -- B/32 is fractionally ahead at 5 and
-10 shots despite storing a quarter as many prototypes.
+| backbone | patches | image 1/5/10 | pixel 1/5/10 | GFLOPs | ms/image | prototypes/class @10-shot |
+|---|---|---|---|---|---|---|
+| ViT-B/16 | 14x14 = 196 | 0.856 / 0.888 / 0.904 | 0.916 / 0.932 / 0.936 | 11.3 | 132 | 1,960 |
+| ViT-B/32 | 7x7 = 49 | 0.837 / 0.884 / 0.904 | **0.920** / **0.934** / **0.940** | **3.0** | **60** | **490** |
 
-So for localisation, the cheaper backbone is the better deal: same accuracy,
-3.7x fewer FLOPs, 2.2x faster, 4x less memory. For image-level detection, B/16
-buys about +0.02 AUROC for 2.2x the latency, and whether that is worth paying is
-an MSME's decision rather than ours.
+**No difference between them survives its error bars.** Paired over 45
+measurements per cell:
 
-### Correction to an earlier claim
+| metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| image, B/16 - B/32 | +0.019 (1.2x SE) | +0.004 (0.3x SE) | +0.000 (0.0x SE) |
+| pixel, B/16 - B/32 | -0.004 (0.9x SE) | -0.003 (0.6x SE) | -0.004 (0.7x SE) |
 
-An earlier version of this document reported that **ViT-B/32 beat ViT-B/16 at
-every shot count** while costing 3.7x less, and called it the headline finding.
-That was measured with 512-dim projected features. It does not survive the move
-to 768-dim: with the richer features, B/16's finer patch grid pays off and the
-ordering reverses at 1 and 10 shots. The earlier claim was an artefact of the
-projection, not a property of the backbones.
+Nothing reaches 2x its standard error. At 10 shots the two are identical on image
+AUROC to four decimal places, and B/32 is fractionally *ahead* on pixel AUROC at
+every shot count while storing a quarter as many prototypes.
+
+So the finding is this: **ViT-B/32 matches ViT-B/16 for 3.7x fewer FLOPs, 2.2x
+lower latency and 4x less memory.** For an MSME choosing hardware, the cheap
+backbone is not a compromise. The only place B/16 may hold an edge is 1-shot
+image detection (+0.019), and even that is 1.2x SE -- suggestive, not established.
+
+### This claim took three attempts; the first two were wrong
+
+It is worth recording how, because the same trap will recur.
+
+1. **"B/32 beats B/16 at every shot count."** Measured with 512-dim projected
+   features on a different set of splits. Wrong -- it did not survive the change
+   of feature convention.
+2. **"B/16 wins at 1 and 10 shots."** Measured at 768 dims but on a single seed,
+   with no error bars. Unsupported -- the gaps were inside seed noise.
+3. **"They are statistically indistinguishable."** Three seeds, paired design,
+   differences compared against the paired standard error. This one is checkable.
+
+Each earlier version looked like a clean result at the time. What separated them
+was not more data but a control: change one variable, pair the comparison, and
+measure the effect against the right spread.
 
 ---
 
