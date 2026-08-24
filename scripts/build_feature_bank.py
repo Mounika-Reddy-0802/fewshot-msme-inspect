@@ -41,10 +41,10 @@ from src.utils.paths import data_root, results_root  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
 
 
-def load_manifest(dataset: str) -> dict:
+def load_manifest(dataset: str) -> dict | None:
     path = results_root() / "manifests" / "splits" / f"{dataset}.json"
-    if not path.is_dir() and not path.exists():
-        raise FileNotFoundError(f"no manifest at {path} -- run generate_splits.py --dataset {dataset} first")
+    if not path.exists():
+        return None
     return json.loads(path.read_text(encoding="utf-8"))
 
 
@@ -59,9 +59,28 @@ def images_to_process(manifest: dict, categories: list[str]) -> dict[str, list[s
     return out
 
 
+def images_from_raw_folder(root: Path, dataset: str) -> dict[str, list[str]]:
+    """For datasets with no manifest yet (e.g. neu_det, pending a shot-design
+    decision): just extract every image found, grouped by class folder."""
+    dataset_root = root / dataset
+    out: dict[str, list[str]] = {}
+    if not dataset_root.is_dir():
+        return out
+    for class_dir in sorted(dataset_root.iterdir()):
+        if not class_dir.is_dir():
+            continue
+        seen: dict[str, Path] = {}
+        for pattern in ("*.jpg", "*.JPG", "*.png", "*.PNG"):
+            for p in class_dir.rglob(pattern):
+                seen[str(p.resolve()).lower()] = p  # dedupe case-insensitive matches
+        if seen:
+            out[class_dir.name] = sorted(str(p.relative_to(root)) for p in seen.values())
+    return out
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--dataset", default="mvtec_ad", choices=["mvtec_ad", "visa"])
+    parser.add_argument("--dataset", default="mvtec_ad", choices=["mvtec_ad", "visa", "neu_det"])
     parser.add_argument("--category", nargs="+", default=None, help="defaults to every category in the manifest")
     parser.add_argument("--limit", type=int, default=None, help="cap images per category -- use for a smoke test")
     args = parser.parse_args()
@@ -82,8 +101,16 @@ def main() -> int:
     model.visual.output_tokens = True  # ask the visual trunk to also return patch tokens
 
     manifest = load_manifest(args.dataset)
-    categories = args.category or list(manifest["categories"].keys())
-    todo = images_to_process(manifest, categories)
+    if manifest is not None:
+        categories = args.category or list(manifest["categories"].keys())
+        todo = images_to_process(manifest, categories)
+    else:
+        # No split manifest for this dataset yet (e.g. neu_det, pending a
+        # shot-design decision) -- extract every image, grouped by class.
+        print(f"no split manifest for '{args.dataset}' -- extracting every image found instead")
+        todo = images_from_raw_folder(data_root(), args.dataset)
+        if args.category:
+            todo = {k: v for k, v in todo.items() if k in args.category}
 
     root = data_root()  # manifest paths are relative to this
     out_root = results_root() / "features" / backbone_cfg["name"]
