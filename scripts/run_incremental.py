@@ -29,9 +29,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import torch  # noqa: E402
 
 from src.data.mvtec import complete_categories  # noqa: E402
-from src.data.splits import load_split  # noqa: E402
+from src.data.splits import load_manifest, manifest_path, split_for  # noqa: E402
 from src.eval.features import FeatureBank, bank_path  # noqa: E402
-from src.eval.metrics import auroc  # noqa: E402
+from src.eval.metrics import image_auroc  # noqa: E402
 from src.model.memory import PrototypeMemory  # noqa: E402
 from src.utils.config import load_config  # noqa: E402
 from src.utils.paths import dataset_dir, repo_root, results_root  # noqa: E402
@@ -52,15 +52,21 @@ def main() -> int:
     root = dataset_dir(config["dataset"]["name"])
     splits_dir = repo_root() / "results" / "manifests" / "splits"
 
+    dim = 768 if not config["backbone"].get("project_patches", True) else 512
+    dataset = config["dataset"]["name"]
+    full = load_manifest(manifest_path(splits_dir, dataset))
+
     categories = complete_categories(root)
     banks, manifests = {}, {}
     for category in categories:
-        path = bank_path(results_root(), backbone, category,
-                         768 if not config['backbone'].get('project_patches', True) else 512)
-        manifest = splits_dir / f"mvtec_ad_{category}_{args.shots}shot_seed{args.seed}.json"
-        if path.exists() and manifest.exists():
-            banks[category] = FeatureBank.load(path)
-            manifests[category] = load_split(manifest)
+        path = bank_path(results_root(), backbone, category, dim)
+        if not path.exists():
+            continue
+        try:
+            manifests[category] = split_for(full, category, args.shots, root.parent)
+        except KeyError:
+            continue
+        banks[category] = FeatureBank.load(path)
 
     if len(banks) < 2:
         print("need at least two cached feature banks; run scripts/run_benchmark.py first",
@@ -103,7 +109,7 @@ def main() -> int:
                 baseline[known] = scores.image
 
         labels = [t["label"] for t in manifest["test"]]
-        class_auroc = auroc(baseline[category], labels)
+        class_auroc = image_auroc(labels, baseline[category].numpy())
 
         added_kib = (support.numel() * 4) / 1024
         history.append({

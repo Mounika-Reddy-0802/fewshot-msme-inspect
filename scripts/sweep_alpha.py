@@ -27,7 +27,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.mvtec import complete_categories  # noqa: E402
-from src.data.splits import load_split  # noqa: E402
+from src.data.splits import load_manifest, manifest_path, split_for  # noqa: E402
 from src.eval.features import FeatureBank, bank_path  # noqa: E402
 from src.eval.pipeline import evaluate_split  # noqa: E402
 from src.model.adapter import AdapterConfig  # noqa: E402
@@ -70,7 +70,11 @@ def main() -> int:
         print("no cached feature banks; run scripts/run_benchmark.py first", file=sys.stderr)
         return 1
 
-    encoder = FrozenCLIPEncoder(backbone, config["backbone"]["pretrained"], device="cpu")
+    full = load_manifest(manifest_path(splits_dir, config["dataset"]["name"]))
+    encoder = FrozenCLIPEncoder(
+        backbone, config["backbone"]["pretrained"], device="cpu",
+        project_patches=config["backbone"].get("project_patches", True),
+    )
     base = config["model"]["adapter"]
 
     print(f"backbone {backbone}   categories {len(banks)}   "
@@ -81,10 +85,10 @@ def main() -> int:
     for category, bank in sorted(banks.items()):
         for shots in args.shots:
             for seed in args.seeds:
-                manifest_path = splits_dir / f"mvtec_ad_{category}_{shots}shot_seed{seed}.json"
-                if not manifest_path.exists():
+                try:
+                    manifest = split_for(full, category, shots, root.parent)
+                except KeyError:
                     continue
-                manifest = load_split(manifest_path)
                 settings = [
                     (a, k)
                     for a in args.alphas
