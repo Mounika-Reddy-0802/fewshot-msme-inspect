@@ -42,3 +42,5 @@ uvicorn==0.24.0
 
 # dev
 pytest==8.3.4
+
+kaggle
