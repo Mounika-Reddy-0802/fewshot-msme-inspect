@@ -159,10 +159,37 @@ cache at alpha=0.3 loses to plain prototype memory:
 | 10 | 0.880 | 0.870 | -0.010 |
 
 It loses in 11 of 15 categories, ties in 2, wins in 2 -- one of those a large win
-on hazelnut (+0.083) that does not offset eleven small losses. Two variables
-changed at once (the `exp(-beta(1-s))` kernel *and* the text blend), so this does
-not yet establish which is at fault. `scripts/sweep_alpha.py` isolates them:
-alpha=0 is the kernel with no text at all.
+on hazelnut (+0.083) that does not offset eleven small losses.
+
+Two sweeps isolate why (`scripts/sweep_alpha.py`, one seed, all 15 categories).
+
+**alpha: the text branch never helps once there is at least one shot.**
+
+| shots | a=0 | a=0.1 | a=0.3 | a=0.5 | a=1.0 |
+|---|---|---|---|---|---|
+| 1 | **0.820** | 0.819 | 0.814 | 0.799 | 0.646 |
+| 5 | **0.862** | 0.859 | 0.852 | 0.839 | 0.646 |
+| 10 | **0.879** | 0.877 | 0.870 | 0.859 | 0.646 |
+
+**top_k at alpha=0: a wider kernel is never better than nearest-neighbour.**
+
+| shots | k=1 | k=3 | k=5 | k=10 | k=25 |
+|---|---|---|---|---|---|
+| 1 | 0.820 | 0.822 | 0.817 | 0.806 | 0.783 |
+| 5 | 0.862 | 0.861 | 0.858 | 0.851 | 0.837 |
+| 10 | 0.879 | 0.879 | 0.876 | 0.868 | 0.854 |
+
+The best adapter setting (alpha=0, top_k=1) reproduces the memory head exactly
+-- 0.820/0.862/0.879 against 0.823/0.862/0.880, the residual being one seed
+versus three. That is not a coincidence: at top_k=1, `exp(-beta(1 - s))` is a
+strictly monotonic function of the cosine similarity `s`, so it preserves the
+ranking, and AUROC is rank-based. The kernel **cannot** change AUROC at its best
+setting, and every setting where it does act (top_k > 1, alpha > 0) is worse.
+
+**The training-free Tip-Adapter therefore adds nothing over prototype memory.**
+Tip-Adapter-F, with the cache keys unfrozen and trained, is the only variant
+worth attempting; the module already supports it (`trainable=True`, gradient
+flow covered by tests).
 
 **`screw` is a resolution failure, not a method failure.** 0.684 at 10 shots
 against PatchCore's ~0.98. Screw defects are hair-thin; at 224px with a 14x14

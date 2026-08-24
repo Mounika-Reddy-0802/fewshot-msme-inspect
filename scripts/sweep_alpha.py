@@ -42,6 +42,11 @@ def main() -> int:
     parser.add_argument("--config", default="adapter.yaml")
     parser.add_argument("--alphas", nargs="+", type=float,
                         default=[0.0, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0])
+    parser.add_argument("--top-ks", nargs="+", type=int, default=None,
+                        help="sweep top_k instead of using the config value. At "
+                             "top_k=1 the kernel is a monotonic reparameterisation "
+                             "of nearest-neighbour, so AUROC cannot differ from the "
+                             "memory head -- the kernel only acts when top_k > 1.")
     parser.add_argument("--shots", nargs="+", type=int, default=[1, 5, 10])
     parser.add_argument("--seeds", nargs="+", type=int, default=[0, 1, 2])
     parser.add_argument("--categories", nargs="+", default=None)
@@ -79,37 +84,47 @@ def main() -> int:
                 if not manifest_path.exists():
                     continue
                 manifest = load_split(manifest_path)
-                for alpha in args.alphas:
+                settings = [
+                    (a, k)
+                    for a in args.alphas
+                    for k in (args.top_ks or [base["top_k"]])
+                ]
+                for alpha, top_k in settings:
                     cfg = AdapterConfig(
                         alpha=alpha,
                         beta=base["beta"],
-                        top_k=base["top_k"],
+                        top_k=top_k,
                         trainable=False,
                     )
                     result = evaluate_split(
                         manifest, root, bank, encoder=encoder,
-                        top_k=base["top_k"], method="adapter", adapter_config=cfg,
+                        top_k=top_k, method="adapter", adapter_config=cfg,
                         temperature=config["model"]["scoring"]["temperature"],
                         image_size=tuple(config["dataset"]["image_size"]),
                     )
                     row = result.as_row()
                     row["alpha"] = alpha
+                    row["adapter_top_k"] = top_k
                     rows.append(row)
-                    scores[(shots, alpha)].append(row["image_auroc"])
+                    scores[(shots, alpha, top_k)].append(row["image_auroc"])
         print(f"  {category} done", flush=True)
 
-    print(f"\n{'shots':<7}" + "".join(f"a={a:<7.2f}" for a in args.alphas) + "  best")
+    combos = sorted({(a, k) for (_, a, k) in scores})
+    header = "".join(f"a{a:g}/k{k:<5}" for a, k in combos)
+    print(chr(10) + f"{'shots':<7}" + header + "  best")
     best_per_shot = {}
     for shots in args.shots:
-        cells, best_alpha, best_value = [], None, -1.0
-        for alpha in args.alphas:
-            values = scores[(shots, alpha)]
+        cells, best, best_value = [], None, -1.0
+        for alpha, top_k in combos:
+            values = scores[(shots, alpha, top_k)]
             mean = sum(values) / len(values) if values else float("nan")
             cells.append(f"{mean:<9.3f}")
             if values and mean > best_value:
-                best_alpha, best_value = alpha, mean
-        best_per_shot[shots] = {"alpha": best_alpha, "image_auroc": round(best_value, 4)}
-        print(f"{shots:<7}" + "".join(cells) + f"  alpha={best_alpha} ({best_value:.3f})")
+                best, best_value = (alpha, top_k), mean
+        best_per_shot[shots] = {
+            "alpha": best[0], "top_k": best[1], "image_auroc": round(best_value, 4)
+        }
+        print(f"{shots:<7}" + "".join(cells) + f"  a={best[0]:g} k={best[1]} ({best_value:.3f})")
 
     print("\nalpha=0 is cache only, alpha=1 is prompts only.")
 
@@ -121,7 +136,8 @@ def main() -> int:
         writer.writerows(rows)
 
     (repo_root() / "results" / "manifests" / "alpha_sweep.json").write_text(
-        json.dumps({"backbone": backbone, "alphas": args.alphas, "shots": args.shots,
+        json.dumps({"backbone": backbone, "alphas": args.alphas,
+                    "top_ks": args.top_ks, "shots": args.shots,
                     "seeds": args.seeds, "categories": sorted(banks),
                     "best_per_shot": best_per_shot}, indent=2) + "\n",
         encoding="utf-8",
