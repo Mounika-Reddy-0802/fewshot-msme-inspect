@@ -23,7 +23,7 @@ from pathlib import Path
 import torch
 
 from src.eval.features import FeatureBank
-from src.eval.metrics import Metrics, compute_metrics, upsample_maps
+from src.eval.scoring import Metrics, compute_metrics, upsample_maps
 from src.model.memory import PrototypeMemory
 
 # A category's test split and its prompts are identical across every shot count,
