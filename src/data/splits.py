@@ -46,6 +46,22 @@ def manifest_path(manifests_dir: str | Path, dataset: str) -> Path:
     return Path(manifests_dir) / f"{dataset}.json"
 
 
+def manifest_paths(manifests_dir: str | Path, dataset: str) -> list[Path]:
+    """Every seed's manifest for a dataset, default seed first.
+
+    The default seed keeps the plain ``<dataset>.json`` name; additional seeds
+    are ``<dataset>_seed<N>.json``. Averaging over several is what turns a
+    single lucky or unlucky support draw into an error bar.
+    """
+    directory = Path(manifests_dir)
+    found = []
+    primary = directory / f"{dataset}.json"
+    if primary.exists():
+        found.append(primary)
+    found.extend(sorted(directory.glob(f"{dataset}_seed*.json")))
+    return found
+
+
 def load_manifest(path: str | Path) -> dict:
     """Load and sanity-check one of her dataset manifests."""
     path = Path(path)

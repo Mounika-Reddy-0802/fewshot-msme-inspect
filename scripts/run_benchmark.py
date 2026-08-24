@@ -24,7 +24,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.mvtec import CATEGORIES, complete_categories  # noqa: E402
 from src.data.splits import categories as manifest_categories  # noqa: E402
-from src.data.splits import load_manifest, manifest_path, shot_counts, split_for  # noqa: E402
+from src.data.splits import (  # noqa: E402
+    load_manifest,
+    manifest_path,
+    manifest_paths,
+    shot_counts,
+    split_for,
+)
 from src.eval.features import FeatureBank, bank_path  # noqa: E402
 from src.eval.pipeline import evaluate_split  # noqa: E402
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
@@ -33,14 +39,20 @@ from src.utils.paths import dataset_dir, repo_root, results_root  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
 
 
-def splits_for(manifest: dict, category: str, root: Path, shots: list[int]) -> list[dict]:
-    """Every requested shot count for one category, from Member B's manifest."""
+def splits_for(
+    manifests: list[dict],
+    category: str,
+    root: Path,
+    shots: list[int],
+) -> list[dict]:
+    """Every (seed, shot count) split for one category, across all seeds."""
     found = []
-    for k in shots:
-        try:
-            found.append(split_for(manifest, category, k, root))
-        except KeyError:
-            continue
+    for manifest in manifests:
+        for k in shots:
+            try:
+                found.append(split_for(manifest, category, k, root))
+            except KeyError:
+                continue
     return found
 
 
@@ -99,7 +111,12 @@ def main() -> int:
 
     # Member B's manifest is the single definition of a split
     dataset = config["dataset"]["name"]
-    manifest = load_manifest(manifest_path(splits_dir, dataset))
+    paths = manifest_paths(splits_dir, dataset)
+    if not paths:
+        print(f"no split manifest for {dataset} in {splits_dir}", file=sys.stderr)
+        return 1
+    manifests = [load_manifest(p) for p in paths]
+    manifest = manifests[0]                     # for category / shot discovery
     data_root_for_splits = root.parent          # her paths include the dataset dir
 
     project_patches = (
@@ -122,7 +139,8 @@ def main() -> int:
 
     print(f"backbone   {backbone} / {pretrained}")
     print(f"dataset    {root}")
-    print(f"splits     {manifest_path(splits_dir, dataset).name} (seed {manifest['seed']})")
+    seeds = [m["seed"] for m in manifests]
+    print(f"splits     {len(manifests)} manifest(s), seeds {seeds}")
     print(f"categories {len(categories)}   shots {wanted_shots}")
     print(f"patch dim  {'768 unprojected' if not project_patches else '512 projected'}")
     print(f"threads    {torch.get_num_threads()}\n")
@@ -135,14 +153,14 @@ def main() -> int:
     rows = []
     started = time.perf_counter()
     for i, category in enumerate(categories, 1):
-        manifests = splits_for(manifest, category, data_root_for_splits, wanted_shots)
-        if not manifests:
+        splits = splits_for(manifests, category, data_root_for_splits, wanted_shots)
+        if not splits:
             print(f"[{i}/{len(categories)}] {category}: no splits, skipping")
             continue
 
         t0 = time.perf_counter()
         bank, how = get_bank(
-            encoder, root, category, manifests,
+            encoder, root, category, splits,
             results_root(), args.batch_size, args.workers, args.refresh_cache,
         )
         extract_seconds = time.perf_counter() - t0
@@ -151,7 +169,7 @@ def main() -> int:
         for method in args.methods:
             # `split`, not `manifest`: the dataset manifest is needed on the
             # next category and must not be shadowed here
-            for split in manifests:
+            for split in splits:
                 # 0-shot is text-only, identical under both heads: score it once
                 if split["shots"] == 0 and method != args.methods[0]:
                     continue
@@ -190,7 +208,7 @@ def main() -> int:
     meta.write_text(json.dumps({
         "backbone": backbone,
         "pretrained": pretrained,
-        "seed": config["experiment"]["seed"],
+        "seeds": seeds,
         "top_k": config["model"]["scoring"]["top_k"],
         "categories": categories,
         "methods": args.methods,
