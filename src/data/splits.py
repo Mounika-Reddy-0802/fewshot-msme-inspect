@@ -1,85 +1,142 @@
-"""Seeded few-shot splits.
+"""Reading Member B's split manifests.
 
-Two properties this generator guarantees, both of which matter for the claims we
-want to make:
+She owns split generation (`scripts/generate_splits.py`); this only reads what it
+writes, so there is one definition of a split in the project rather than two.
 
-**Nested shots.** The 1-shot support set is a subset of the 5-shot set, which is
-a subset of the 10-shot set. Support images are drawn by shuffling the training
-normals once per (category, seed) and taking the first k. So a jump from 1 to 5
-shots is attributable to the four added images, not to having drawn a different,
-luckier set.
+Her layout is one JSON per dataset:
 
-**Fixed test split.** k never changes the test images. Accuracy at 1 and 10 shots
-is measured on exactly the same queries, so the numbers are directly comparable.
+    {"dataset": "mvtec_ad", "seed": 42, "shot_counts": [0, 1, 5, 10],
+     "categories": {"bottle": {"test": [...],
+                               "shots": {"0": [], "1": [...], ...},
+                               "num_train_good_available": 209}}}
 
-Seeds are derived with sha256 rather than :func:`hash`, which is salted per
-process and would silently produce different splits on different runs.
+Paths are relative to the data root and include the dataset directory, e.g.
+``mvtec_ad/bottle/test/broken_large/000.png``.
+
+Her shot sets are **nested** -- the 1-shot support is the first of the 5-shot,
+which is the first of the 10-shot -- so a gain from adding shots is attributable
+to the extra images rather than to a different draw.
+
+Two things her manifest does not record, because a split does not need them:
+per-image labels and mask paths. Both follow from the MVTec directory
+convention and are derived here.
 """
 
 from __future__ import annotations
 
-import hashlib
 import json
-import random
+from dataclasses import dataclass
 from pathlib import Path
 
-from src.data.mvtec import Sample, category_dir, list_test_samples, list_train_normals
-
-SCHEMA_VERSION = 1
-SHOT_COUNTS = (0, 1, 5, 10)
+SCHEMA_KEYS = ("dataset", "seed", "shot_counts", "categories")
+NORMAL = "good"
 
 
-def _derive_seed(base_seed: int, *parts: object) -> int:
-    """Stable per-(category, seed) seed. sha256, not hash() -- hash() is salted."""
-    key = "|".join([str(base_seed), *(str(p) for p in parts)]).encode()
-    return int.from_bytes(hashlib.sha256(key).digest()[:8], "big")
+@dataclass(frozen=True)
+class Sample:
+    """One test image, with its mask when it has one."""
+
+    image: Path
+    label: int          # 0 normal, 1 anomalous
+    defect_type: str
+    mask: Path | None
 
 
-def make_split(
-    root: str | Path,
+def manifest_path(manifests_dir: str | Path, dataset: str) -> Path:
+    return Path(manifests_dir) / f"{dataset}.json"
+
+
+def load_manifest(path: str | Path) -> dict:
+    """Load and sanity-check one of her dataset manifests."""
+    path = Path(path)
+    manifest = json.loads(path.read_text(encoding="utf-8"))
+    missing = [k for k in SCHEMA_KEYS if k not in manifest]
+    if missing:
+        raise ValueError(f"{path} is missing {missing}; expected keys {list(SCHEMA_KEYS)}")
+    return manifest
+
+
+def categories(manifest: dict) -> list[str]:
+    return sorted(manifest["categories"])
+
+
+def shot_counts(manifest: dict) -> list[int]:
+    return sorted(int(k) for k in manifest["shot_counts"])
+
+
+def _defect_of(relative_path: str) -> str:
+    """`.../test/<defect>/000.png` -> `<defect>`."""
+    parts = Path(relative_path).parts
+    return parts[-2] if len(parts) >= 2 else NORMAL
+
+
+def _mask_for(relative_path: str, root: Path) -> Path | None:
+    """MVTec keeps masks at ground_truth/<defect>/<stem>_mask.png."""
+    path = Path(relative_path)
+    parts = list(path.parts)
+    if "test" not in parts:
+        return None
+    parts[parts.index("test")] = "ground_truth"
+    candidate = root / Path(*parts[:-1]) / f"{path.stem}_mask{path.suffix}"
+    if candidate.exists():
+        return candidate
+    # some datasets store masks as .png regardless of the image suffix
+    alternative = candidate.with_suffix(".png")
+    return alternative if alternative.exists() else None
+
+
+def split_for(
+    manifest: dict,
     category: str,
     shots: int,
-    seed: int,
-    dataset: str = "mvtec_ad",
+    root: str | Path,
 ) -> dict:
-    """Build one split manifest. Paths are relative to the category directory so
-    the manifest is portable between machines (local, Kaggle, a teammate's box)."""
-    if shots < 0:
-        raise ValueError(f"shots must be >= 0, got {shots}")
+    """One (category, shots) split, in the shape the evaluation pipeline uses.
 
-    base = category_dir(root, category)
-    normals = list_train_normals(root, category)
-    if shots > len(normals):
-        raise ValueError(
-            f"asked for {shots} shots but {category} only has {len(normals)} training normals"
+    ``root`` is the data root her paths are relative to. Returned paths are
+    relative to the *category* directory, matching how the pipeline resolves
+    them.
+    """
+    if category not in manifest["categories"]:
+        raise KeyError(f"no category {category!r}; have {categories(manifest)}")
+    block = manifest["categories"][category]
+
+    key = str(shots)
+    if key not in block["shots"]:
+        raise KeyError(
+            f"{category} has no {shots}-shot split; have {sorted(block['shots'])}"
         )
 
-    # shuffle once per (category, seed), then take the first k -> nested supports
-    order = list(normals)
-    random.Random(_derive_seed(seed, dataset, category)).shuffle(order)
-    support = sorted(p.relative_to(base).as_posix() for p in order[:shots])
+    root = Path(root)
+    prefix = f"{manifest['dataset']}/{category}/"
 
-    test = [
-        {
-            "image": s.image.relative_to(base).as_posix(),
-            "label": s.label,
-            "defect_type": s.defect_type,
-            "mask": s.mask.relative_to(base).as_posix() if s.mask else None,
-        }
-        for s in list_test_samples(root, category)
-    ]
+    def strip(rel: str) -> str:
+        rel = rel.replace("\\", "/")
+        return rel[len(prefix):] if rel.startswith(prefix) else rel
+
+    test = []
+    for rel in block["test"]:
+        rel = rel.replace("\\", "/")
+        defect = _defect_of(rel)
+        mask = _mask_for(rel, root) if defect != NORMAL else None
+        test.append({
+            "image": strip(rel),
+            "label": 0 if defect == NORMAL else 1,
+            "defect_type": defect,
+            "mask": mask.relative_to(root / manifest["dataset"] / category).as_posix()
+            if mask else None,
+        })
 
     return {
-        "schema_version": SCHEMA_VERSION,
-        "dataset": dataset,
+        "dataset": manifest["dataset"],
         "category": category,
         "shots": shots,
-        "seed": seed,
-        "support": support,
+        "seed": manifest["seed"],
+        "support": [strip(p) for p in block["shots"][key]],
         "test": test,
         "counts": {
-            "support": len(support),
-            "train_normals_available": len(normals),
+            "support": len(block["shots"][key]),
+            "train_normals_available": block.get("num_train_good_available"),
             "test_total": len(test),
             "test_normal": sum(1 for t in test if t["label"] == 0),
             "test_anomalous": sum(1 for t in test if t["label"] == 1),
@@ -88,34 +145,10 @@ def make_split(
     }
 
 
-def split_filename(manifest: dict) -> str:
-    return (
-        f"{manifest['dataset']}_{manifest['category']}"
-        f"_{manifest['shots']}shot_seed{manifest['seed']}.json"
-    )
-
-
-def write_split(manifest: dict, out_dir: str | Path) -> Path:
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
-    path = out_dir / split_filename(manifest)
-    path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
-    return path
-
-
-def load_split(path: str | Path) -> dict:
-    manifest = json.loads(Path(path).read_text(encoding="utf-8"))
-    if manifest.get("schema_version") != SCHEMA_VERSION:
-        raise ValueError(
-            f"{path} is schema v{manifest.get('schema_version')}, expected v{SCHEMA_VERSION}"
-        )
-    return manifest
-
-
-def resolve_split(manifest: dict, root: str | Path) -> tuple[list[Path], list[Sample]]:
-    """Turn a manifest's relative paths back into absolute ones for this machine."""
-    base = category_dir(root, manifest["category"])
-    support = [base / p for p in manifest["support"]]
+def resolve_split(split: dict, root: str | Path) -> tuple[list[Path], list[Sample]]:
+    """Turn a split's relative paths into absolute ones for this machine."""
+    base = Path(root) / split["dataset"] / split["category"]
+    support = [base / p for p in split["support"]]
     test = [
         Sample(
             image=base / t["image"],
@@ -123,6 +156,6 @@ def resolve_split(manifest: dict, root: str | Path) -> tuple[list[Path], list[Sa
             defect_type=t["defect_type"],
             mask=base / t["mask"] if t["mask"] else None,
         )
-        for t in manifest["test"]
+        for t in split["test"]
     ]
     return support, test

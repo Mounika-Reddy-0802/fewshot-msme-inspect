@@ -1,20 +1,44 @@
-"""Dataset loading and split generation.
+"""Dataset loading and split reading.
 
-Member B owns this area. These are minimal stand-ins written so the modelling
-and profiling work is not blocked; the on-disk formats (split manifests, feature
-banks) are the shared interface and are documented in docs/data_formats.md.
-Their real loaders should be able to replace these without changing either format.
+Member B owns dataset acquisition, split generation and feature banks
+(`scripts/download_*.py`, `scripts/generate_splits.py`,
+`scripts/build_feature_bank.py`). This package holds the MVTec directory
+conventions and a reader for her manifests, so the evaluation pipeline consumes
+her splits rather than defining its own.
 """
 
-from src.data.mvtec import Sample, list_test_samples, list_train_normals
-from src.data.splits import load_split, make_split, resolve_split, write_split
+from src.data.mvtec import (
+    CATEGORIES,
+    OFFICIAL_COUNTS,
+    available_categories,
+    complete_categories,
+    list_test_samples,
+    list_train_normals,
+    verify_category,
+)
+from src.data.splits import (
+    Sample,
+    categories,
+    load_manifest,
+    manifest_path,
+    resolve_split,
+    shot_counts,
+    split_for,
+)
 
 __all__ = [
-    "Sample",
+    "CATEGORIES",
+    "OFFICIAL_COUNTS",
+    "available_categories",
+    "complete_categories",
     "list_test_samples",
     "list_train_normals",
-    "load_split",
-    "make_split",
+    "verify_category",
+    "Sample",
+    "categories",
+    "load_manifest",
+    "manifest_path",
     "resolve_split",
-    "write_split",
+    "shot_counts",
+    "split_for",
 ]

@@ -62,7 +62,8 @@ def main() -> int:
     categories = args.categories or complete_categories(root)
     banks = {}
     for category in categories:
-        path = bank_path(results_root(), backbone, category)
+        path = bank_path(results_root(), backbone, category,
+                         768 if not config['backbone'].get('project_patches', True) else 512)
         if path.exists():
             banks[category] = FeatureBank.load(path)
     if not banks:

@@ -23,7 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.mvtec import CATEGORIES, complete_categories  # noqa: E402
-from src.data.splits import load_split  # noqa: E402
+from src.data.splits import categories as manifest_categories  # noqa: E402
+from src.data.splits import load_manifest, manifest_path, shot_counts, split_for  # noqa: E402
 from src.eval.features import FeatureBank, bank_path  # noqa: E402
 from src.eval.pipeline import evaluate_split  # noqa: E402
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
@@ -32,18 +33,19 @@ from src.utils.paths import dataset_dir, repo_root, results_root  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
 
 
-def manifests_for(splits_dir: Path, category: str) -> list[dict]:
-    """Every manifest for one category, ordered by shots then seed."""
+def splits_for(manifest: dict, category: str, root: Path, shots: list[int]) -> list[dict]:
+    """Every requested shot count for one category, from Member B's manifest."""
     found = []
-    for path in sorted(splits_dir.glob(f"*_{category}_*shot_seed*.json")):
-        manifest = load_split(path)
-        if manifest["category"] == category:      # guards metal_nut vs metal
-            found.append(manifest)
-    return sorted(found, key=lambda m: (m["shots"], m["seed"]))
+    for k in shots:
+        try:
+            found.append(split_for(manifest, category, k, root))
+        except KeyError:
+            continue
+    return found
 
 
 def get_bank(encoder, root, category, manifests, cache_dir, batch_size, workers, refresh):
-    path = bank_path(cache_dir, encoder.name, category)
+    path = bank_path(cache_dir, encoder.name, category, encoder.embed_dim)
     needed = {p for m in manifests for p in m["support"]}
     needed |= {t["image"] for m in manifests for t in m["test"]}
 
@@ -89,25 +91,43 @@ def main() -> int:
     splits_dir = repo_root() / "results" / "manifests" / "splits"
     out_path = Path(args.out) if args.out else results_root() / "benchmark" / f"{backbone}.csv"
 
-    categories = args.categories or complete_categories(root)
+    # Member B's manifest is the single definition of a split
+    dataset = config["dataset"]["name"]
+    manifest = load_manifest(manifest_path(splits_dir, dataset))
+    data_root_for_splits = root.parent          # her paths include the dataset dir
+
+    project_patches = config["backbone"].get("project_patches", True)
+    wanted_shots = shot_counts(manifest)
+    if not project_patches:
+        # 768-dim tokens are not in the joint image-text space, so a prompt
+        # cannot score a patch; zero-shot is unavailable rather than wrong
+        wanted_shots = [k for k in wanted_shots if k > 0]
+
+    categories = args.categories or [
+        c for c in manifest_categories(manifest) if c in complete_categories(root)
+    ]
     if not categories:
         print(f"no complete categories under {root}", file=sys.stderr)
         return 1
 
     print(f"backbone   {backbone} / {pretrained}")
     print(f"dataset    {root}")
-    print(f"categories {len(categories)}")
+    print(f"splits     {manifest_path(splits_dir, dataset).name} (seed {manifest['seed']})")
+    print(f"categories {len(categories)}   shots {wanted_shots}")
+    print(f"patch dim  {'768 unprojected' if not project_patches else '512 projected'}")
     print(f"threads    {torch.get_num_threads()}\n")
 
-    encoder = FrozenCLIPEncoder(backbone, pretrained, device="cpu")
+    encoder = FrozenCLIPEncoder(
+        backbone, pretrained, device="cpu", project_patches=project_patches
+    )
     print(f"{encoder}\n")
 
     rows = []
     started = time.perf_counter()
     for i, category in enumerate(categories, 1):
-        manifests = manifests_for(splits_dir, category)
+        manifests = splits_for(manifest, category, data_root_for_splits, wanted_shots)
         if not manifests:
-            print(f"[{i}/{len(categories)}] {category}: no manifests, skipping")
+            print(f"[{i}/{len(categories)}] {category}: no splits, skipping")
             continue
 
         t0 = time.perf_counter()
@@ -119,12 +139,14 @@ def main() -> int:
 
         produced = 0
         for method in args.methods:
-            for manifest in manifests:
+            # `split`, not `manifest`: the dataset manifest is needed on the
+            # next category and must not be shadowed here
+            for split in manifests:
                 # 0-shot is text-only, identical under both heads: score it once
-                if manifest["shots"] == 0 and method != args.methods[0]:
+                if split["shots"] == 0 and method != args.methods[0]:
                     continue
                 result = evaluate_split(
-                    manifest, root, bank,
+                    split, root, bank,
                     encoder=encoder,
                     top_k=config["model"]["scoring"]["top_k"],
                     method=method,

@@ -55,7 +55,8 @@ def main() -> int:
     categories = complete_categories(root)
     banks, manifests = {}, {}
     for category in categories:
-        path = bank_path(results_root(), backbone, category)
+        path = bank_path(results_root(), backbone, category,
+                         768 if not config['backbone'].get('project_patches', True) else 512)
         manifest = splits_dir / f"mvtec_ad_{category}_{args.shots}shot_seed{args.seed}.json"
         if path.exists() and manifest.exists():
             banks[category] = FeatureBank.load(path)

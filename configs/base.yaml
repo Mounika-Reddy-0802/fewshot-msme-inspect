@@ -23,6 +23,13 @@ backbone:
   # builds the model with the wrong activation. open_clip only warns about it.
   name: ViT-B-16-quickgelu  # ablations: ViT-B-32-quickgelu, ViT-L-14-quickgelu
   pretrained: openai
+
+  # Member B's feature banks store the raw transformer width (768 for ViT-B/16),
+  # not the 512-dim joint image-text projection. Matching her keeps one bank
+  # format in the project. The cost is that patch features are no longer
+  # comparable with text embeddings, so zero-shot prompting is unavailable --
+  # acceptable, since the alpha sweep showed text never helps past 0 shots.
+  project_patches: false
   precision: fp32           # fp32 | int8  (NOT YET READ -- week 5, INT8 export)
   frozen: true
 

@@ -165,8 +165,20 @@ class FeatureBank:
         )
 
 
-def bank_path(results_root: Path, backbone: str, category: str) -> Path:
-    """Where a bank lives. Backbone name is part of the path -- mixing features
-    from two backbones would be silently meaningless."""
+def bank_path(
+    results_root: Path,
+    backbone: str,
+    category: str,
+    dim: int | None = None,
+) -> Path:
+    """Where a bank lives.
+
+    Backbone *and* feature dimension are part of the path. Mixing features from
+    two backbones would be meaningless, and so would mixing 768-dim unprojected
+    tokens with 512-dim projected ones -- they are different spaces, and a
+    similarity computed across them is noise that still looks like a number.
+    """
     safe = backbone.replace("/", "-")
+    if dim is not None:
+        safe = f"{safe}-d{dim}"
     return Path(results_root) / "feature_banks" / safe / f"{category}.pt"
