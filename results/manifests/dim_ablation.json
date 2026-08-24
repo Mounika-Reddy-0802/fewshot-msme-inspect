@@ -1,27 +1,41 @@
 {
   "question": "does 768-dim unprojected beat 512-dim projected for patch matching",
-  "controlled": "identical splits (Member B's mvtec_ad.json, seed 42), identical shot counts, identical backbone; only the patch projection differs",
+  "design": "paired: identical splits, shot counts and backbone; only the projection differs. Three seeds (42, 1, 2) x 15 categories.",
   "backbone": "ViT-B-16-quickgelu",
   "metric": "image_auroc",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
   "per_shot": {
     "1": {
-      "mean_512_projected": 0.857,
-      "mean_768_unprojected": 0.8709,
-      "delta": 0.0139,
-      "categories_favouring_768": "10/15"
+      "mean_512_projected": 0.8294,
+      "mean_768_unprojected": 0.8558,
+      "paired_mean_delta": 0.0264,
+      "paired_standard_error": 0.0062,
+      "effect_over_se": 4.3,
+      "categories_favouring_768": "13/15"
     },
     "5": {
-      "mean_512_projected": 0.8689,
-      "mean_768_unprojected": 0.8863,
-      "delta": 0.0174,
+      "mean_512_projected": 0.8686,
+      "mean_768_unprojected": 0.8881,
+      "paired_mean_delta": 0.0196,
+      "paired_standard_error": 0.0053,
+      "effect_over_se": 3.7,
       "categories_favouring_768": "11/15"
     },
     "10": {
-      "mean_512_projected": 0.8919,
-      "mean_768_unprojected": 0.9086,
-      "delta": 0.0166,
+      "mean_512_projected": 0.8837,
+      "mean_768_unprojected": 0.904,
+      "paired_mean_delta": 0.0203,
+      "paired_standard_error": 0.0046,
+      "effect_over_se": 4.4,
       "categories_favouring_768": "12/15"
     }
   },
-  "note": "An uncontrolled comparison against the earlier 3-seed run showed +0.048 at 1-shot; most of that was the split change, not the projection. The controlled effect is about +0.015."
+  "notes": [
+    "An earlier single-seed estimate gave +0.014 at 1-shot; with three seeds the effect is +0.026, so seed 42 understated it.",
+    "Marginal seed-to-seed std at 1-shot is 0.027, larger than the effect. That does not invalidate it: the comparison is paired, so split luck cancels and the relevant spread is the paired standard error (0.006)."
+  ]
 }

@@ -9,68 +9,81 @@ normal only. 15 MVTec AD categories, shot counts 1/5/10, evaluated on the fixed
 test split so numbers are comparable across shot counts. CPU only: Intel
 i7-13700H, 14 threads pinned, no GPU anywhere.
 
-**Splits** come from Member B's `results/manifests/splits/mvtec_ad.json`
-(seed 42) -- one definition of a split for the whole project. Her shot sets are
-nested (1 ⊂ 5 ⊂ 10), so adding shots is measured against the same starting
-images.
+**Splits** come from Member B's generator (`scripts/generate_splits.py`) --
+one definition of a split for the whole project. Her shot sets are nested
+(1 subset of 5 subset of 10), so adding shots is measured against the same
+starting images. **Three seeds** (42, 1, 2) are committed, and every number below
+is a mean over them with the seed-to-seed spread reported.
 
 **Features** are the raw 768-dim transformer tokens, matching her feature-bank
 convention (section 3 measures what that choice is worth).
 
-Two consequences of those conventions, both stated up front:
-
-* **There is no 0-shot column.** 768-dim patch tokens are not in the joint
-  image-text space, so a text prompt cannot score a patch. Section 6 covers what
-  that costs -- little.
-* **There is one seed.** Every number below is a single measurement with no error
-  bars. Section 6 quantifies the damage.
+One consequence of that convention, stated up front: **there is no 0-shot
+column.** 768-dim patch tokens are not in the joint image-text space, so a text
+prompt cannot score a patch. Section 6 covers what that costs -- little.
 
 ---
 
 ## 1. Few-shot accuracy
 
-Image AUROC, ViT-B/16, prototype memory.
+Image AUROC, ViT-B/16, prototype memory. Mean over 3 seeds, +/- population std.
 
 | category | 1-shot | 5-shot | 10-shot |
 |---|---|---|---|
-| bottle | 0.979 | 0.993 | 0.998 |
-| tile | 0.980 | 0.992 | 0.990 |
-| leather | 0.988 | 0.986 | 0.989 |
-| carpet | 0.985 | 0.999 | 0.984 |
-| metal_nut | 0.933 | 0.933 | 0.975 |
-| wood | 0.965 | 0.956 | 0.963 |
-| hazelnut | 0.823 | 0.900 | 0.932 |
-| grid | 0.906 | 0.927 | 0.926 |
-| zipper | 0.916 | 0.917 | 0.910 |
-| pill | 0.890 | 0.896 | 0.905 |
-| toothbrush | 0.733 | 0.703 | 0.894 |
-| capsule | 0.860 | 0.803 | 0.886 |
-| cable | 0.772 | 0.885 | 0.848 |
-| transistor | 0.697 | 0.729 | 0.717 |
-| screw | 0.635 | 0.678 | 0.711 |
-| **mean** | **0.871** | **0.886** | **0.909** |
+| leather | 0.989 +/-0.001 | 0.995 +/-0.007 | 0.996 +/-0.005 |
+| bottle | 0.985 +/-0.007 | 0.992 +/-0.001 | 0.994 +/-0.005 |
+| tile | 0.986 +/-0.010 | 0.992 +/-0.004 | 0.992 +/-0.003 |
+| carpet | 0.952 +/-0.037 | 0.987 +/-0.011 | 0.982 +/-0.006 |
+| metal_nut | 0.938 +/-0.004 | 0.961 +/-0.020 | 0.978 +/-0.003 |
+| wood | 0.971 +/-0.007 | 0.966 +/-0.007 | 0.972 +/-0.008 |
+| grid | 0.884 +/-0.023 | 0.914 +/-0.012 | 0.931 +/-0.013 |
+| zipper | 0.858 +/-0.043 | 0.914 +/-0.004 | 0.917 +/-0.006 |
+| pill | 0.888 +/-0.002 | 0.893 +/-0.002 | 0.901 +/-0.014 |
+| hazelnut | 0.774 +/-0.035 | 0.882 +/-0.013 | 0.899 +/-0.025 |
+| capsule | 0.757 +/-0.102 | 0.828 +/-0.022 | 0.874 +/-0.009 |
+| cable | 0.772 +/-0.067 | 0.860 +/-0.022 | 0.858 +/-0.009 |
+| toothbrush | 0.762 +/-0.043 | 0.736 +/-0.055 | 0.829 +/-0.047 |
+| transistor | 0.678 +/-0.013 | 0.718 +/-0.014 | 0.733 +/-0.011 |
+| screw | 0.643 +/-0.011 | 0.684 +/-0.004 | 0.705 +/-0.022 |
+| **mean** | **0.856** | **0.888** | **0.904** |
 
 Pixel AUROC on the same runs -- the harder question, since it asks *where* the
 defect is, not merely whether there is one.
 
 | category | 1-shot | 5-shot | 10-shot |
 |---|---|---|---|
-| carpet | 0.990 | 0.989 | 0.980 |
-| leather | 0.988 | 0.987 | 0.987 |
-| toothbrush | 0.978 | 0.983 | 0.986 |
-| bottle | 0.973 | 0.975 | 0.977 |
-| hazelnut | 0.965 | 0.982 | 0.984 |
-| pill | 0.935 | 0.942 | 0.947 |
-| tile | 0.921 | 0.932 | 0.934 |
-| wood | 0.916 | 0.924 | 0.927 |
-| capsule | 0.917 | 0.930 | 0.934 |
-| screw | 0.913 | 0.917 | 0.921 |
-| grid | 0.898 | 0.913 | 0.917 |
-| cable | 0.886 | 0.889 | 0.895 |
-| zipper | 0.834 | 0.861 | 0.880 |
-| transistor | 0.834 | 0.870 | 0.861 |
-| metal_nut | 0.855 | 0.900 | 0.917 |
-| **mean** | **0.920** | **0.933** | **0.936** |
+| leather | 0.985 +/-0.003 | 0.986 +/-0.000 | 0.986 +/-0.000 |
+| carpet | 0.985 +/-0.005 | 0.986 +/-0.003 | 0.983 +/-0.002 |
+| toothbrush | 0.978 +/-0.001 | 0.984 +/-0.002 | 0.986 +/-0.000 |
+| bottle | 0.972 +/-0.002 | 0.976 +/-0.001 | 0.977 +/-0.000 |
+| hazelnut | 0.965 +/-0.007 | 0.980 +/-0.002 | 0.981 +/-0.002 |
+| pill | 0.933 +/-0.003 | 0.942 +/-0.001 | 0.946 +/-0.001 |
+| tile | 0.918 +/-0.004 | 0.928 +/-0.002 | 0.931 +/-0.002 |
+| wood | 0.916 +/-0.011 | 0.928 +/-0.004 | 0.929 +/-0.003 |
+| capsule | 0.914 +/-0.004 | 0.930 +/-0.001 | 0.935 +/-0.001 |
+| screw | 0.901 +/-0.013 | 0.916 +/-0.004 | 0.923 +/-0.002 |
+| grid | 0.882 +/-0.015 | 0.916 +/-0.003 | 0.925 +/-0.005 |
+| cable | 0.874 +/-0.010 | 0.881 +/-0.007 | 0.889 +/-0.005 |
+| zipper | 0.843 +/-0.018 | 0.875 +/-0.010 | 0.883 +/-0.004 |
+| metal_nut | 0.861 +/-0.006 | 0.898 +/-0.003 | 0.911 +/-0.006 |
+| transistor | 0.807 +/-0.028 | 0.848 +/-0.018 | 0.858 +/-0.002 |
+| **mean** | **0.916** | **0.932** | **0.936** |
+
+### More shots buy predictability, not just accuracy
+
+Mean seed-to-seed standard deviation falls sharply with shot count:
+
+| shots | mean image AUROC | mean std across seeds |
+|---|---|---|
+| 1 | 0.856 | **0.027** |
+| 5 | 0.888 | 0.013 |
+| 10 | 0.904 | 0.012 |
+
+A workshop deploying at 1 shot faces real variance depending on *which* good
+photo it happened to take -- `capsule` swings +/-0.102, `cable` +/-0.067. By 10
+shots that is halved. This is invisible with a single seed, and is an argument
+for taking ten reference photos rather than one that has nothing to do with mean
+accuracy.
 
 Pixel AUROC of **0.920 from a single photo** is the strongest result here. For
 scale, PatchCore -- trained on all 209 normal images of `bottle` -- reaches 0.986
@@ -114,20 +127,30 @@ align with text. For image-to-image matching that projection is not obviously
 useful, so it was measured directly -- **identical splits, identical shot counts,
 identical backbone, only the projection differs**:
 
-| shots | 512 projected | 768 unprojected | delta | categories favouring 768 |
-|---|---|---|---|---|
-| 1 | 0.857 | **0.871** | +0.014 | 10/15 |
-| 5 | 0.869 | **0.886** | +0.017 | 11/15 |
-| 10 | 0.892 | **0.909** | +0.017 | 12/15 |
+Three seeds, 15 categories, 45 paired measurements per shot count:
 
-A consistent but modest **+0.015**, in the same direction at every shot count.
-`cable` gains most (+0.056 at 1-shot); `pill` and `capsule` genuinely lose.
+| shots | 512 projected | 768 unprojected | delta | vs paired SE | categories favouring 768 |
+|---|---|---|---|---|---|
+| 1 | 0.8294 | **0.8558** | +0.026 | 4.3x | 13/15 |
+| 5 | 0.8686 | **0.8881** | +0.020 | 3.7x | 11/15 |
+| 10 | 0.8837 | **0.9040** | +0.020 | 4.4x | 12/15 |
 
-**A methodological note worth more than the result.** The first comparison run
-was against the earlier 3-seed results and showed **+0.048** at 1-shot. That
-number changed two things at once -- the feature dimension *and* the splits -- and
-roughly two thirds of the apparent gain was the split change. Only the controlled
-comparison above supports a claim about the projection.
+Around **+0.02**, in the same direction at every shot count, at roughly four
+times the paired standard error. Member B's convention is the right one.
+
+**Two methodological notes, each worth more than the result itself.**
+
+*Change one thing at a time.* The first comparison was run against the earlier
+512-dim results, which used different splits, and showed +0.048 at 1-shot. That
+changed the feature dimension *and* the splits together; roughly two thirds of
+the apparent gain was the split change.
+
+*Pair the comparison, then use the paired spread.* A single-seed version of the
+controlled experiment gave +0.014, and the marginal seed-to-seed spread at 1-shot
+is 0.027 -- larger than the effect, which looked fatal. It is not, because the
+design is paired: the same split is scored two ways, so split luck cancels and
+the relevant quantity is the paired standard error (0.006). Comparing an effect
+against the wrong spread would have discarded a real result.
 
 ---
 
@@ -191,13 +214,16 @@ robust figure.
 
 ## 6. Limitations, stated plainly
 
-**One seed, so most categories are no longer monotonic in shots.** Under three
-seeds, 13/15 categories improved monotonically with 2 violations, both < 0.01.
-Under Member B's single seed 42, only **4/15** are strictly monotonic: 11
-violations, median 0.009, largest 0.057 (`capsule` at 5-shot). The underlying
-method did not get worse -- the averaging that hid single-draw noise is gone.
-Multiple seeds are the fix, and are worth agreeing on before any result is
-frozen.
+**Five categories are still not monotonic in shots.** 10/15 improve
+monotonically across three seeds. The five exceptions are small -- `toothbrush`
+-0.026 at 5-shot, then `wood` -0.005, `carpet` -0.005, `cable` -0.002, `tile`
+-0.000 -- and four of the five are inside their own seed spread.
+
+This was much worse before: a single seed gave only **4/15** monotonic with the
+largest violation at 0.057. Averaging over three seeds fixed it, which is what
+seeds are for. `toothbrush` is the one that persists, and it is the smallest
+category in MVTec (60 train, 42 test, 12 normal test images), so its +/-0.055
+spread at 5 shots is unsurprising. More seeds would settle it.
 
 **The Tip-Adapter adds nothing.** Two sweeps (`scripts/sweep_alpha.py`) settled
 it. Mixing text into the cache monotonically hurts (alpha 0 → 1 takes 1-shot from
