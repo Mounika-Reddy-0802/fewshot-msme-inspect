@@ -167,6 +167,12 @@ def evaluate_split(
     if shots == 0:
         if encoder is None:
             raise ValueError("zero-shot needs the encoder for text prompts")
+        if bank.dim != encoder.encode_text(["probe"]).shape[-1]:
+            raise ValueError(
+                f"zero-shot needs patches in the joint image-text space, but this "
+                f"bank stores {bank.dim}-dim features. Set "
+                f"backbone.project_patches: true to enable prompting."
+            )
         patch_scores = zero_shot_scores(encoder, query_patches, category, temperature)
         h, w = bank.grid
         maps = patch_scores.reshape(-1, h, w)
@@ -182,7 +188,20 @@ def evaluate_split(
             config = adapter_config or AdapterConfig(top_k=top_k)
             if not isinstance(config, AdapterConfig):
                 config = AdapterConfig.from_mapping(config)
-            text = category_text_embeddings(encoder, category) if encoder else None
+
+            # Text prompts live in the 512-dim joint space. When the bank stores
+            # unprojected 768-dim tokens there is no shared space to compare them
+            # in, so the text branch is unavailable and the adapter runs as a
+            # pure cache. Silently multiplying mismatched matrices is not an
+            # option, and neither is pretending the blend happened.
+            text = None
+            if encoder is not None and bank.dim == getattr(encoder, "output_dim", bank.dim):
+                try:
+                    candidate = category_text_embeddings(encoder, category)
+                    if candidate.shape[-1] == bank.dim:
+                        text = candidate
+                except NotImplementedError:
+                    text = None
             head = TipAdapter.from_memory(memory, category, config, text)
             scored = head(query_patches)
         else:

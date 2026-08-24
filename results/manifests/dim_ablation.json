@@ -1,0 +1,27 @@
+{
+  "question": "does 768-dim unprojected beat 512-dim projected for patch matching",
+  "controlled": "identical splits (Member B's mvtec_ad.json, seed 42), identical shot counts, identical backbone; only the patch projection differs",
+  "backbone": "ViT-B-16-quickgelu",
+  "metric": "image_auroc",
+  "per_shot": {
+    "1": {
+      "mean_512_projected": 0.857,
+      "mean_768_unprojected": 0.8709,
+      "delta": 0.0139,
+      "categories_favouring_768": "10/15"
+    },
+    "5": {
+      "mean_512_projected": 0.8689,
+      "mean_768_unprojected": 0.8863,
+      "delta": 0.0174,
+      "categories_favouring_768": "11/15"
+    },
+    "10": {
+      "mean_512_projected": 0.8919,
+      "mean_768_unprojected": 0.9086,
+      "delta": 0.0166,
+      "categories_favouring_768": "12/15"
+    }
+  },
+  "note": "An uncontrolled comparison against the earlier 3-seed run showed +0.048 at 1-shot; most of that was the split change, not the projection. The controlled effect is about +0.015."
+}

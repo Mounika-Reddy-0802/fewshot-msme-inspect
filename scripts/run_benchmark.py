@@ -74,6 +74,12 @@ def main() -> int:
     parser.add_argument("--workers", type=int, default=0)
     parser.add_argument("--threads", type=int, default=None,
                         help="pin torch threads so timings are comparable")
+    parser.add_argument("--project-patches", dest="project_patches",
+                        action="store_true", default=None,
+                        help="512-dim joint image-text space; enables prompting")
+    parser.add_argument("--no-project-patches", dest="project_patches",
+                        action="store_false",
+                        help="768-dim raw transformer width (Member B's convention)")
     parser.add_argument("--refresh-cache", action="store_true")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
@@ -96,7 +102,11 @@ def main() -> int:
     manifest = load_manifest(manifest_path(splits_dir, dataset))
     data_root_for_splits = root.parent          # her paths include the dataset dir
 
-    project_patches = config["backbone"].get("project_patches", True)
+    project_patches = (
+        args.project_patches
+        if args.project_patches is not None
+        else config["backbone"].get("project_patches", True)
+    )
     wanted_shots = shot_counts(manifest)
     if not project_patches:
         # 768-dim tokens are not in the joint image-text space, so a prompt
