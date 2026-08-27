@@ -31,6 +31,21 @@ from pathlib import Path
 SCHEMA_KEYS = ("dataset", "seed", "shot_counts", "categories")
 NORMAL = "good"
 
+# Datasets disagree on how deep the category directories sit. MVTec puts them
+# directly under the dataset root; VisA nests them one level further. Mirrors
+# CATEGORY_SUBDIR in scripts/generate_splits.py, which writes the manifests.
+CATEGORY_SUBDIR = {
+    "mvtec_ad": "",
+    "visa": "visa_pytorch",
+}
+
+
+def category_root(dataset: str, data_root: str | Path) -> Path:
+    """Directory that directly contains the category folders."""
+    subdir = CATEGORY_SUBDIR.get(dataset, "")
+    base = Path(data_root) / dataset
+    return (base / subdir) if subdir else base
+
 
 @dataclass(frozen=True)
 class Sample:
@@ -87,18 +102,32 @@ def _defect_of(relative_path: str) -> str:
 
 
 def _mask_for(relative_path: str, root: Path) -> Path | None:
-    """MVTec keeps masks at ground_truth/<defect>/<stem>_mask.png."""
+    """Find the ground-truth mask for a test image.
+
+    Datasets disagree on the naming, and guessing wrong is silent: the image
+    simply gets an all-zero mask and its pixel metrics quietly become
+    meaningless. Both conventions in use here are tried explicitly.
+
+        MVTec AD   test/broken_large/000.png -> ground_truth/broken_large/000_mask.png
+        VisA       test/bad/000.JPG          -> ground_truth/bad/000.png
+    """
     path = Path(relative_path)
     parts = list(path.parts)
     if "test" not in parts:
         return None
     parts[parts.index("test")] = "ground_truth"
-    candidate = root / Path(*parts[:-1]) / f"{path.stem}_mask{path.suffix}"
-    if candidate.exists():
-        return candidate
-    # some datasets store masks as .png regardless of the image suffix
-    alternative = candidate.with_suffix(".png")
-    return alternative if alternative.exists() else None
+    directory = root / Path(*parts[:-1])
+
+    for name in (
+        f"{path.stem}_mask{path.suffix}",   # MVTec, same extension
+        f"{path.stem}_mask.png",            # MVTec, png masks
+        f"{path.stem}.png",                 # VisA, png masks
+        f"{path.stem}{path.suffix}",        # same name, same extension
+    ):
+        candidate = directory / name
+        if candidate.exists():
+            return candidate
+    return None
 
 
 def split_for(
@@ -124,11 +153,19 @@ def split_for(
         )
 
     root = Path(root)
-    prefix = f"{manifest['dataset']}/{category}/"
+    marker = f"/{category}/"
 
     def strip(rel: str) -> str:
+        """Path relative to the category directory.
+
+        Derived from the path itself rather than assumed to be
+        ``<dataset>/<category>/``: VisA nests categories under
+        ``visa/visa_pytorch/``, so a hardcoded prefix silently fails to strip
+        and every later lookup misses.
+        """
         rel = rel.replace("\\", "/")
-        return rel[len(prefix):] if rel.startswith(prefix) else rel
+        index = rel.find(marker)
+        return rel[index + len(marker):] if index >= 0 else rel
 
     test = []
     for rel in block["test"]:
@@ -139,8 +176,9 @@ def split_for(
             "image": strip(rel),
             "label": 0 if defect == NORMAL else 1,
             "defect_type": defect,
-            "mask": mask.relative_to(root / manifest["dataset"] / category).as_posix()
-            if mask else None,
+            "mask": mask.relative_to(
+                category_root(manifest["dataset"], root) / category
+            ).as_posix() if mask else None,
         })
 
     return {
@@ -162,8 +200,11 @@ def split_for(
 
 
 def resolve_split(split: dict, root: str | Path) -> tuple[list[Path], list[Sample]]:
-    """Turn a split's relative paths into absolute ones for this machine."""
-    base = Path(root) / split["dataset"] / split["category"]
+    """Turn a split's relative paths into absolute ones for this machine.
+
+    ``root`` is the data root; the dataset's own layout is applied here.
+    """
+    base = category_root(split["dataset"], root) / split["category"]
     support = [base / p for p in split["support"]]
     test = [
         Sample(

@@ -202,3 +202,34 @@ def test_each_committed_seed_is_nested_and_distinct():
             assert one < five < ten, f"{p.name} is not nested"
         draws.add(tuple(manifest["categories"]["bottle"]["shots"]["5"]))
     assert len(draws) == len(paths), "seeds produced identical draws"
+
+
+# --- mask naming conventions ------------------------------------------------
+
+def test_finds_mvtec_style_masks(tmp_path):
+    """MVTec: test/broken/000.png -> ground_truth/broken/000_mask.png"""
+    from src.data.splits import _mask_for
+
+    gt = tmp_path / "ds" / "cat" / "ground_truth" / "broken"
+    gt.mkdir(parents=True)
+    (gt / "000_mask.png").write_bytes(b"")
+    assert _mask_for("ds/cat/test/broken/000.png", tmp_path) is not None
+
+
+def test_finds_visa_style_masks(tmp_path):
+    """VisA: test/bad/000.JPG -> ground_truth/bad/000.png -- a different
+    convention entirely. Guessing wrong is silent: the image gets an all-zero
+    mask and its pixel metrics become meaningless without any error."""
+    from src.data.splits import _mask_for
+
+    gt = tmp_path / "ds" / "cat" / "ground_truth" / "bad"
+    gt.mkdir(parents=True)
+    (gt / "000.png").write_bytes(b"")
+    assert _mask_for("ds/cat/test/bad/000.JPG", tmp_path) is not None
+
+
+def test_missing_mask_returns_none(tmp_path):
+    from src.data.splits import _mask_for
+
+    (tmp_path / "ds" / "cat" / "ground_truth" / "bad").mkdir(parents=True)
+    assert _mask_for("ds/cat/test/bad/000.JPG", tmp_path) is None

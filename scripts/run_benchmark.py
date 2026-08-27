@@ -24,6 +24,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.mvtec import CATEGORIES, complete_categories  # noqa: E402
 from src.data.splits import categories as manifest_categories  # noqa: E402
+from src.data.splits import category_root  # noqa: E402
 from src.data.splits import (  # noqa: E402
     load_manifest,
     manifest_path,
@@ -77,6 +78,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--config", default="prototype.yaml")
     parser.add_argument("--backbone", default=None, help="overrides the config")
+    parser.add_argument("--dataset", default=None, help="overrides the config")
     parser.add_argument("--categories", nargs="+", default=None)
     parser.add_argument("--methods", nargs="+", default=["memory"],
                         choices=["memory", "adapter"],
@@ -105,19 +107,21 @@ def main() -> int:
 
     backbone = args.backbone or config["backbone"]["name"]
     pretrained = config["backbone"]["pretrained"]
-    root = dataset_dir(config["dataset"]["name"])
+    dataset = args.dataset or config["dataset"]["name"]
+    # directory that directly contains the category folders
+    root = category_root(dataset, dataset_dir(dataset).parent)
     splits_dir = repo_root() / "results" / "manifests" / "splits"
-    out_path = Path(args.out) if args.out else results_root() / "benchmark" / f"{backbone}.csv"
+    out_path = (Path(args.out) if args.out
+                else results_root() / "benchmark" / f"{dataset}_{backbone}.csv")
 
     # Member B's manifest is the single definition of a split
-    dataset = config["dataset"]["name"]
     paths = manifest_paths(splits_dir, dataset)
     if not paths:
         print(f"no split manifest for {dataset} in {splits_dir}", file=sys.stderr)
         return 1
     manifests = [load_manifest(p) for p in paths]
     manifest = manifests[0]                     # for category / shot discovery
-    data_root_for_splits = root.parent          # her paths include the dataset dir
+    data_root_for_splits = dataset_dir(dataset).parent   # her paths include the dataset dir
 
     project_patches = (
         args.project_patches
@@ -130,8 +134,14 @@ def main() -> int:
         # cannot score a patch; zero-shot is unavailable rather than wrong
         wanted_shots = [k for k in wanted_shots if k > 0]
 
+    # complete_categories() verifies against MVTec's published per-category
+    # counts; for any other dataset fall back to "the directory exists"
+    if dataset == "mvtec_ad":
+        present = set(complete_categories(root))
+    else:
+        present = {c for c in manifest_categories(manifest) if (root / c).is_dir()}
     categories = args.categories or [
-        c for c in manifest_categories(manifest) if c in complete_categories(root)
+        c for c in manifest_categories(manifest) if c in present
     ]
     if not categories:
         print(f"no complete categories under {root}", file=sys.stderr)
@@ -206,6 +216,7 @@ def main() -> int:
 
     meta = out_path.with_suffix(".meta.json")
     meta.write_text(json.dumps({
+        "dataset": dataset,
         "backbone": backbone,
         "pretrained": pretrained,
         "seeds": seeds,
