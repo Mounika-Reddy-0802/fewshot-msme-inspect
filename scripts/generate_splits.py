@@ -82,10 +82,10 @@ def discover_categories(root: Path) -> list[str]:
 
 def build_category_split(category_dir: Path, relpath_root: Path, rng) -> dict:
     good_images = glob_images(category_dir / "train" / "good")
-    good_images = [str(p.relative_to(relpath_root)) for p in good_images]
+    good_images = [p.relative_to(relpath_root).as_posix() for p in good_images]
 
     test_images = rglob_images(category_dir / "test")
-    test_images = [str(p.relative_to(relpath_root)) for p in test_images]
+    test_images = [p.relative_to(relpath_root).as_posix() for p in test_images]
 
     rng.shuffle(good_images)
 

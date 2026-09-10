@@ -1,6 +1,8 @@
 # --- datasets: download scripts only, never the data ---
-data/
-datasets/
+# Anchored with a leading slash: an unanchored `data/` also matches
+# src/data/, which is a source package, not a dataset.
+/data/
+/datasets/
 *.tar
 *.tar.gz
 *.tar.xz
@@ -8,7 +10,7 @@ datasets/
 *.7z
 
 # --- feature banks / cached embeddings / prototype memory dumps ---
-feature_banks/
+/feature_banks/
 *.npy
 *.npz
 *.faiss
@@ -16,7 +18,7 @@ feature_banks/
 *.pkl
 
 # --- checkpoints and exported models ---
-checkpoints/
+/checkpoints/
 *.ckpt
 *.pt
 *.pth
@@ -26,11 +28,11 @@ checkpoints/
 *.safetensors
 
 # --- results: ignored except manifests (see results/.gitignore) ---
-logs/
-lightning_logs/
-wandb/
-runs/
-outputs/
+/logs/
+/lightning_logs/
+/wandb/
+/runs/
+/outputs/
 
 # --- secrets ---
 .env
@@ -52,9 +54,12 @@ env/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
-.ipynb_checkpoints/
+.ipynb_/checkpoints/
 .coverage
 htmlcov/
+
+# --- local working notes, not part of the deliverable ---
+GIT_RULES.md
 
 # --- editors / os ---
 .vscode/

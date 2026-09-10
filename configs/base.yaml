@@ -6,7 +6,7 @@
 experiment:
   name: base
   seed: 42
-  output_dir: ${results_root}/runs
+  output_dir: ${results_root}/runs  # (NOT YET READ -- see FEWSHOT_RESULTS_ROOT)
 
 dataset:
   name: mvtec_ad
@@ -14,7 +14,7 @@ dataset:
   category: bottle
   image_size: [224, 224]
   shots: 5                  # 0 | 1 | 5 | 10
-  split_manifest: ${results_root}/manifests/splits
+  split_manifest: ${results_root}/manifests/splits  # (NOT YET READ -- splits are globbed)
   num_workers: 0
 
 backbone:
@@ -23,7 +23,14 @@ backbone:
   # builds the model with the wrong activation. open_clip only warns about it.
   name: ViT-B-16-quickgelu  # ablations: ViT-B-32-quickgelu, ViT-L-14-quickgelu
   pretrained: openai
-  precision: fp32           # fp32 | int8
+
+  # Member B's feature banks store the raw transformer width (768 for ViT-B/16),
+  # not the 512-dim joint image-text projection. Matching her keeps one bank
+  # format in the project. The cost is that patch features are no longer
+  # comparable with text embeddings, so zero-shot prompting is unavailable --
+  # acceptable, since the alpha sweep showed text never helps past 0 shots.
+  project_patches: false
+  precision: fp32           # fp32 | int8  (NOT YET READ -- week 5, INT8 export)
   frozen: true
 
 eval:
@@ -31,8 +38,8 @@ eval:
   batch_size: 16
 
 profiling:
-  enabled: true
+  enabled: true             # (NOT YET READ -- profiling is a separate script)
   device: cpu               # the whole benchmark is CPU-only by design
   warmup_iters: 5
   measure_iters: 20
-  track: [latency_ms, peak_ram_mb, flops, params]
+  track: [latency_ms, peak_ram_mb, flops, params]  # (NOT YET READ -- all four are always measured)

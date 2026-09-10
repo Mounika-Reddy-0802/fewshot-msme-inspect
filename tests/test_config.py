@@ -66,3 +66,40 @@ def test_openai_weights_use_a_quickgelu_backbone(name):
     backbone = load_config(name)["backbone"]
     if backbone["pretrained"] == "openai":
         assert backbone["name"].endswith("-quickgelu"), backbone["name"]
+
+
+def test_scoring_temperature_is_a_real_knob():
+    """Hardcoding this while the config advertised it would silently ignore the
+    setting -- the same failure as the adapter's alpha."""
+    import inspect
+
+    from src.eval.pipeline import evaluate_split, zero_shot_scores
+
+    assert "temperature" in inspect.signature(evaluate_split).parameters
+    assert "temperature" in inspect.signature(zero_shot_scores).parameters
+    assert load_config("prototype.yaml")["model"]["scoring"]["temperature"] > 0
+
+
+def test_image_size_is_a_real_knob():
+    import inspect
+
+    from src.eval.pipeline import evaluate_split
+
+    assert "image_size" in inspect.signature(evaluate_split).parameters
+    assert load_config("base.yaml")["dataset"]["image_size"] == [224, 224]
+
+
+def test_unread_config_keys_say_so():
+    """Every key nothing consumes carries a NOT YET READ marker, so no one sets
+    one and assumes it took effect."""
+    unread = {
+        "configs/base.yaml": ["precision", "split_manifest", "output_dir", "track", "enabled"],
+        "configs/prototype.yaml": ["append_only", "normalise", "reduction",
+                                   "patch_level", "max_prototypes_per_class"],
+        "configs/adapter.yaml": ["init_from_memory"],
+    }
+    for path, keys in unread.items():
+        text = (CONFIG_DIR.parent / path).read_text(encoding="utf-8")
+        for key in keys:
+            line = next(l for l in text.splitlines() if l.strip().startswith(f"{key}:"))
+            assert "NOT YET READ" in line, f"{path}:{key} is unread but not marked"

@@ -10,12 +10,12 @@ model:
   kind: prototype
 
   memory:
-    append_only: true
-    normalise: true         # l2-normalise before storing and before scoring
+    append_only: true       # (NOT YET READ -- always true by construction; see test_memory.py)
+    normalise: true         # (NOT YET READ -- always on)
     similarity: cosine
-    reduction: mean         # mean | max over the shots of a class
-    patch_level: true       # keep patch tokens for pixel-level scoring
-    max_prototypes_per_class: null
+    reduction: mean         # (NOT YET READ -- week 5)
+    patch_level: true       # (NOT YET READ -- always on)
+    max_prototypes_per_class: null   # (NOT YET READ -- week 5, coreset pruning)
 
   scoring:
     top_k: 1                # neighbours averaged into the anomaly score
