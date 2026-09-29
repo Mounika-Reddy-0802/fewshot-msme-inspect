@@ -211,7 +211,7 @@ right tool.
 | dataset | categories | images | status |
 |---|---|---|---|
 | **MVTec AD** | 15 | **5,354** (3,629 train, 1,725 test) | ✅ downloaded, verified, fully evaluated |
-| **VisA** | 12 | ~10,800 | 🟡 downloaded + splits generated; not yet evaluated |
+| **VisA** | 12 | ~10,800 | ✅ downloaded, 3-seed splits, evaluated on both backbones |
 | **NEU-DET** | 6 | 1,800 | 🟡 downloaded + reorganised; splits not yet generated |
 | MPDD | 6 | — | optional, not started |
 
@@ -338,9 +338,23 @@ per class.
 | ViT-B/16 | 0.904 | 0.936 | 11.3 | 132 |
 | ViT-B/32 | 0.904 | **0.940** | **3.0** | **60** |
 
-**The two backbones are statistically indistinguishable** — every paired
-difference is under 2× its standard error. So ViT-B/32 delivers the same accuracy
-for **3.7× fewer FLOPs, 2.2× lower latency and 4× less memory**.
+**On MVTec AD the two backbones are statistically indistinguishable** — every
+paired difference is under 2× its standard error. So there ViT-B/32 delivers the
+same accuracy for **3.7× fewer FLOPs, 2.2× lower latency and 4× less memory**.
+
+### Second dataset — VisA, 12 categories, 3 seeds
+
+| | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| image AUROC, B/16 | 0.773 | 0.811 | 0.831 |
+| pixel AUROC, B/16 | 0.934 | 0.947 | **0.951** |
+| image AUROC, B/32 | 0.681 | 0.761 | 0.779 |
+
+**On VisA, B/16 wins clearly**: +0.05 to +0.09 image AUROC, 4.4–5.5× the paired
+standard error. VisA defects cover 0.04–0.9% of the image against 4.6% on MVTec;
+a B/32 patch is 2% of the frame, so most VisA defects are smaller than one patch.
+The backbone choice depends on defect size, and that is a more useful rule for
+an MSME than "always use the cheap one".
 
 ### Other measured findings
 
@@ -409,7 +423,8 @@ MVTec AD downloaded and verified (5,354/5,354) · seeded 3-seed splits · frozen
 encoder · append-only prototype memory · Tip-Adapter (evaluated, rejected) ·
 evaluation harness · CPU profiling harness · full MVTec benchmark on two
 backbones · dimension ablation · incremental-class demonstration · frontier
-figures · **159 tests**.
+figures · **VisA benchmark on two backbones** · 768-dim ONNX/INT8 export ·
+**164 tests**.
 
 ## Not yet done
 
@@ -417,7 +432,7 @@ figures · **159 tests**.
 |---|---|
 | **INT8 accuracy** | one half of the headline FP32/INT8 axis. Export works (4× compression, cosine 1.0000 vs torch) but is not accuracy-validated |
 | **ViT-L/14** | third backbone; weights never downloaded |
-| **VisA / NEU-DET evaluation** | data and splits partly ready, never benchmarked |
+| **NEU-DET evaluation** | data reorganised, splits not yet generated |
 | **₹0 feasibility analysis** | a headline contribution; needs writing from numbers already measured |
 | **Streamlit / FastAPI demo** | dependencies pinned, no code |
 | **Sustained-load latency** | the same script gave numbers **3.6× apart** before and after a cool-down — thermal throttling. A single latency figure would mislead |
@@ -431,7 +446,9 @@ figures · **159 tests**.
   unavailable entirely.
 * **`screw` is a resolution failure**, not a method failure: 0.705 at 10 shots.
   Its defects are thinner than one 16-pixel patch of a 224-px image.
-* **Single dataset evaluated.** All numbers are MVTec AD.
+* **Two datasets evaluated, not three.** MVTec AD and VisA; NEU-DET is pending.
+* **Small defects cost detection accuracy.** VisA image AUROC is 0.831 at 10 shots
+  against 0.904 on MVTec, even though pixel AUROC is higher (0.951).
 * **`toothbrush` remains non-monotonic** — the smallest category (60 train, 42
   test), ±0.055 spread at 5 shots.
 
@@ -443,10 +460,11 @@ figures · **159 tests**.
 Pixel AUROC goes from 0.323 (text prompts, worse than chance) to **0.916** with a
 single good photo. That is the project in one number.
 
-**2. Accuracy is free; compute is the choice.**
-ViT-B/32 equals ViT-B/16 to four decimal places at 10 shots while costing 3.7×
-fewer FLOPs. The cheap backbone is not a compromise — good news for anyone
-inspecting parts on a laptop.
+**2. Defect size decides the backbone.**
+On MVTec AD, ViT-B/32 equals ViT-B/16 to four decimal places at 10 shots for 3.7×
+fewer FLOPs. On VisA, where defects are smaller than one B/32 patch, B/16 wins by
++0.05 AUROC at 5× the standard error. One measurable rule — defect area against
+patch area — tells a workshop which one to buy compute for.
 
 **3. Adding a product cannot break the ones already running.**
 15 classes added one at a time; after every addition, every previous class scored

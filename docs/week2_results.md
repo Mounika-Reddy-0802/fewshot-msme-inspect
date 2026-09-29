@@ -1,11 +1,11 @@
-# Results: frozen CLIP + prototype memory on MVTec AD
+# Results: frozen CLIP + prototype memory on MVTec AD and VisA
 
 Reproducible from the committed manifests and the scripts in `scripts/`. Raw CSVs
 live outside the repo (gitignored); the manifests identifying each run are
 committed.
 
 **Setup.** Frozen OpenCLIP ViT-B/16, no training of any kind. Support images are
-normal only. 15 MVTec AD categories, shot counts 1/5/10, evaluated on the fixed
+normal only. 15 MVTec AD categories (VisA's 12 in section 6), shot counts 1/5/10, evaluated on the fixed
 test split so numbers are comparable across shot counts. CPU only: Intel
 i7-13700H, 14 threads pinned, no GPU anywhere.
 
@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 6 covers what that costs -- little.
+prompt cannot score a patch. Section 7 covers what that costs -- little.
 
 ---
 
@@ -116,6 +116,10 @@ So the finding is this: **ViT-B/32 matches ViT-B/16 for 3.7x fewer FLOPs, 2.2x
 lower latency and 4x less memory.** For an MSME choosing hardware, the cheap
 backbone is not a compromise. The only place B/16 may hold an edge is 1-shot
 image detection (+0.019), and even that is 1.2x SE -- suggestive, not established.
+
+**This holds on MVTec AD only.** On VisA, whose defects are far smaller, B/16 wins
+clearly at every shot count (section 6). The finding is "B/32 suffices when
+defects are large relative to a 32px patch", not "B/32 suffices".
 
 ### This claim took three attempts; the first two were wrong
 
@@ -229,7 +233,100 @@ robust figure.
 
 ---
 
-## 6. Limitations, stated plainly
+## 6. Second dataset: VisA
+
+Committed records: `results/manifests/visa_backbones.json`,
+`results/manifests/figures_visa.json`.
+
+Same method, nothing retuned: frozen CLIP, 768-dim patches, prototype memory,
+top_k 1. 12 categories, 1/5/10 shots, three seeds (42, 1, 2) from Member B's
+VisA manifests. Image AUROC, ViT-B/16, mean over seeds, +/- population std:
+
+| category | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| pipe_fryum | 0.933 +/-0.035 | 0.972 +/-0.015 | 0.979 +/-0.008 |
+| chewinggum | 0.891 +/-0.056 | 0.936 +/-0.012 | 0.942 +/-0.018 |
+| cashew | 0.925 +/-0.006 | 0.929 +/-0.012 | 0.927 +/-0.011 |
+| pcb4 | 0.716 +/-0.126 | 0.865 +/-0.049 | 0.892 +/-0.018 |
+| fryum | 0.887 +/-0.005 | 0.879 +/-0.024 | 0.888 +/-0.009 |
+| candle | 0.774 +/-0.044 | 0.850 +/-0.016 | 0.881 +/-0.005 |
+| macaroni1 | 0.750 +/-0.023 | 0.786 +/-0.031 | 0.832 +/-0.016 |
+| pcb1 | 0.785 +/-0.033 | 0.786 +/-0.054 | 0.769 +/-0.024 |
+| pcb2 | 0.627 +/-0.014 | 0.670 +/-0.055 | 0.731 +/-0.023 |
+| macaroni2 | 0.690 +/-0.012 | 0.694 +/-0.013 | 0.725 +/-0.016 |
+| capsules | 0.725 +/-0.016 | 0.703 +/-0.023 | 0.711 +/-0.018 |
+| pcb3 | 0.578 +/-0.015 | 0.661 +/-0.028 | 0.696 +/-0.029 |
+| **mean** | **0.773** | **0.811** | **0.831** |
+
+Pixel AUROC:
+
+| category | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| cashew | 0.978 +/-0.003 | 0.985 +/-0.001 | 0.985 +/-0.001 |
+| pcb1 | 0.966 +/-0.005 | 0.980 +/-0.003 | 0.985 +/-0.000 |
+| chewinggum | 0.979 +/-0.003 | 0.982 +/-0.002 | 0.983 +/-0.002 |
+| pipe_fryum | 0.974 +/-0.004 | 0.979 +/-0.002 | 0.980 +/-0.001 |
+| macaroni1 | 0.922 +/-0.023 | 0.944 +/-0.007 | 0.955 +/-0.006 |
+| pcb3 | 0.907 +/-0.013 | 0.945 +/-0.003 | 0.953 +/-0.002 |
+| fryum | 0.925 +/-0.006 | 0.941 +/-0.003 | 0.945 +/-0.002 |
+| pcb4 | 0.912 +/-0.004 | 0.941 +/-0.000 | 0.944 +/-0.002 |
+| capsules | 0.927 +/-0.004 | 0.935 +/-0.004 | 0.939 +/-0.002 |
+| pcb2 | 0.903 +/-0.019 | 0.926 +/-0.005 | 0.933 +/-0.001 |
+| candle | 0.914 +/-0.015 | 0.925 +/-0.002 | 0.931 +/-0.002 |
+| macaroni2 | 0.901 +/-0.023 | 0.884 +/-0.013 | 0.880 +/-0.015 |
+| **mean** | **0.934** | **0.947** | **0.951** |
+
+**Detection is harder than on MVTec; localisation is not.** Image AUROC drops by
+about 0.08 against MVTec (0.831 vs 0.904 at 10 shots), while pixel AUROC is
+actually *higher* (0.951 vs 0.936). The anomaly maps find VisA defects well; the
+image score (max over patches) has trouble separating a tiny real defect from
+the ordinary variation in a normal part. pcb3 at 0.696 and capsules at 0.711
+are the weakest.
+
+### The backbone result does not transfer
+
+Paired over 36 measurements per shot count (12 categories x 3 seeds), delta is
+B/16 - B/32:
+
+| metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| image AUROC | +0.093 (5.5x SE) | +0.050 (4.4x SE) | +0.052 (5.1x SE) |
+| pixel AUROC | +0.029 (4.1x SE) | +0.017 (3.5x SE) | +0.016 (3.4x SE) |
+| categories favouring B/16 (image) | 10/12 | 9/12 | 10/12 |
+
+On MVTec nothing reached 2x SE. On VisA everything exceeds 3x. The B/32 means
+are 0.681 / 0.761 / 0.779 image and 0.905 / 0.930 / 0.935 pixel.
+
+**Why: defect size against patch size.** Measured from the ground-truth masks,
+a VisA defect covers **0.04-0.9%** of the image (macaroni2 0.04%, capsules 0.09%,
+pcb3 0.62%, chewinggum 0.89%); an MVTec defect averages **4.6%**. At 224px one
+B/32 patch is 1/49 = 2.0% of the image and one B/16 patch 1/196 = 0.5%. Most VisA
+defects are smaller than a B/32 patch and get averaged away inside it. The
+largest B/16 gains at 10 shots are exactly the small-defect categories --
+capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
+
+This is the same mechanism as the `screw` failure on MVTec (section 7), now
+visible across a whole dataset. For an MSME the practical rule is: if the
+defects that matter are smaller than about 2% of the frame, pay for B/16 (or
+crop tighter); otherwise B/32 is enough.
+
+**Seeds matter more here.** Mean seed-to-seed std of image AUROC for B/16 is
+0.032 / 0.028 / 0.016 at 1 / 5 / 10 shots, against 0.027 / 0.013 / 0.012 on
+MVTec. pcb4 swings +/-0.126 at 1 shot.
+
+**Monotonicity.** 8/12 categories improve monotonically for B/16 (10/12 for
+B/32). The exceptions -- pcb1, cashew, fryum, capsules -- are within their seed
+spread.
+
+**Centre-crop loss is negligible.** VisA images are ~1500x1000; CLIP's centre
+crop discards the outer sixth on each long side. Checked against the masks, 11
+of 1,200 anomalous test images (4 capsules, 7 macaroni2) have their defect
+entirely outside the crop -- under 1%, and identical for both backbones, so the
+paired comparison is unaffected.
+
+---
+
+## 7. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -264,10 +361,10 @@ against PatchCore's ~0.98. Screw defects are hair-thin; at 224px on a 14x14 grid
 each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution.
 
-**Not yet done:** ViT-L/14 (weights never downloaded), INT8 accuracy (export and
-quantisation work -- see `results/manifests/onnx_export.json` -- but the graph was
-built against 512-dim features and needs redoing at 768), VisA and NEU-DET
-evaluation, and sustained-load latency.
+**Not yet done:** ViT-L/14 (weights never downloaded), INT8 accuracy (768-dim
+graphs now exported -- see `results/manifests/onnx_export.json` -- benchmark
+running), NEU-DET evaluation (splits not yet generated), and sustained-load
+latency.
 
 ---
 
@@ -285,4 +382,12 @@ python scripts/run_benchmark.py --project-patches --out .../proj512.csv   # dim 
 python scripts/run_profiling.py --threads 14     # idle machine, see section 4
 python scripts/run_incremental.py --shots 5
 python scripts/make_figures.py
+
+# VisA (section 6)
+python scripts/run_benchmark.py --dataset visa --threads 14
+python scripts/run_benchmark.py --dataset visa --backbone ViT-B-32-quickgelu --threads 14
+python scripts/compare_paired.py visa_ViT-B-16-quickgelu visa_ViT-B-32-quickgelu \
+    --question "does ViT-B/32 match ViT-B/16 on VisA, as it does on MVTec AD" \
+    --out visa_backbones.json
+python scripts/make_figures.py --dataset visa
 ```
