@@ -98,8 +98,10 @@ def main() -> int:
                         help="768-dim raw transformer width (Member B's convention)")
     parser.add_argument("--precision", default=None, choices=["fp32", "int8"],
                         help="overrides the config; int8 runs the exported ONNX graph")
-    parser.add_argument("--scales", nargs="+", type=int, default=[1],
-                        help="window sizes for the memory head; 1 alone is single-pass")
+    parser.add_argument("--scales", nargs="+", type=int, default=None,
+                        help="window sizes for the memory head; overrides the config")
+    parser.add_argument("--text-weight", type=float, default=None,
+                        help="fuse the image score with text prompts; overrides the config")
     parser.add_argument("--refresh-cache", action="store_true")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
@@ -119,9 +121,14 @@ def main() -> int:
     root = category_root(dataset, dataset_dir(dataset).parent)
     splits_dir = repo_root() / "results" / "manifests" / "splits"
     # fp32 keeps its original file name so earlier results stay where they were
+    scoring = config["model"]["scoring"]
+    scales = args.scales or scoring.get("scales", [1])
+    text_weight = args.text_weight if args.text_weight is not None else scoring.get("text_weight", 0.0)
     tag = backbone if precision == "fp32" else f"{backbone}-{precision}"
-    if args.scales != [1]:
-        tag += "-win" + "".join(map(str, args.scales))
+    if scales != [1]:
+        tag += "-win" + "".join(map(str, scales))
+    if text_weight:
+        tag += f"-text{text_weight:g}"
     out_path = (Path(args.out) if args.out
                 else results_root() / "benchmark" / f"{dataset}_{tag}.csv")
 
@@ -216,7 +223,8 @@ def main() -> int:
                     adapter_config=config["model"].get("adapter"),
                     temperature=config["model"]["scoring"]["temperature"],
                     image_size=tuple(config["dataset"]["image_size"]),
-                    scales=tuple(args.scales),
+                    scales=tuple(scales),
+                    text_weight=text_weight,
                 )
                 rows.append(result.as_row())
                 produced += 1
@@ -251,7 +259,8 @@ def main() -> int:
         "top_k": config["model"]["scoring"]["top_k"],
         "categories": categories,
         "methods": args.methods,
-        "scales": args.scales,
+        "scales": scales,
+        "text_weight": text_weight,
         "rows": len(rows),
         "threads": torch.get_num_threads(),
         "total_seconds": round(total, 1),

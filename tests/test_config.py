@@ -5,7 +5,7 @@ import yaml
 
 from src.utils.config import CONFIG_DIR, load_config
 
-EXPERIMENT_CONFIGS = ["baseline.yaml", "prototype.yaml", "adapter.yaml"]
+EXPERIMENT_CONFIGS = ["baseline.yaml", "prototype.yaml", "adapter.yaml", "proposed.yaml"]
 
 
 @pytest.mark.parametrize("name", EXPERIMENT_CONFIGS)
@@ -103,3 +103,11 @@ def test_unread_config_keys_say_so():
         for key in keys:
             line = next(l for l in text.splitlines() if l.strip().startswith(f"{key}:"))
             assert "NOT YET READ" in line, f"{path}:{key} is unread but not marked"
+
+
+def test_proposed_config_turns_on_windows_and_text():
+    scoring = load_config("proposed.yaml")["model"]["scoring"]
+    assert scoring["scales"] == [1, 2, 3] and scoring["text_weight"] == 0.5
+    # the plain prototype config stays single-pass, so earlier results reproduce
+    plain = load_config("prototype.yaml")["model"]["scoring"]
+    assert plain["scales"] == [1] and plain["text_weight"] == 0.0
