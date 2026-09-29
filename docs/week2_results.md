@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 7 covers what that costs -- little.
+prompt cannot score a patch. Section 8 covers what that costs -- little.
 
 ---
 
@@ -305,7 +305,7 @@ defects are smaller than a B/32 patch and get averaged away inside it. The
 largest B/16 gains at 10 shots are exactly the small-defect categories --
 capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
 
-This is the same mechanism as the `screw` failure on MVTec (section 7), now
+This is the same mechanism as the `screw` failure on MVTec (section 8), now
 visible across a whole dataset. For an MSME the practical rule is: if the
 defects that matter are smaller than about 2% of the frame, pay for B/16 (or
 crop tighter); otherwise B/32 is enough.
@@ -326,7 +326,65 @@ paired comparison is unaffected.
 
 ---
 
-## 7. Limitations, stated plainly
+## 7. INT8: what quantisation costs and buys
+
+Committed records: `results/manifests/int8_vit_b16.json`,
+`results/manifests/int8_vit_b32.json`, `results/manifests/int8_latency.json`,
+`results/manifests/onnx_export.json`.
+
+The visual tower is exported to ONNX at 768 dims (cosine 1.00000 against torch,
+so the export itself is exact) and dynamically quantised to INT8 weights -- no
+calibration set, nothing an MSME would need to collect. Then the full MVTec grid
+is re-run on the INT8 graph: same splits, 15 categories x 3 seeds, paired
+against FP32. Delta is INT8 - FP32:
+
+| backbone | metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|---|
+| ViT-B/16 | image AUROC | -0.019 (2.6x SE) | -0.020 (2.6x SE) | -0.019 (2.9x SE) |
+| ViT-B/16 | pixel AUROC | -0.013 (5.3x SE) | -0.015 (8.4x SE) | -0.016 (7.8x SE) |
+| ViT-B/32 | image AUROC | -0.004 (0.7x SE) | -0.009 (2.7x SE) | -0.013 (3.6x SE) |
+| ViT-B/32 | pixel AUROC | -0.006 (3.9x SE) | -0.007 (5.3x SE) | -0.007 (5.7x SE) |
+
+**INT8 costs accuracy, and B/16 pays about twice what B/32 does.** Pixel AUROC
+falls in 14/15 categories for both. For B/16 the image loss is concentrated:
+`cable` -0.107, `screw` -0.061, `hazelnut` and `metal_nut` -0.050. The export
+smoke test predicted the ordering: FP32-vs-INT8 patch cosine was 0.873 for B/16
+and 0.971 for B/32.
+
+What it buys, ONNX FP32 against ONNX INT8 on the same runtime, batch size 1,
+6 threads, two alternating runs each:
+
+| backbone | FP32 ms | INT8 ms | speed-up | FP32 MB | INT8 MB |
+|---|---|---|---|---|---|
+| ViT-B/32 | 39-41 | 27-33 | **1.3x** | 352 | 89 |
+| ViT-B/16 | 131-133 | 71-72 | **1.8x** | 345 | 88 |
+
+Every graph is 4x smaller on disk.
+
+**The trade, for an MSME:** INT8 B/32 at ~30 ms is the cheapest configuration
+measured and loses under 0.015 AUROC on MVTec. INT8 B/16 at ~72 ms is still
+faster than FP32 B/16 but gives up 0.02 image AUROC -- which on MVTec leaves it
+below FP32 B/32 (0.885 vs 0.904 at 10 shots) at roughly twice B/32's latency.
+Where B/16 is needed at all (small defects, section 6), keep it in FP32.
+
+### 14 threads was the wrong setting for ONNX
+
+The first profiling pass used the same 14 pinned threads as the torch numbers
+(section 4) and was unusable: FP32 B/32 measured 36 ms in one run and 526 ms in
+the next, identical settings. This i7-13700H has 6 performance and 8 efficiency
+cores; 14 threads put work on both, and every parallel op then waits for the
+slowest core, while OneDrive sync was competing for the same cores. At 6 threads
+repeats agree within ~20% even at 50-60% background load. Two consequences:
+
+* The ONNX timings above are not comparable with the torch timings in section 4
+  (different runtime and thread count). Compare INT8 with ONNX FP32 only.
+* The section 4 torch numbers were taken at 14 threads on an idle machine and
+  looked stable then, but they deserve a 6-thread repeat before the week-5
+  sustained-load measurement.
+
+---
+
+## 8. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -361,10 +419,9 @@ against PatchCore's ~0.98. Screw defects are hair-thin; at 224px on a 14x14 grid
 each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution.
 
-**Not yet done:** ViT-L/14 (weights never downloaded), INT8 accuracy (768-dim
-graphs now exported -- see `results/manifests/onnx_export.json` -- benchmark
-running), NEU-DET evaluation (splits not yet generated), and sustained-load
-latency.
+**Not yet done:** ViT-L/14 (weights never downloaded), INT8 on VisA (only MVTec
+was quantised), NEU-DET evaluation (splits not yet generated), and
+sustained-load latency.
 
 ---
 
@@ -390,4 +447,13 @@ python scripts/compare_paired.py visa_ViT-B-16-quickgelu visa_ViT-B-32-quickgelu
     --question "does ViT-B/32 match ViT-B/16 on VisA, as it does on MVTec AD" \
     --out visa_backbones.json
 python scripts/make_figures.py --dataset visa
+
+# INT8 (section 7)
+python scripts/export_onnx.py
+python scripts/run_benchmark.py --precision int8 --threads 14
+python scripts/run_benchmark.py --precision int8 --backbone ViT-B-32-quickgelu --threads 14
+python scripts/compare_paired.py mvtec_ad_ViT-B-16-quickgelu mvtec_ad_ViT-B-16-quickgelu-int8 \
+    --question "..." --out int8_vit_b16.json               # likewise for B/32
+python scripts/run_profiling.py --engine onnx-fp32 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
+python scripts/run_profiling.py --engine onnx-int8 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 ```

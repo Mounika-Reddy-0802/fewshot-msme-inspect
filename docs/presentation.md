@@ -139,7 +139,7 @@ Two side branches exist and are reported honestly:
   instead of a hard max, optionally blended with text prompts. **Measured to add
   nothing** (§2.3).
 * **ONNX / INT8 export** (`src/model/export.py`) — exports the visual tower and
-  quantises it. Working (4× compression) but **not yet accuracy-validated**.
+  quantises it. 4× smaller, 1.3–1.8× faster, and **costs 0.01–0.02 AUROC** (§3.5).
 
 ## 2.2 How each module works
 
@@ -302,7 +302,7 @@ Tip-Adapter-F, with trainable keys, remains worth attempting.
 | input resolution | 224×224 | fixed |
 | eval batch size | 16 | fixed |
 | torch threads | 14, pinned | fixed for comparability |
-| precision | FP32 (INT8 pending) | 🔴 not yet |
+| precision | FP32, INT8 (dynamic) | ✅ both measured |
 
 > **The `-quickgelu` suffix is not cosmetic.** OpenAI CLIP weights were trained
 > with QuickGELU activation. Pairing them with a plain `ViT-B-16` builds the wrong
@@ -355,6 +355,17 @@ standard error. VisA defects cover 0.04–0.9% of the image against 4.6% on MVTe
 a B/32 patch is 2% of the frame, so most VisA defects are smaller than one patch.
 The backbone choice depends on defect size, and that is a more useful rule for
 an MSME than "always use the cheap one".
+
+### INT8 — MVTec AD, 3 seeds, paired against FP32
+
+| backbone | image AUROC 10-shot | pixel AUROC 10-shot | ms/image (ONNX, 6 threads) | model |
+|---|---|---|---|---|
+| ViT-B/32 FP32 → INT8 | 0.904 → 0.891 | 0.940 → 0.933 | 40 → **30** (1.3×) | 352 → 89 MB |
+| ViT-B/16 FP32 → INT8 | 0.904 → 0.885 | 0.936 → 0.920 | 132 → 72 (1.8×) | 345 → 88 MB |
+
+Every loss is real (up to 8× the paired standard error) and B/16 loses about
+twice as much as B/32. **INT8 B/32 is the cheapest configuration measured**; INT8
+B/16 ends up below FP32 B/32 on MVTec, so where B/16 is needed, keep it FP32.
 
 ### Other measured findings
 
@@ -423,14 +434,14 @@ MVTec AD downloaded and verified (5,354/5,354) · seeded 3-seed splits · frozen
 encoder · append-only prototype memory · Tip-Adapter (evaluated, rejected) ·
 evaluation harness · CPU profiling harness · full MVTec benchmark on two
 backbones · dimension ablation · incremental-class demonstration · frontier
-figures · **VisA benchmark on two backbones** · 768-dim ONNX/INT8 export ·
-**164 tests**.
+figures · **VisA benchmark on two backbones** · **INT8 accuracy and latency** ·
+**165 tests**.
 
 ## Not yet done
 
 | item | why it matters |
 |---|---|
-| **INT8 accuracy** | one half of the headline FP32/INT8 axis. Export works (4× compression, cosine 1.0000 vs torch) but is not accuracy-validated |
+| **INT8 on VisA** | INT8 was measured on MVTec only |
 | **ViT-L/14** | third backbone; weights never downloaded |
 | **NEU-DET evaluation** | data reorganised, splits not yet generated |
 | **₹0 feasibility analysis** | a headline contribution; needs writing from numbers already measured |
