@@ -1,0 +1,68 @@
+{
+  "assumptions": {
+    "cpu_watts": 45.0,
+    "tariff_inr_per_kwh": 8.0,
+    "parts_per_day": 10000,
+    "working_days_per_year": 300
+  },
+  "hardware_spend_inr": 0,
+  "free_tier_gpu_hours": 0.0,
+  "study_benchmark_cpu_hours_lower_bound": 6.68,
+  "study_benchmark_runs": {
+    "mvtec_ad_ViT-B-16-quickgelu-int8": 16.6,
+    "mvtec_ad_ViT-B-16-quickgelu-win123": 10.3,
+    "mvtec_ad_ViT-B-16-quickgelu": 39.7,
+    "mvtec_ad_ViT-B-32-quickgelu-int8": 20.0,
+    "mvtec_ad_ViT-B-32-quickgelu": 18.8,
+    "mvtec_ad_ViT-L-14-quickgelu": 94.3,
+    "visa_ViT-B-16-quickgelu-int8": 46.2,
+    "visa_ViT-B-16-quickgelu": 42.4,
+    "visa_ViT-B-32-quickgelu-int8": 38.0,
+    "visa_ViT-B-32-quickgelu": 10.8,
+    "visa_ViT-L-14-quickgelu": 63.4
+  },
+  "study_electricity_inr_lower_bound": 2.4,
+  "commercial_licence_inr": null,
+  "per_config": [
+    {
+      "config": "ViT-B-32 FP32",
+      "ms_per_image": 40.93,
+      "images_per_hour": 87955,
+      "inr_per_image": 4e-06,
+      "inr_per_day": 0.04093,
+      "inr_per_year": 12.279,
+      "hours_per_day_busy": 0.113694,
+      "model_mb": 351.8
+    },
+    {
+      "config": "ViT-B-32 INT8",
+      "ms_per_image": 32.67,
+      "images_per_hour": 110192,
+      "inr_per_image": 3e-06,
+      "inr_per_day": 0.03267,
+      "inr_per_year": 9.801,
+      "hours_per_day_busy": 0.09075,
+      "model_mb": 88.9
+    },
+    {
+      "config": "ViT-B-16 FP32",
+      "ms_per_image": 133.48,
+      "images_per_hour": 26970,
+      "inr_per_image": 1.3e-05,
+      "inr_per_day": 0.13348,
+      "inr_per_year": 40.044,
+      "hours_per_day_busy": 0.370778,
+      "model_mb": 345.1
+    },
+    {
+      "config": "ViT-B-16 INT8",
+      "ms_per_image": 72.23,
+      "images_per_hour": 49840,
+      "inr_per_image": 7e-06,
+      "inr_per_day": 0.07223,
+      "inr_per_year": 21.669,
+      "hours_per_day_busy": 0.200639,
+      "model_mb": 87.6
+    }
+  ]
+}
