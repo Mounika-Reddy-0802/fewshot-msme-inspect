@@ -1,0 +1,123 @@
+{
+  "source_rows": 216,
+  "backbones": [
+    "ViT-B-16-quickgelu",
+    "ViT-B-32-quickgelu"
+  ],
+  "categories": [
+    "candle",
+    "capsules",
+    "cashew",
+    "chewinggum",
+    "fryum",
+    "macaroni1",
+    "macaroni2",
+    "pcb1",
+    "pcb2",
+    "pcb3",
+    "pcb4",
+    "pipe_fryum"
+  ],
+  "shots": [
+    1,
+    5,
+    10
+  ],
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "figures": {
+    "shots_vs_accuracy": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_visa.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_visa.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.7734135313531353,
+            0.8108161624495783,
+            0.8311422258892556
+          ]
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.6806609827649432,
+            0.7610498624862486,
+            0.7790119820315364
+          ]
+        }
+      ]
+    },
+    "accuracy_latency_frontier": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_visa.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_visa.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 1,
+          "backbone_ms": 132.48,
+          "memory_search_ms": 0.454,
+          "total_ms_per_image": 132.934,
+          "image_auroc": 0.7734135313531353
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 5,
+          "backbone_ms": 132.48,
+          "memory_search_ms": 1.166,
+          "total_ms_per_image": 133.646,
+          "image_auroc": 0.8108161624495783
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 10,
+          "backbone_ms": 132.48,
+          "memory_search_ms": 1.472,
+          "total_ms_per_image": 133.952,
+          "image_auroc": 0.8311422258892556
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 1,
+          "backbone_ms": 60.41,
+          "memory_search_ms": 0.174,
+          "total_ms_per_image": 60.583999999999996,
+          "image_auroc": 0.6806609827649432
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 5,
+          "backbone_ms": 60.41,
+          "memory_search_ms": 0.226,
+          "total_ms_per_image": 60.635999999999996,
+          "image_auroc": 0.7610498624862486
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 10,
+          "backbone_ms": 60.41,
+          "memory_search_ms": 0.265,
+          "total_ms_per_image": 60.675,
+          "image_auroc": 0.7790119820315364
+        }
+      ]
+    }
+  }
+}
