@@ -2,6 +2,7 @@
 
     python scripts/summarise_results.py                     # markdown to stdout
     python scripts/summarise_results.py --metric pixel_auroc
+    python scripts/summarise_results.py --dataset visa --backbone ViT-B-32-quickgelu
     python scripts/summarise_results.py --out docs/results_table.md
 
 Aggregates over seeds (mean +- spread), one row per category, one column per
@@ -24,11 +25,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.utils.paths import results_root  # noqa: E402
 
 METRICS = ("image_auroc", "pixel_auroc", "image_f1_max", "pixel_f1_max")
+DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET"}
 
 
-def load_rows(benchmark_dir: Path) -> list[dict]:
+def load_rows(benchmark_dir: Path, dataset: str) -> list[dict]:
+    """Rows for one dataset; run_benchmark.py writes <dataset>_<backbone>.csv."""
     rows = []
-    for path in sorted(benchmark_dir.glob("*.csv")):
+    for path in sorted(benchmark_dir.glob(f"{dataset}_*.csv")):
         with path.open(encoding="utf-8") as handle:
             rows.extend(csv.DictReader(handle))
     return rows
@@ -55,15 +58,20 @@ def cell(values: list[float | None], show_spread: bool) -> str:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--metric", default="image_auroc", choices=METRICS)
+    parser.add_argument("--dataset", default="mvtec_ad")
+    parser.add_argument("--backbone", default=None, help="filter to one backbone")
     parser.add_argument("--method", default=None, help="filter to one scoring head")
     parser.add_argument("--spread", action="store_true", help="show +/- std over seeds")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
-    rows = load_rows(results_root() / "benchmark")
+    rows = load_rows(results_root() / "benchmark", args.dataset)
     if not rows:
-        print("no benchmark CSV; run scripts/run_benchmark.py first", file=sys.stderr)
+        print(f"no benchmark CSV for {args.dataset}; run scripts/run_benchmark.py first",
+              file=sys.stderr)
         return 1
+    if args.backbone:
+        rows = [r for r in rows if r.get("backbone") == args.backbone]
     if args.method:
         rows = [r for r in rows if r.get("method") == args.method]
 
@@ -76,7 +84,7 @@ def main() -> int:
         grid[(row["category"], int(row["shots"]))].append(as_float(row[args.metric]))
 
     lines = [
-        f"### {args.metric.replace('_', ' ')} on MVTec AD",
+        f"### {args.metric.replace('_', ' ')} on {DATASET_NAMES.get(args.dataset, args.dataset)}",
         "",
         f"Backbone: {', '.join(backbones)}. "
         f"Mean over {len({r['seed'] for r in rows})} seeds"

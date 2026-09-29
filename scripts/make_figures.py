@@ -1,6 +1,7 @@
 """Produce the result figures (T3.3).
 
     python scripts/make_figures.py
+    python scripts/make_figures.py --dataset visa
 
 Reads the benchmark and profiling CSVs and writes:
 
@@ -32,6 +33,8 @@ from src.utils.paths import repo_root, results_root  # noqa: E402
 # colourblind-safe, and distinguishable in greyscale print
 PALETTE = ["#0173B2", "#DE8F05", "#029E73", "#CC78BC", "#CA9161"]
 
+DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET"}
+
 
 def read_csv(path: Path) -> list[dict]:
     if not path.exists():
@@ -40,11 +43,11 @@ def read_csv(path: Path) -> list[dict]:
         return list(csv.DictReader(handle))
 
 
-def load_benchmark(benchmark_dir: Path) -> list[dict]:
+def load_benchmark(benchmark_dir: Path, dataset: str) -> list[dict]:
+    """Rows for one dataset. run_benchmark.py names its output
+    <dataset>_<backbone>.csv; pooling datasets would average VisA into MVTec."""
     rows = []
-    for path in sorted(benchmark_dir.glob("*.csv")):
-        if path.name.endswith(".meta.json"):
-            continue
+    for path in sorted(benchmark_dir.glob(f"{dataset}_*.csv")):
         for row in read_csv(path):
             row["shots"] = int(row["shots"])
             row["seed"] = int(row["seed"])
@@ -69,7 +72,7 @@ def pareto_front(points: list[tuple[float, float, str]]) -> list[tuple[float, fl
     return front
 
 
-def figure_shots_vs_accuracy(rows, out_dir, dpi):
+def figure_shots_vs_accuracy(rows, out_dir, dpi, dataset):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -93,19 +96,21 @@ def figure_shots_vs_accuracy(rows, out_dir, dpi):
 
     ax.set_xlabel("labelled normal images (shots)")
     ax.set_ylabel("image AUROC")
-    ax.set_title("Few-shot accuracy on MVTec AD\n(mean over 15 categories, band = min-max across categories x seeds)",
+    n_categories = len({r["category"] for r in rows})
+    ax.set_title(f"Few-shot accuracy on {DATASET_NAMES.get(dataset, dataset)}\n"
+                 f"(mean over {n_categories} categories, band = min-max across categories x seeds)",
                  fontsize=10)
     ax.set_xticks(sorted({r["shots"] for r in rows}))
     ax.grid(alpha=0.3, linestyle=":")
     ax.legend(frameon=False, fontsize=9)
     fig.tight_layout()
 
-    paths = _save(fig, out_dir, "shots_vs_accuracy", dpi)
+    paths = _save(fig, out_dir, _name("shots_vs_accuracy", dataset), dpi)
     plt.close(fig)
     return paths, used
 
 
-def figure_frontier(rows, profiles, out_dir, dpi):
+def figure_frontier(rows, profiles, out_dir, dpi, dataset):
     import matplotlib
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
@@ -163,15 +168,21 @@ def figure_frontier(rows, profiles, out_dir, dpi):
 
     ax.set_xlabel("CPU latency (ms per image, batch size 1: backbone + memory search)")
     ax.set_ylabel("image AUROC")
-    ax.set_title("Accuracy against CPU cost\n(MVTec AD, frozen backbone + prototype memory, no GPU)",
+    ax.set_title("Accuracy against CPU cost\n"
+                 f"({DATASET_NAMES.get(dataset, dataset)}, frozen backbone + prototype memory, no GPU)",
                  fontsize=10)
     ax.grid(alpha=0.3, linestyle=":")
     ax.legend(frameon=False, fontsize=9, loc="lower right")
     fig.tight_layout()
 
-    paths = _save(fig, out_dir, "accuracy_latency_frontier", dpi)
+    paths = _save(fig, out_dir, _name("accuracy_latency_frontier", dataset), dpi)
     plt.close(fig)
     return paths, used
+
+
+def _name(stem: str, dataset: str) -> str:
+    """MVTec keeps the original names so existing references stay valid."""
+    return stem if dataset == "mvtec_ad" else f"{stem}_{dataset}"
 
 
 def _save(fig, out_dir: Path, name: str, dpi: int) -> list[str]:
@@ -188,11 +199,13 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dpi", type=int, default=200)
     parser.add_argument("--out", default=None)
+    parser.add_argument("--dataset", default="mvtec_ad")
     args = parser.parse_args()
 
-    rows = load_benchmark(results_root() / "benchmark")
+    rows = load_benchmark(results_root() / "benchmark", args.dataset)
     if not rows:
-        print("no benchmark rows; run scripts/run_benchmark.py first", file=sys.stderr)
+        print(f"no benchmark rows for {args.dataset}; run scripts/run_benchmark.py first",
+              file=sys.stderr)
         return 1
     profiles = read_csv(results_root() / "profiling" / "backbones.csv")
 
@@ -206,11 +219,11 @@ def main() -> int:
         "figures": {},
     }
 
-    paths, used = figure_shots_vs_accuracy(rows, out_dir, args.dpi)
+    paths, used = figure_shots_vs_accuracy(rows, out_dir, args.dpi, args.dataset)
     manifest["figures"]["shots_vs_accuracy"] = {"files": paths, "data": used}
     print(f"shots_vs_accuracy       -> {paths[0]}")
 
-    paths, used = figure_frontier(rows, profiles, out_dir, args.dpi)
+    paths, used = figure_frontier(rows, profiles, out_dir, args.dpi, args.dataset)
     if paths:
         manifest["figures"]["accuracy_latency_frontier"] = {"files": paths, "data": used}
         print(f"accuracy_latency_frontier -> {paths[0]}")
@@ -219,7 +232,7 @@ def main() -> int:
               "(run scripts/run_profiling.py)")
 
     # manifests are committed even though the images are not
-    manifest_path = repo_root() / "results" / "manifests" / "figures.json"
+    manifest_path = repo_root() / "results" / "manifests" / f"{_name('figures', args.dataset)}.json"
     manifest_path.parent.mkdir(parents=True, exist_ok=True)
     manifest_path.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
     print(f"manifest                -> {manifest_path}")
