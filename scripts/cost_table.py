@@ -3,10 +3,12 @@
     python scripts/cost_table.py
     python scripts/cost_table.py --watts 45 --tariff 8 --parts-per-day 10000 --gpu-hours 0
 
-Measured inputs, read from the run records:
+Measured inputs, read from the committed run records:
 
-* **per-image latency** -- ONNX FP32 and INT8, 6 threads, batch size 1
-  (results/manifests/int8_latency.json);
+* **per-image latency** -- ONNX FP32/INT8 and torch FP32, 6 threads, batch size 1
+  (int8_latency.json, torch_latency.json), and torch after 10 minutes of
+  continuous load (sustained_torch.json);
+* **RAM** -- peak working set of the loaded inspector (peak_ram.json);
 * **compute spent on the study** -- the wall-clock of every benchmark run, from
   the .meta.json files next to each benchmark CSV. A lower bound: sweeps,
   ablations and aborted runs are not included.
@@ -21,6 +23,8 @@ Stated assumptions, each overridable, each printed next to the result:
 * ``--commercial-inr`` -- the price of a commercial machine-vision licence, if a
   cited quote is available. Left out rather than guessed.
 
+Capacity (busy hours per day) is planned on the *sustained* latency where it was
+measured: the laptop throttles to 5-6x its burst latency after a few minutes.
 Hardware spend is Rs 0 by construction: the laptop already existed.
 """
 
@@ -45,30 +49,47 @@ def main() -> int:
     parser.add_argument("--commercial-inr", type=float, default=None)
     args = parser.parse_args()
 
-    latency = json.loads((repo_root() / "results" / "manifests" / "int8_latency.json")
-                         .read_text(encoding="utf-8"))
+    manifests = repo_root() / "results" / "manifests"
+
+    def load(name):
+        return json.loads((manifests / name).read_text(encoding="utf-8"))
+
+    onnx = load("int8_latency.json")["backbones"]
+    torch_rows = {r["backbone"]: r for r in load("torch_latency.json")["rows"]}
+    sustained = load("sustained_torch.json")["backbones"]
+    ram = {(r["backbone"], r["engine"]): r["inspector_mb"] for r in load("peak_ram.json")["rows"]}
+
     runs = {}
     for meta in sorted((results_root() / "benchmark").glob("*.meta.json")):
         runs[meta.name.removesuffix(".meta.json")] = json.loads(
             meta.read_text(encoding="utf-8"))["total_seconds"]
     study_hours = sum(runs.values()) / 3600
 
+    def row(config, ms, ram_mb, sustained_ms=None):
+        inr_per_image = args.watts * ms / 1000 / 3.6e6 * args.tariff
+        worst = sustained_ms or ms
+        return {
+            "config": config,
+            "ms_per_image": ms,
+            "sustained_ms_per_image": sustained_ms,
+            "images_per_hour": int(3600_000 / ms),
+            "inr_per_image": inr_per_image,
+            "inr_per_year": inr_per_image * args.parts_per_day * 300,
+            "hours_per_day_busy_worst": args.parts_per_day * worst / 3.6e6,
+            "ram_mb": ram_mb,
+        }
+
     rows = []
-    for backbone, rec in latency["backbones"].items():
-        for precision, key in (("FP32", "fp32_ms_bs1_runs"), ("INT8", "int8_ms_bs1_runs")):
+    for backbone, rec in onnx.items():
+        short = backbone.replace("-quickgelu", "")
+        for precision, key in (("fp32", "fp32_ms_bs1_runs"), ("int8", "int8_ms_bs1_runs")):
             ms = sorted(rec[key])[len(rec[key]) // 2]            # the higher of two runs
-            joules = args.watts * ms / 1000
-            inr_per_image = joules / 3.6e6 * args.tariff
-            rows.append({
-                "config": f"{backbone.replace('-quickgelu', '')} {precision}",
-                "ms_per_image": ms,
-                "images_per_hour": int(3600_000 / ms),
-                "inr_per_image": inr_per_image,
-                "inr_per_day": inr_per_image * args.parts_per_day,
-                "inr_per_year": inr_per_image * args.parts_per_day * 300,
-                "hours_per_day_busy": args.parts_per_day * ms / 3.6e6,
-                "model_mb": rec["int8_mb"] if precision == "INT8" else rec["fp32_mb"],
-            })
+            rows.append(row(f"{short} ONNX {precision.upper()}", ms,
+                            ram.get((backbone, f"onnx-{precision}"))))
+    for backbone, rec in torch_rows.items():
+        rows.append(row(f"{backbone.replace('-quickgelu', '')} torch FP32",
+                        rec["latency_bs1_median_ms"], ram.get((backbone, "torch")),
+                        sustained.get(backbone, {}).get("last_window_ms")))
 
     record = {
         "assumptions": {"cpu_watts": args.watts, "tariff_inr_per_kwh": args.tariff,
@@ -85,20 +106,21 @@ def main() -> int:
 
     print(f"assumptions: {args.watts:g} W CPU, Rs {args.tariff:g}/kWh, "
           f"{args.parts_per_day:,} parts/day, 300 days/yr\n")
-    print("| config | ms/image | images/hour | Rs per 1,000 images | Rs per year | "
-          "busy hours/day | model MB |")
-    print("|---|---|---|---|---|---|---|")
+    print("| config | ms/image (burst) | ms/image (sustained) | Rs per year | "
+          "busy hours/day (worst) | RAM MB |")
+    print("|---|---|---|---|---|---|")
     for r in rows:
-        print(f"| {r['config']} | {r['ms_per_image']:.0f} | {r['images_per_hour']:,} | "
-              f"{r['inr_per_image'] * 1000:.4f} | {r['inr_per_year']:.2f} | "
-              f"{r['hours_per_day_busy']:.2f} | {r['model_mb']:.0f} |")
+        sus = f"{r['sustained_ms_per_image']:.0f}" if r["sustained_ms_per_image"] else "-"
+        ram_mb = f"{r['ram_mb']:.0f}" if r["ram_mb"] else "-"
+        print(f"| {r['config']} | {r['ms_per_image']:.0f} | {sus} | {r['inr_per_year']:.2f} | "
+              f"{r['hours_per_day_busy_worst']:.2f} | {ram_mb} |")
     print(f"\nhardware Rs 0 | free-tier GPU hours {args.gpu_hours:g} | "
           f"benchmark CPU time for the whole study >= {study_hours:.1f} h "
           f"(~Rs {record['study_electricity_inr_lower_bound']:.2f} of electricity)")
     if args.commercial_inr is None:
         print("commercial licence: not included -- pass --commercial-inr with a cited quote")
 
-    out = repo_root() / "results" / "manifests" / "cost_feasibility.json"
+    out = manifests / "cost_feasibility.json"
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(f"\nmanifest -> {out}")
     return 0

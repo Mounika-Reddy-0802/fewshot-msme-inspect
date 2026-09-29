@@ -52,6 +52,8 @@ def main() -> int:
     parser.add_argument("--threads", type=int, default=None)
     parser.add_argument("--engine", default="torch", choices=["torch", "onnx-fp32", "onnx-int8"])
     parser.add_argument("--out", default=None)
+    parser.add_argument("--manifest", default=None,
+                        help="also write the rows to results/manifests/<name> (committed)")
     args = parser.parse_args()
 
     config = load_config(args.config)
@@ -149,6 +151,13 @@ def main() -> int:
                     "batch_sizes": args.batch_sizes, "skipped": failed}, indent=2) + "\n",
         encoding="utf-8",
     )
+
+    if args.manifest:
+        from src.utils.paths import repo_root
+        target = repo_root() / "results" / "manifests" / args.manifest
+        target.write_text(json.dumps({"machine": machine, "warmup": warmup, "iters": iters,
+                                      "rows": rows}, indent=2) + "\n", encoding="utf-8")
+        print(f"manifest -> {target}")
 
     print(f"\n{len(rows)} backbones -> {out_path}")
     if failed:

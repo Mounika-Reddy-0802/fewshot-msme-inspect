@@ -10,7 +10,8 @@ machine, so a single latency number would mislead.
 
 This runs back-to-back batch-size-1 inference for a fixed wall-clock duration
 and records the median latency per window, plus the CPU clock psutil reports
-(on Windows that is the fixed base clock, so latency is the signal to read).
+(coarse on Windows -- it moved between 2400 and 1520 MHz here -- so latency is
+the signal to read).
 The summary compares the first window with the last: the ratio is how much a
 workshop should add to the burst figure for continuous use.
 

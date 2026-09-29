@@ -75,7 +75,7 @@ TARGETS: dict[str, tuple[str, list[list[str]]]] = {
         ["scripts/run_text_fusion.py", "--scales", "1", "2", "3"],
     ]),
     "profiling": ("sections 4 and 7: latency, idle machine, 6 threads", [
-        ["scripts/run_profiling.py", "--threads", "6"],
+        ["scripts/run_profiling.py", "--threads", "6", "--manifest", "torch_latency.json"],
         ["scripts/run_profiling.py", "--engine", "onnx-fp32", "--threads", "6", "--backbones", B32, B16],
         ["scripts/run_profiling.py", "--engine", "onnx-int8", "--threads", "6", "--backbones", B32, B16],
     ]),
