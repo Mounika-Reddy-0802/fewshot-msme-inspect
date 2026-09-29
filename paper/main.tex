@@ -1,0 +1,242 @@
+\documentclass[10pt,twocolumn]{article}
+% Draft. Every number is traceable to a file in results/manifests/ (named in
+% a comment beside it). \todo marks what is not written or not yet measured.
+
+\usepackage[margin=0.8in]{geometry}
+\usepackage{booktabs}
+\usepackage{amsmath}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\newcommand{\todo}[1]{\textcolor{red}{[TODO: #1]}}
+
+\title{Few-Shot Defect Inspection on a Laptop CPU:\\
+A Compute-Efficiency Benchmark of Frozen CLIP with Append-Only Memory}
+\author{\todo{author names, affiliation}}
+\date{}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Small manufacturers need visual inspection that starts from a handful of photos
+of good parts, runs on hardware they already own, and can take on a new product
+without disturbing the ones in production. We benchmark a training-free
+detector for this setting: a frozen OpenCLIP backbone, an append-only per-class
+memory of patch tokens, and optional fusion with text prompts. On MVTec AD and
+VisA, three backbones (ViT-B/32, B/16, L/14), two precisions (FP32, INT8) and
+1/5/10 shots over three seeds, we report accuracy and CPU cost together. With
+ten good photos, ViT-L/14 reaches 0.933 image and 0.945 pixel AUROC on MVTec AD;
+ViT-B/16 with multi-scale windows and text fusion reaches 0.925 at a
+single-pass cost. The cheaper ViT-B/32 is statistically indistinguishable from
+B/16 on MVTec AD but loses 0.05--0.09 AUROC on VisA, whose defects are smaller
+than one of its patches. INT8 costs 0.005--0.02 AUROC and never changes which
+backbone to choose. Adding a product is bit-identical to building it in from
+the start and leaves every existing product's scores unchanged. Inspecting
+10,000 parts a day costs under \textrm{Rs}~41 of electricity a year.
+\todo{rewrite in your own words; check against the similarity threshold}
+\end{abstract}
+
+\section{Introduction}
+\todo{Member-authored. Motivation: MSMEs, no defect photos, no GPU, product
+changeover. Contributions list: (1) CPU benchmark across backbone $\times$
+precision $\times$ shots with paired statistics; (2) append-only class addition,
+verified bit-identical; (3) a defect-size rule for choosing a backbone; (4) a
+Rs 0 feasibility analysis; (5) an open release.}
+
+\section{Related work}
+\todo{Member-authored. Memory-bank methods: PatchCore~\cite{roth2022patchcore},
+PaDiM~\cite{defard2021padim}. Vision--language: CLIP~\cite{radford2021clip},
+OpenCLIP~\cite{cherti2023openclip}, WinCLIP~\cite{jeong2023winclip},
+AnomalyCLIP~\cite{zhou2024anomalyclip}. Training-free adaptation:
+Tip-Adapter~\cite{zhang2022tipadapter}. Tooling: anomalib~\cite{akcay2022anomalib}.
+Gap: none report CPU latency, INT8 cost, or class addition.}
+
+\section{Method}
+
+\paragraph{Encoder.} A frozen OpenCLIP ViT (OpenAI weights, QuickGELU
+activation) maps a $224\times224$ image to a pooled embedding in the 512-dim
+image--text space and to $H\times W$ patch tokens. We keep patch tokens at the
+transformer width (768 for B/32 and B/16, 1024 for L/14) rather than projecting
+them to 512: the unprojected tokens are $+0.020$ to $+0.026$ image AUROC better
+(3.7--4.4$\times$ the paired standard error, 15 categories $\times$ 3 seeds;
+\texttt{dim\_ablation.json}). No parameter is trained anywhere.
+
+\paragraph{Append-only memory.} Adding a product stores the $\ell_2$-normalised
+patch tokens of its $k$ good photos in a bank owned by that product alone. A
+query patch's anomaly is $1-\max_j \cos(q, m_j)$ over the bank; the image score
+is the maximum over patches, and the $H\times W$ map is bilinearly upsampled and
+Gaussian-smoothed ($\sigma=4$). Because banks share nothing, adding a product
+cannot change any other product's scores; we verify this with exact tensor
+equality rather than assume it (Section~\ref{sec:incremental}).
+
+\paragraph{Multi-scale windows.} Following WinCLIP's observation that defects
+are judged better over a neighbourhood~\cite{jeong2023winclip}, but without its
+per-window encoder passes, we average-pool the already computed patch tokens over
+$2\times2$ and $3\times3$ windows, score each scale against an equally pooled
+bank, spread window scores back over the patches they cover, and average the
+scales. Scale 1 alone is exactly the memory above.
+
+\paragraph{Text fusion.} Unprojected patch tokens cannot be compared with text,
+but the pooled embedding can. The image score becomes
+$(1-w)\,s_\text{memory} + w\,s_\text{text}$, where $s_\text{text}$ is the
+softmax weight of a ``defective $\langle$object$\rangle$'' prompt ensemble
+against a ``normal'' one; a typed defect description is added to the defective
+ensemble. The map is unaffected. We fix $w=0.5$, the equal weighting used by
+WinCLIP+, and report the full grid $w\in\{0,0.1,0.25,0.5,1\}$ rather than
+selecting on test data.
+
+\paragraph{Deployment.} The visual tower is exported to ONNX (outputs identical
+to PyTorch: patch cosine 1.00000 and identical anomaly scores on 50 real test
+images; \texttt{fidelity\_probe.json}) and dynamically quantised to INT8, which
+needs no calibration set.
+
+\section{Protocol}
+Datasets: MVTec AD~\cite{bergmann2019mvtec} (15 categories) and
+VisA~\cite{zou2022visa} (12). Splits: 1/5/10 normal support images, nested
+($1\subset5\subset10$) so extra shots are measured against the same starting
+images, on a fixed test set, for three seeds (42, 1, 2); manifests are
+committed. Metrics: image and pixel AUROC. Comparisons are paired over identical
+(category, shots, seed) splits and reported as the mean delta and its multiple of
+the paired standard error (SE); we call an effect established above $2\times$SE.
+Hardware: one Intel i7-13700H laptop (6 performance + 8 efficiency cores), CPU
+only; latency is the median of 20 batch-size-1 passes after 5 warm-up passes at
+6 threads (Section~\ref{sec:cost} explains why not 14). \todo{NEU-DET if completed.}
+
+\section{Results}
+
+\begin{table}[t]
+\centering\small
+\caption{Image / pixel AUROC, prototype memory, mean over 3 seeds.
+(\texttt{benchmark} CSVs; paired tests in \texttt{visa\_backbones.json},
+\texttt{mvtec\_l14\_vs\_b16.json}, \texttt{visa\_l14\_vs\_b16.json}.)}
+\label{tab:main}
+\begin{tabular}{llccc}
+\toprule
+ & backbone & 1-shot & 5-shot & 10-shot \\
+\midrule
+MVTec & B/32 & .837/.920 & .884/.934 & .904/.940 \\
+      & B/16 & .856/.916 & .888/.932 & .904/.936 \\
+      & L/14 & .883/.930 & .920/.942 & .933/.945 \\
+\midrule
+VisA  & B/32 & .681/.905 & .761/.930 & .779/.935 \\
+      & B/16 & .773/.934 & .811/.947 & .831/.951 \\
+      & L/14 & .785/.950 & .828/.961 & .843/.964 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Backbone choice depends on defect size.} On MVTec AD no B/16--B/32
+difference reaches $2\times$SE (at 10 shots: $+0.000$ image, $-0.004$ pixel). On
+VisA, B/16 wins at every shot count ($+0.093$, $+0.050$, $+0.052$ image;
+4.4--5.5$\times$SE). Measured from the masks, a VisA defect covers 0.04--0.9\% of
+the image against 4.6\% on MVTec AD; a B/32 patch covers 2.0\%, a B/16 patch
+0.5\%. B/16's largest VisA gains are the smallest-defect categories. L/14
+(0.3\% per patch) improves on B/16 again: $+0.030$ image on MVTec AD
+(4.6$\times$SE), largest on \texttt{toothbrush} ($+0.117$) and \texttt{screw}
+($+0.086$); on VisA its pixel gain is established ($+0.013$, 3.9$\times$SE) but
+its image gain is not ($+0.012$, 1.7$\times$SE).
+
+\paragraph{More shots buy predictability.} On MVTec AD with B/16 the mean
+seed-to-seed standard deviation of image AUROC falls from 0.027 at one shot to
+0.012 at ten; single-seed few-shot numbers understate this variance.
+
+\begin{table}[t]
+\centering\small
+\caption{Scoring ablations, ViT-B/16, image AUROC. Windows: $\{1,2,3\}$.
+Text: $w=0.5$. (\texttt{text\_fusion.json}, \texttt{text\_fusion\_win123.json},
+\texttt{mvtec\_windowed.json}.)}
+\label{tab:ablation}
+\begin{tabular}{llccc}
+\toprule
+ & scoring & 1-shot & 5-shot & 10-shot \\
+\midrule
+MVTec & memory & .856 & .888 & .904 \\
+      & + windows & .866 & .907 & .921 \\
+      & + text & .872 & .897 & .911 \\
+      & + both & \textbf{.881} & \textbf{.913} & \textbf{.925} \\
+      & text only (0-shot) & .802 & .802 & .802 \\
+\midrule
+VisA  & memory & .773 & .811 & .831 \\
+      & + windows & .789 & .832 & .851 \\
+      & + text & .791 & .820 & .837 \\
+      & + both & \textbf{.815} & \textbf{.841} & \textbf{.855} \\
+      & text only (0-shot) & .698 & .698 & .698 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{Windows and text help, independently.} Windows add $+0.017$ to
+$+0.019$ image AUROC at 5 and 10 shots on MVTec AD (3.3--4.3$\times$SE) and leave
+pixel AUROC unchanged; they cost two extra memory searches and no extra encoder
+pass. Text fusion helps most at one shot ($+0.016$ MVTec, $+0.018$ VisA,
+$\ge3.9\times$SE); text alone is far worse than memory alone. Earlier we found
+text \emph{hurts} when fused per patch in the 512-dim space (1-shot image AUROC
+0.820 at $w=0$ falling to 0.646 at $w=1$; \texttt{alpha\_sweep.json}); at the
+image level it helps. \todo{VisA windowed pixel AUROC once the run lands.}
+
+\paragraph{Against WinCLIP.} WinCLIP+ reports 93.1 / 94.4 / 95.2 image AUROC on
+MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots~\cite{jeong2023winclip}
+\todo{verify against its Table before submission}. It uses a ViT-B/16+ backbone
+at 240\,px with LAION-400M weights and one encoder pass per window. Our
+single-pass B/16 system reaches 0.881 (MVTec) and 0.815 (VisA) at one shot. We
+did not reproduce WinCLIP; the comparison is across backbones, weights and shot
+counts and should be read as indicative only.
+
+\begin{table}[t]
+\centering\small
+\caption{INT8 against FP32, 10-shot image AUROC, and ONNX latency
+(batch 1, 6 threads). (\texttt{int8\_*.json}, \texttt{int8\_latency.json}.)}
+\label{tab:int8}
+\begin{tabular}{lcccc}
+\toprule
+ & MVTec & VisA & ms/img & MB \\
+\midrule
+B/32 FP32 & .904 & .779 & 39--41 & 352 \\
+B/32 INT8 & .891 & .765 & 27--33 & 89 \\
+B/16 FP32 & .904 & .831 & 131--133 & 345 \\
+B/16 INT8 & .885 & .819 & 71--72 & 88 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\paragraph{INT8 costs little and changes nothing structural.} Dynamic INT8 makes
+every graph $4\times$ smaller and B/32 1.3$\times$ / B/16 1.8$\times$ faster.
+It costs 0.005--0.02 image AUROC across both datasets and backbones. Which
+backbone loses more is dataset-dependent (B/16 on MVTec AD, neither clearly on
+VisA), and in no case does quantisation change which backbone should be chosen.
+
+\subsection{Adding a product}\label{sec:incremental}
+Twelve MVTec categories form a deployed memory; three held-out categories
+(fixed in advance as the alphabetically last) are appended from 5 or 10 photos.
+For every seed and shot count: (i) the twelve existing products score
+\emph{bit-identically} before and after; (ii) each appended product scores
+bit-identically to a memory built with all fifteen from the start
+(\texttt{incremental\_holdout\_*.json}). Appending costs \todo{idle-machine
+end-to-end seconds} and 3.0\,MB (B/16, 5 shots); sequentially adding all fifteen
+products takes 1.9\,ms of memory work each (\texttt{incremental\_5shot.json}).
+
+\subsection{Cost}\label{sec:cost}
+\todo{torch latency at 6 threads for B/32, B/16, L/14, and the 10-minute
+sustained-load slowdown.} At 14 threads, timings on this hybrid CPU were
+unusable (the same graph measured 36 and 526\,ms in consecutive runs); at 6
+threads repeats agree within 20\%. Assuming 45\,W and Rs~8/kWh, 10,000 parts a
+day for 300 days costs Rs~9.80 a year with B/32 INT8 and Rs~40 with B/16 FP32; the
+laptop is busy 5--22 minutes a day. The whole study's benchmarks used at least
+6.7 CPU-hours and no GPU (\texttt{cost\_feasibility.json}). Hardware spend: Rs~0.
+
+\section{Limitations}
+Datasets are public benchmarks, not a shop floor. Thin defects remain below the
+patch resolution (\texttt{screw}: 0.792 at 10 shots even with L/14). Image scores
+still confuse tiny defects with normal variation on VisA (0.855 best) while maps
+localise well (pixel $\ge$0.95). We did not reproduce WinCLIP or AnomalyCLIP, nor
+test static INT8. \todo{NEU-DET, MPDD.}
+
+\section{Conclusion}
+\todo{Member-authored.}
+
+\paragraph{Reproducibility.} Code, split manifests and one command per table:
+\texttt{python scripts/reproduce.py --list}. \todo{repository URL and tag v1.0.}
+
+\bibliographystyle{plain}
+\bibliography{refs}
+\end{document}
