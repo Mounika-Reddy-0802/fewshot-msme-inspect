@@ -1,0 +1,190 @@
+{
+  "backbone": "ViT-B-16-quickgelu",
+  "scales": [
+    1,
+    2,
+    3
+  ],
+  "weights": [
+    0.0,
+    0.1,
+    0.25,
+    0.5,
+    1.0
+  ],
+  "temperature": 0.07,
+  "datasets": {
+    "mvtec_ad": {
+      "n_pairs_per_cell": 45,
+      "per_shot": {
+        "1": {
+          "0.0": {
+            "mean_image_auroc": 0.866,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.869,
+            "delta_vs_image_only": 0.003,
+            "effect_over_se": 4.4
+          },
+          "0.25": {
+            "mean_image_auroc": 0.8736,
+            "delta_vs_image_only": 0.0076,
+            "effect_over_se": 4.4
+          },
+          "0.5": {
+            "mean_image_auroc": 0.8809,
+            "delta_vs_image_only": 0.0149,
+            "effect_over_se": 3.7
+          },
+          "1.0": {
+            "mean_image_auroc": 0.802,
+            "delta_vs_image_only": -0.064,
+            "effect_over_se": 3.2
+          }
+        },
+        "5": {
+          "0.0": {
+            "mean_image_auroc": 0.9075,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.9095,
+            "delta_vs_image_only": 0.002,
+            "effect_over_se": 3.6
+          },
+          "0.25": {
+            "mean_image_auroc": 0.9123,
+            "delta_vs_image_only": 0.0048,
+            "effect_over_se": 3.9
+          },
+          "0.5": {
+            "mean_image_auroc": 0.9135,
+            "delta_vs_image_only": 0.006,
+            "effect_over_se": 2.3
+          },
+          "1.0": {
+            "mean_image_auroc": 0.802,
+            "delta_vs_image_only": -0.1055,
+            "effect_over_se": 5.5
+          }
+        },
+        "10": {
+          "0.0": {
+            "mean_image_auroc": 0.9212,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.9223,
+            "delta_vs_image_only": 0.0011,
+            "effect_over_se": 2.0
+          },
+          "0.25": {
+            "mean_image_auroc": 0.9244,
+            "delta_vs_image_only": 0.0032,
+            "effect_over_se": 2.7
+          },
+          "0.5": {
+            "mean_image_auroc": 0.9247,
+            "delta_vs_image_only": 0.0035,
+            "effect_over_se": 1.5
+          },
+          "1.0": {
+            "mean_image_auroc": 0.802,
+            "delta_vs_image_only": -0.1192,
+            "effect_over_se": 5.9
+          }
+        }
+      }
+    },
+    "visa": {
+      "n_pairs_per_cell": 36,
+      "per_shot": {
+        "1": {
+          "0.0": {
+            "mean_image_auroc": 0.7894,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.7939,
+            "delta_vs_image_only": 0.0045,
+            "effect_over_se": 5.0
+          },
+          "0.25": {
+            "mean_image_auroc": 0.8012,
+            "delta_vs_image_only": 0.0118,
+            "effect_over_se": 4.5
+          },
+          "0.5": {
+            "mean_image_auroc": 0.8145,
+            "delta_vs_image_only": 0.0251,
+            "effect_over_se": 3.6
+          },
+          "1.0": {
+            "mean_image_auroc": 0.6984,
+            "delta_vs_image_only": -0.091,
+            "effect_over_se": 2.4
+          }
+        },
+        "5": {
+          "0.0": {
+            "mean_image_auroc": 0.8315,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.8338,
+            "delta_vs_image_only": 0.0023,
+            "effect_over_se": 3.9
+          },
+          "0.25": {
+            "mean_image_auroc": 0.8375,
+            "delta_vs_image_only": 0.0059,
+            "effect_over_se": 3.7
+          },
+          "0.5": {
+            "mean_image_auroc": 0.8412,
+            "delta_vs_image_only": 0.0096,
+            "effect_over_se": 2.3
+          },
+          "1.0": {
+            "mean_image_auroc": 0.6984,
+            "delta_vs_image_only": -0.1331,
+            "effect_over_se": 4.1
+          }
+        },
+        "10": {
+          "0.0": {
+            "mean_image_auroc": 0.8507,
+            "delta_vs_image_only": 0.0,
+            "effect_over_se": null
+          },
+          "0.1": {
+            "mean_image_auroc": 0.8526,
+            "delta_vs_image_only": 0.002,
+            "effect_over_se": 3.4
+          },
+          "0.25": {
+            "mean_image_auroc": 0.855,
+            "delta_vs_image_only": 0.0043,
+            "effect_over_se": 2.8
+          },
+          "0.5": {
+            "mean_image_auroc": 0.855,
+            "delta_vs_image_only": 0.0044,
+            "effect_over_se": 1.0
+          },
+          "1.0": {
+            "mean_image_auroc": 0.6984,
+            "delta_vs_image_only": -0.1523,
+            "effect_over_se": 5.0
+          }
+        }
+      }
+    }
+  }
+}

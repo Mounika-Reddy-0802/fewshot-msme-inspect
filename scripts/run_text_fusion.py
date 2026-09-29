@@ -2,6 +2,7 @@
 
     python scripts/run_text_fusion.py
     python scripts/run_text_fusion.py --datasets visa --backbone ViT-B-32-quickgelu
+    python scripts/run_text_fusion.py --scales 1 2 3     # windowed memory + text: WinCLIP+-style
 
 Three sources of evidence for "is this part defective":
 
@@ -37,7 +38,7 @@ from src.eval.metrics import image_auroc  # noqa: E402
 from src.eval.pipeline import category_text_embeddings  # noqa: E402
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
 from src.model.memory import PrototypeMemory  # noqa: E402
-from src.model.windows import text_image_scores  # noqa: E402
+from src.model.windows import text_image_scores, windowed_scores  # noqa: E402
 from src.utils.paths import dataset_dir, repo_root, results_root  # noqa: E402
 
 WEIGHTS = (0.0, 0.1, 0.25, 0.5, 1.0)
@@ -58,11 +59,13 @@ def main() -> int:
     parser.add_argument("--backbone", default="ViT-B-16-quickgelu")
     parser.add_argument("--temperature", type=float, default=0.07)
     parser.add_argument("--threads", type=int, default=6)
+    parser.add_argument("--scales", nargs="+", type=int, default=[1])
     args = parser.parse_args()
+    scales = tuple(args.scales)
 
     torch.set_num_threads(args.threads)
     encoder = FrozenCLIPEncoder(args.backbone, "openai", device="cpu", project_patches=False)
-    record = {"backbone": args.backbone, "weights": list(WEIGHTS),
+    record = {"backbone": args.backbone, "scales": list(scales), "weights": list(WEIGHTS),
               "temperature": args.temperature, "datasets": {}}
 
     for dataset in args.datasets:
@@ -80,9 +83,13 @@ def main() -> int:
                     split = split_for(manifest, category, shots, root)
                     paths = [t["image"] for t in split["test"]]
                     labels = [t["label"] for t in split["test"]]
-                    memory = PrototypeMemory(bank.dim, bank.grid)
-                    memory.add_class(category, bank.patches(split["support"]))
-                    image = memory.score(bank.patches(paths), category).image
+                    if scales == (1,):
+                        memory = PrototypeMemory(bank.dim, bank.grid)
+                        memory.add_class(category, bank.patches(split["support"]))
+                        image = memory.score(bank.patches(paths), category).image
+                    else:
+                        image = windowed_scores(bank.patches(split["support"]),
+                                                bank.patches(paths), bank.grid, scales).image
                     zero = text_image_scores(bank.images(paths), text, args.temperature)
                     for w in WEIGHTS:
                         fused = (1 - w) * image + w * zero
@@ -113,7 +120,8 @@ def main() -> int:
                 cells.append(f"{r['mean_image_auroc']:.3f}{tag:<9}")
             print(f"{shots:>5}  " + " ".join(cells))
 
-    out = repo_root() / "results" / "manifests" / "text_fusion.json"
+    suffix = "" if scales == (1,) else "_win" + "".join(map(str, scales))
+    out = repo_root() / "results" / "manifests" / f"text_fusion{suffix}.json"
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(f"\nmanifest -> {out}")
     return 0
