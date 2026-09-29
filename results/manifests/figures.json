@@ -1,8 +1,11 @@
 {
-  "source_rows": 270,
+  "source_rows": 675,
   "backbones": [
     "ViT-B-16-quickgelu",
-    "ViT-B-32-quickgelu"
+    "ViT-B-16-quickgelu-int8",
+    "ViT-B-32-quickgelu",
+    "ViT-B-32-quickgelu-int8",
+    "ViT-L-14-quickgelu"
   ],
   "categories": [
     "bottle",
@@ -52,6 +55,19 @@
           ]
         },
         {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8372065128592463,
+            0.8680948915575366,
+            0.8845965246588152
+          ]
+        },
+        {
           "backbone": "ViT-B-32-quickgelu",
           "shots": [
             1,
@@ -63,6 +79,32 @@
             0.884313860780257,
             0.9038096679419995
           ]
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8332212938425305,
+            0.87577836723388,
+            0.8912015255809387
+          ]
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8834449764324666,
+            0.9200313725551277,
+            0.9334788957947668
+          ]
         }
       ]
     },
@@ -73,52 +115,124 @@
       ],
       "data": [
         {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 1,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 0.821,
+          "total_ms_per_image": 73.051,
+          "image_auroc": 0.8372065128592463
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 5,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 2.139,
+          "total_ms_per_image": 74.369,
+          "image_auroc": 0.8680948915575366
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 10,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 3.647,
+          "total_ms_per_image": 75.87700000000001,
+          "image_auroc": 0.8845965246588152
+        },
+        {
           "backbone": "ViT-B-16-quickgelu",
           "shots": 1,
-          "backbone_ms": 132.48,
-          "memory_search_ms": 0.454,
-          "total_ms_per_image": 132.934,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 0.694,
+          "total_ms_per_image": 88.574,
           "image_auroc": 0.8558213316143518
         },
         {
           "backbone": "ViT-B-16-quickgelu",
           "shots": 5,
-          "backbone_ms": 132.48,
-          "memory_search_ms": 1.166,
-          "total_ms_per_image": 133.646,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.024,
+          "total_ms_per_image": 88.904,
           "image_auroc": 0.8881495294329732
         },
         {
           "backbone": "ViT-B-16-quickgelu",
           "shots": 10,
-          "backbone_ms": 132.48,
-          "memory_search_ms": 1.472,
-          "total_ms_per_image": 133.952,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.697,
+          "total_ms_per_image": 89.577,
           "image_auroc": 0.9039790150933062
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 1,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 0.546,
+          "total_ms_per_image": 33.216,
+          "image_auroc": 0.8332212938425305
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 5,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 0.585,
+          "total_ms_per_image": 33.255,
+          "image_auroc": 0.87577836723388
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 10,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 1.019,
+          "total_ms_per_image": 33.689,
+          "image_auroc": 0.8912015255809387
         },
         {
           "backbone": "ViT-B-32-quickgelu",
           "shots": 1,
-          "backbone_ms": 60.41,
-          "memory_search_ms": 0.174,
-          "total_ms_per_image": 60.583999999999996,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.264,
+          "total_ms_per_image": 36.984,
           "image_auroc": 0.8367013663424048
         },
         {
           "backbone": "ViT-B-32-quickgelu",
           "shots": 5,
-          "backbone_ms": 60.41,
-          "memory_search_ms": 0.226,
-          "total_ms_per_image": 60.635999999999996,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.257,
+          "total_ms_per_image": 36.977,
           "image_auroc": 0.884313860780257
         },
         {
           "backbone": "ViT-B-32-quickgelu",
           "shots": 10,
-          "backbone_ms": 60.41,
-          "memory_search_ms": 0.265,
-          "total_ms_per_image": 60.675,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.385,
+          "total_ms_per_image": 37.105,
           "image_auroc": 0.9038096679419995
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 1,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 0.87,
+          "total_ms_per_image": 397.99,
+          "image_auroc": 0.8834449764324666
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 5,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.515,
+          "total_ms_per_image": 399.635,
+          "image_auroc": 0.9200313725551277
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 10,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.94,
+          "total_ms_per_image": 400.06,
+          "image_auroc": 0.9334788957947668
         }
       ]
     }

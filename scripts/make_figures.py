@@ -209,7 +209,10 @@ def main() -> int:
         print(f"no benchmark rows for {args.dataset}; run scripts/run_benchmark.py first",
               file=sys.stderr)
         return 1
-    profiles = read_csv(results_root() / "profiling" / "backbones.csv")
+    # every point is a real way to run the model: torch FP32, and the ONNX INT8
+    # graph (whose rows are named <backbone>-int8, matching its benchmark rows)
+    profiles = (read_csv(results_root() / "profiling" / "backbones.csv")
+                + read_csv(results_root() / "profiling" / "backbones_onnx_int8.csv"))
 
     out_dir = Path(args.out) if args.out else results_root() / "figures"
     manifest = {
