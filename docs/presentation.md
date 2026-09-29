@@ -290,7 +290,7 @@ Tip-Adapter-F, with trainable keys, remains worth attempting.
 
 | parameter | value | swept? |
 |---|---|---|
-| backbone | ViT-B/16-quickgelu, ViT-B/32-quickgelu | ✅ both measured |
+| backbone | ViT-B/32, ViT-B/16, ViT-L/14 (all -quickgelu) | ✅ all three measured |
 | patch feature dim | **768 unprojected** vs 512 projected | ✅ controlled ablation |
 | shots (k) | 0, 1, 5, 10 | ✅ |
 | seeds | 42, 1, 2 | ✅ |
@@ -356,6 +356,16 @@ a B/32 patch is 2% of the frame, so most VisA defects are smaller than one patch
 The backbone choice depends on defect size, and that is a more useful rule for
 an MSME than "always use the cheap one".
 
+### Third backbone — ViT-L/14
+
+| 10-shot | MVTec image | MVTec pixel | VisA image | VisA pixel |
+|---|---|---|---|---|
+| ViT-L/14 | **0.933** | 0.945 | 0.843 | **0.964** |
+| gain over B/16 | +0.030 (4.6× SE) | +0.009 | +0.012 (not significant) | +0.013 (3.9× SE) |
+
+Most accurate on both datasets; the biggest gains are the fine-detail categories
+(`toothbrush` +0.117, `screw` +0.086). Cost: 1.7× B/16's memory per class.
+
 ### INT8 — MVTec AD, 3 seeds, paired against FP32
 
 | backbone | image AUROC 10-shot | pixel AUROC 10-shot | ms/image (ONNX, 6 threads) | model |
@@ -412,7 +422,7 @@ image–text pairs is applied to industrial inspection **without adaptation**.
 |---|---|---|---|
 | **ViT-B/16-quickgelu** | OpenAI CLIP (WIT-400M) | 150 M | primary backbone |
 | **ViT-B/32-quickgelu** | OpenAI CLIP (WIT-400M) | 151 M | cheap ablation |
-| ViT-L/14-quickgelu | OpenAI CLIP | 428 M | 🔴 planned, weights not downloaded |
+| ViT-L/14-quickgelu | OpenAI CLIP | 428 M | most accurate; evaluated on both datasets |
 | WideResNet-50-2 | ImageNet (timm) | 69 M | PatchCore baseline only |
 
 **Why CLIP rather than an ImageNet CNN?** Its joint image–text space makes the
@@ -442,7 +452,6 @@ figures · **VisA benchmark on two backbones** · **INT8 accuracy and latency** 
 
 | item | why it matters |
 |---|---|
-| **ViT-L/14** | third backbone; weights never downloaded |
 | **NEU-DET evaluation** | data reorganised, splits not yet generated |
 | **₹0 feasibility analysis** | a headline contribution; needs writing from numbers already measured |
 | **Streamlit / FastAPI demo** | dependencies pinned, no code |

@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 8 covers what that costs -- little.
+prompt cannot score a patch. Section 9 covers what that costs -- little.
 
 ---
 
@@ -305,7 +305,7 @@ defects are smaller than a B/32 patch and get averaged away inside it. The
 largest B/16 gains at 10 shots are exactly the small-defect categories --
 capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
 
-This is the same mechanism as the `screw` failure on MVTec (section 8), now
+This is the same mechanism as the `screw` failure on MVTec (section 9), now
 visible across a whole dataset. For an MSME the practical rule is: if the
 defects that matter are smaller than about 2% of the frame, pay for B/16 (or
 crop tighter); otherwise B/32 is enough.
@@ -413,7 +413,40 @@ repeats agree within ~20% even at 50-60% background load. Two consequences:
 
 ---
 
-## 8. Limitations, stated plainly
+## 8. The third backbone: ViT-L/14
+
+Records: `results/manifests/mvtec_l14_vs_b16.json`,
+`results/manifests/visa_l14_vs_b16.json`.
+
+ViT-L/14 (428M parameters, 16x16 = 256 patches of 1024 dims at 224px), same
+splits, same memory head, three seeds. Delta is L/14 - B/16, paired:
+
+| dataset | metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|---|
+| MVTec AD | image AUROC | +0.028 (3.1x SE) | +0.032 (4.1x SE) | +0.030 (4.6x SE) |
+| MVTec AD | pixel AUROC | +0.014 (2.6x SE) | +0.010 (2.5x SE) | +0.009 (2.3x SE) |
+| VisA | image AUROC | +0.012 (1.5x SE) | +0.017 (2.3x SE) | +0.012 (1.7x SE) |
+| VisA | pixel AUROC | +0.016 (4.6x SE) | +0.014 (4.1x SE) | +0.013 (3.9x SE) |
+
+| L/14 | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec image / pixel | 0.883 / 0.930 | 0.920 / 0.942 | **0.933** / 0.945 |
+| VisA image / pixel | 0.785 / 0.950 | 0.828 / 0.961 | 0.843 / **0.964** |
+
+**L/14 is the most accurate backbone on both datasets.** On MVTec the gain is
+clear on image AUROC and largest exactly where resolution was the limit:
+`toothbrush` +0.117, `screw` +0.086 (0.705 -> 0.792), `hazelnut` +0.053. Its
+finer 16x16 grid is the same mechanism as B/16 over B/32 (section 6), one step
+further. On VisA the localisation gain is solid (4x SE) but the image gain is
+not established (under 2.3x SE), and two categories go backwards (`macaroni2`
+-0.048, `candle` -0.027).
+
+Memory costs 1024 x 256 x 4 bytes = 1.0 MB per support image, 10.5 MB per class
+at 10 shots -- 1.7x B/16. Its latency is measured with the idle-machine batch (pending).
+
+---
+
+## 9. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -446,9 +479,10 @@ projection layers. Little was lost.
 **`screw` is a resolution failure, not a method failure.** 0.711 at 10 shots
 against PatchCore's ~0.98. Screw defects are hair-thin; at 224px on a 14x14 grid
 each patch spans ~16px of an already-downsampled image, so the defect is smaller
-than the model's spatial resolution.
+than the model's spatial resolution. ViT-L/14's finer grid lifts it to 0.792 (section 8),
+which supports that reading.
 
-**Not yet done:** ViT-L/14 (benchmark running), NEU-DET evaluation (splits not yet generated), and
+**Not yet done:** ViT-L/14 latency, NEU-DET evaluation (splits not yet generated), and
 sustained-load latency.
 
 ---
