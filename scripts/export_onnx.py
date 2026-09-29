@@ -12,6 +12,9 @@ The agreement check reports cosine similarity between FP32 and INT8 features on
 random inputs. It is a smoke test, not evidence about accuracy: what matters for
 the benchmark is whether AUROC survives, which `run_benchmark.py --precision
 int8` measures directly.
+
+Patch dim follows the config (768 unprojected by default), and is part of each
+graph's file name, so exports at both dims can sit side by side.
 """
 
 from __future__ import annotations
@@ -26,7 +29,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import torch  # noqa: E402
 
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
-from src.model.export import OnnxEncoder, export_onnx, quantize_int8  # noqa: E402
+from src.model.export import OnnxEncoder, export_onnx, onnx_path, quantize_int8  # noqa: E402
 from src.utils.config import load_config  # noqa: E402
 from src.utils.paths import repo_root, results_root  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
@@ -52,23 +55,26 @@ def main() -> int:
     config = load_config(args.config)
     seed_everything(config["experiment"]["seed"])
     pretrained = config["backbone"]["pretrained"]
+    project_patches = config["backbone"].get("project_patches", True)
     out_dir = Path(args.out) if args.out else results_root() / "onnx"
 
     records = []
     for name in args.backbones:
         print(f"\n=== {name} ===", flush=True)
         try:
-            encoder = FrozenCLIPEncoder(name, pretrained, device="cpu")
+            encoder = FrozenCLIPEncoder(
+                name, pretrained, device="cpu", project_patches=project_patches
+            )
         except Exception as exc:
             print(f"  skipped: {type(exc).__name__} (weights unavailable?)")
             continue
 
-        fp32_path = out_dir / f"{name}.onnx"
-        print("  exporting fp32 ...", flush=True)
+        fp32_path = onnx_path(out_dir, name, encoder.embed_dim)
+        print(f"  exporting fp32, {encoder.embed_dim}-dim patches ...", flush=True)
         export_onnx(encoder, fp32_path)
 
         print("  quantising to int8 ...", flush=True)
-        int8_path = quantize_int8(fp32_path)
+        int8_path = quantize_int8(fp32_path, onnx_path(out_dir, name, encoder.embed_dim, "int8"))
 
         fp32_mb = fp32_path.stat().st_size / 1e6
         int8_mb = int8_path.stat().st_size / 1e6
@@ -81,6 +87,7 @@ def main() -> int:
 
         record = {
             "backbone": name,
+            "patch_dim": encoder.embed_dim,
             "fp32_mb": round(fp32_mb, 1),
             "int8_mb": round(int8_mb, 1),
             "compression": round(fp32_mb / int8_mb, 2),
@@ -109,7 +116,15 @@ def main() -> int:
 
     manifest = repo_root() / "results" / "manifests" / "onnx_export.json"
     manifest.parent.mkdir(parents=True, exist_ok=True)
-    manifest.write_text(json.dumps({"exports": records}, indent=2) + "\n", encoding="utf-8")
+    # keep exports at other dims; records predating the dim field were 512
+    fresh = {(r["backbone"], r["patch_dim"]) for r in records}
+    kept = []
+    if manifest.exists():
+        for r in json.loads(manifest.read_text(encoding="utf-8"))["exports"]:
+            r.setdefault("patch_dim", 512)
+            if (r["backbone"], r["patch_dim"]) not in fresh:
+                kept.append(r)
+    manifest.write_text(json.dumps({"exports": kept + records}, indent=2) + "\n", encoding="utf-8")
     print(f"\n{len(records)} exports -> {out_dir}")
     print(f"manifest -> {manifest}")
     return 0

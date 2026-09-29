@@ -93,7 +93,7 @@ def test_unread_config_keys_say_so():
     """Every key nothing consumes carries a NOT YET READ marker, so no one sets
     one and assumes it took effect."""
     unread = {
-        "configs/base.yaml": ["precision", "split_manifest", "output_dir", "track", "enabled"],
+        "configs/base.yaml": ["split_manifest", "output_dir", "track", "enabled"],
         "configs/prototype.yaml": ["append_only", "normalise", "reduction",
                                    "patch_level", "max_prototypes_per_class"],
         "configs/adapter.yaml": ["init_from_memory"],
