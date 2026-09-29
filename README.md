@@ -32,6 +32,8 @@ src/eval/       features.py  feature bank cache
                 profiling.py latency, RAM, FLOPs, params
 src/baselines/  reference baselines (anomalib, CLIP zero-shot)
 src/utils/      config loading, path resolution, seeding
+src/demo/       inspector behind the Streamlit demo
+app/            demo.py -- streamlit run app/demo.py
 scripts/        runnable entry points, one per stage of the pipeline
 notebooks/      kaggle_setup.ipynb mirrors this environment for free GPU bursts
 tests/          145 tests; the append-only and seeding guarantees are asserted here
@@ -111,6 +113,19 @@ Accelerator set to GPU, Internet set to On, and a `GITHUB_TOKEN` secret (the rep
 is private). Attaching an MVTec dataset with **Add Data** mounts it read-only
 under `/kaggle/input`, so no download is needed -- the notebook finds it by its
 category folders rather than by a hardcoded dataset name.
+
+## Demo
+
+```bash
+streamlit run app/demo.py
+```
+
+Add a product from a few photos of good parts (or load any MVTec AD / VisA
+category from the committed split when `FEWSHOT_DATA_ROOT` is set), then inspect
+parts: anomaly score, heatmap, and pass/fail against a threshold suggested from
+the good photos themselves. Add a second product and re-inspect a part of the
+first -- the score is bit-identical. Runs on CPU; the logic lives in
+`src/demo/inspector.py` and uses exactly the benchmarked encoder and memory.
 
 ## Running an experiment
 
