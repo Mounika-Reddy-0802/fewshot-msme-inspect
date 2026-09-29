@@ -98,6 +98,8 @@ def main() -> int:
                         help="768-dim raw transformer width (Member B's convention)")
     parser.add_argument("--precision", default=None, choices=["fp32", "int8"],
                         help="overrides the config; int8 runs the exported ONNX graph")
+    parser.add_argument("--scales", nargs="+", type=int, default=[1],
+                        help="window sizes for the memory head; 1 alone is single-pass")
     parser.add_argument("--refresh-cache", action="store_true")
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
@@ -118,6 +120,8 @@ def main() -> int:
     splits_dir = repo_root() / "results" / "manifests" / "splits"
     # fp32 keeps its original file name so earlier results stay where they were
     tag = backbone if precision == "fp32" else f"{backbone}-{precision}"
+    if args.scales != [1]:
+        tag += "-win" + "".join(map(str, args.scales))
     out_path = (Path(args.out) if args.out
                 else results_root() / "benchmark" / f"{dataset}_{tag}.csv")
 
@@ -212,6 +216,7 @@ def main() -> int:
                     adapter_config=config["model"].get("adapter"),
                     temperature=config["model"]["scoring"]["temperature"],
                     image_size=tuple(config["dataset"]["image_size"]),
+                    scales=tuple(args.scales),
                 )
                 rows.append(result.as_row())
                 produced += 1
@@ -246,6 +251,7 @@ def main() -> int:
         "top_k": config["model"]["scoring"]["top_k"],
         "categories": categories,
         "methods": args.methods,
+        "scales": args.scales,
         "rows": len(rows),
         "threads": torch.get_num_threads(),
         "total_seconds": round(total, 1),
