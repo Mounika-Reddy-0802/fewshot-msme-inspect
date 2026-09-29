@@ -2,6 +2,11 @@
 
     python scripts/run_profiling.py --threads 14
     python scripts/run_profiling.py --backbones ViT-B-16-quickgelu ViT-B-32-quickgelu
+    python scripts/run_profiling.py --engine onnx-int8 --threads 14   # after export_onnx.py
+
+Compare ``onnx-int8`` against ``onnx-fp32``, not against ``torch``: only then is
+the precision the one thing that differs. Each engine writes its own CSV, so
+profiling ONNX never overwrites the torch numbers the frontier figure reads.
 
 Run this on an otherwise idle machine. The numbers are the point of the project,
 and a background download or a test suite running alongside will inflate them.
@@ -26,6 +31,7 @@ from src.eval.profiling import (  # noqa: E402
     profile_encoder,
 )
 from src.model.encoder import FrozenCLIPEncoder  # noqa: E402
+from src.model.export import OnnxEncoder, onnx_path  # noqa: E402
 from src.utils.config import load_config  # noqa: E402
 from src.utils.paths import results_root  # noqa: E402
 
@@ -44,6 +50,7 @@ def main() -> int:
     parser.add_argument("--warmup", type=int, default=None)
     parser.add_argument("--iters", type=int, default=None)
     parser.add_argument("--threads", type=int, default=None)
+    parser.add_argument("--engine", default="torch", choices=["torch", "onnx-fp32", "onnx-int8"])
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
 
@@ -66,9 +73,22 @@ def main() -> int:
     for name in args.backbones:
         print(f"{name} ...", flush=True)
         try:
-            encoder = FrozenCLIPEncoder(name, pretrained, device="cpu")
+            if args.engine == "torch":
+                encoder = FrozenCLIPEncoder(
+                    name, pretrained, device="cpu",
+                    project_patches=config["backbone"].get("project_patches", True),
+                )
+            else:
+                import open_clip
+                cfg = open_clip.get_model_config(name)
+                dim = (cfg["embed_dim"] if config["backbone"].get("project_patches", True)
+                       else cfg["vision_cfg"]["width"])
+                precision = args.engine.split("-")[1]
+                encoder = OnnxEncoder(
+                    onnx_path(results_root() / "onnx", name, dim, precision), threads
+                )
         except Exception as exc:
-            print(f"  skipped: {type(exc).__name__} (weights not available?)")
+            print(f"  skipped: {type(exc).__name__} (weights or graph not available?)")
             failed.append(name)
             continue
 
@@ -82,6 +102,9 @@ def main() -> int:
         row = profile.as_row()
         row["grid"] = f"{encoder.grid_size[0]}x{encoder.grid_size[1]}"
         row["embed_dim"] = encoder.embed_dim
+        row["engine"] = args.engine
+        if args.engine != "torch":
+            row["model_mb"] = round(encoder.file_bytes() / 1e6, 1)
 
         # the memory search is part of inference cost and grows with the shots
         for shots in (1, 5, 10):
@@ -98,8 +121,9 @@ def main() -> int:
         rows.append(row)
 
         gflops = f"{row['gflops']:.1f}" if row["gflops"] else "n/a"
+        params = f"{row['parameters'] / 1e6:.0f}M" if row["parameters"] else "n/a"
         print(
-            f"  params {row['parameters'] / 1e6:.0f}M  {gflops} GFLOPs  "
+            f"  params {params}  {gflops} GFLOPs  "
             f"bs1 {row['latency_bs1_per_image_ms']:.0f} ms/img  "
             f"RAM {row['peak_ram_mb']:.0f} MB  "
             f"memory search {row['memory_ms_1shot']:.1f}/{row['memory_ms_10shot']:.1f} ms "
@@ -110,7 +134,8 @@ def main() -> int:
         print("nothing profiled", file=sys.stderr)
         return 1
 
-    out_path = Path(args.out) if args.out else results_root() / "profiling" / "backbones.csv"
+    stem = "backbones" if args.engine == "torch" else f"backbones_{args.engine.replace('-', '_')}"
+    out_path = Path(args.out) if args.out else results_root() / "profiling" / f"{stem}.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 
     fieldnames = sorted({k for r in rows for k in r})

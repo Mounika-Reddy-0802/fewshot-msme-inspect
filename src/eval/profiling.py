@@ -50,7 +50,7 @@ class LatencyStats:
 class Profile:
     backbone: str
     threads: int
-    parameters: int
+    parameters: int | None
     gflops: float | None
     peak_ram_mb: float
     latency: list[LatencyStats]
@@ -199,8 +199,14 @@ def profile_encoder(
     iters: int = 20,
     threads: int | None = None,
 ) -> Profile:
-    """Full cost profile of one frozen backbone."""
+    """Full cost profile of one frozen backbone.
+
+    Works for an ONNX encoder too. It has no torch module to count, so
+    parameters and FLOPs come back None; both are the same as the FP32 torch
+    model's anyway, since quantisation changes the arithmetic, not the graph.
+    """
     used_threads = pin_threads(threads)
+    model = getattr(encoder, "model", None)
     height, width = encoder.image_size
 
     latency = []
@@ -216,8 +222,8 @@ def profile_encoder(
     return Profile(
         backbone=encoder.name,
         threads=used_threads,
-        parameters=encoder.num_parameters(),
-        gflops=count_flops(encoder.model.visual, single),
+        parameters=encoder.num_parameters() if model is not None else None,
+        gflops=count_flops(model.visual, single) if model is not None else None,
         peak_ram_mb=measure_peak_ram(lambda: encoder.encode_images(single)),
         latency=latency,
     )
