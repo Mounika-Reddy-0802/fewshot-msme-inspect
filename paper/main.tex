@@ -172,7 +172,9 @@ pass. Text fusion helps most at one shot ($+0.016$ MVTec, $+0.018$ VisA,
 $\ge3.9\times$SE); text alone is far worse than memory alone. Earlier we found
 text \emph{hurts} when fused per patch in the 512-dim space (1-shot image AUROC
 0.820 at $w=0$ falling to 0.646 at $w=1$; \texttt{alpha\_sweep.json}); at the
-image level it helps. \todo{VisA windowed pixel AUROC once the run lands.}
+image level it helps. On VisA windows add $+0.016$ to $+0.021$ image AUROC
+(2.7--5.5$\times$SE) and cost up to 0.005 pixel AUROC at one shot, where pooling
+smears defects already smaller than a patch (\texttt{visa\_windowed.json}).
 
 \paragraph{Against WinCLIP.} WinCLIP+ reports 93.1 / 94.4 / 95.2 image AUROC on
 MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots~\cite{jeong2023winclip}

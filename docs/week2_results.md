@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 9 covers what that costs -- little.
+prompt cannot score a patch. Section 10 covers what that costs -- little.
 
 ---
 
@@ -305,7 +305,7 @@ defects are smaller than a B/32 patch and get averaged away inside it. The
 largest B/16 gains at 10 shots are exactly the small-defect categories --
 capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
 
-This is the same mechanism as the `screw` failure on MVTec (section 9), now
+This is the same mechanism as the `screw` failure on MVTec (section 10), now
 visible across a whole dataset. For an MSME the practical rule is: if the
 defects that matter are smaller than about 2% of the frame, pay for B/16 (or
 crop tighter); otherwise B/32 is enough.
@@ -446,7 +446,66 @@ at 10 shots -- 1.7x B/16. Its latency is measured with the idle-machine batch (p
 
 ---
 
-## 9. Limitations, stated plainly
+## 9. Scoring ablations: windows and text
+
+Records: `mvtec_windowed.json`, `visa_windowed.json`, `text_fusion.json`,
+`text_fusion_win123.json` (all under `results/manifests/`). ViT-B/16, three
+seeds, paired against the single-pass memory.
+
+**Windows.** Patch tokens are average-pooled over 2x2 and 3x3 windows, each
+scale is scored against equally pooled support, and the scales are averaged
+back onto the patch grid (`src/model/windows.py`). This is WinCLIP's
+multi-scale idea at single-pass cost: WinCLIP re-encodes every window, which is
+unaffordable on a CPU; here the extra cost is two more memory searches, about 1%
+of inference each.
+
+| delta, windowed - single-pass | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec image | +0.010 (1.4x SE) | +0.019 (3.3x SE) | +0.017 (4.3x SE) |
+| MVTec pixel | +0.000 | +0.003 (0.5x SE) | +0.002 (0.5x SE) |
+| VisA image | +0.016 (2.7x SE) | +0.021 (5.2x SE) | +0.020 (5.5x SE) |
+| VisA pixel | -0.005 (2.1x SE) | -0.002 (1.6x SE) | -0.002 (1.4x SE) |
+
+Windows help *detection* on both datasets and do nothing for localisation --
+slightly worse on VisA at 1 shot, where pooling smears defects that are already
+smaller than a patch.
+
+**Image vs text vs fused.** The pooled image embedding is in the joint
+image-text space even though the 768-dim patches are not, so text can score a
+whole image: the softmax weight on a "defective <object>" prompt ensemble
+against a "normal" one. Fused as `(1 - w) * memory + w * text`, image AUROC:
+
+| | w = 0 (image) | 0.1 | 0.25 | 0.5 | 1 (text only) |
+|---|---|---|---|---|---|
+| MVTec 1-shot | 0.856 | 0.859 | 0.863 | **0.872** | 0.802 |
+| MVTec 10-shot | 0.904 | 0.906 | 0.908 | **0.911** | 0.802 |
+| VisA 1-shot | 0.773 | 0.776 | 0.781 | **0.791** | 0.698 |
+| VisA 10-shot | 0.831 | 0.832 | 0.834 | **0.837** | 0.698 |
+
+Every fused gain is 2.4-4.8x its paired SE, largest at 1 shot, where the memory
+knows least. Text alone is far worse. The weights are a fixed grid reported in
+full; w = 0.5 is WinCLIP+'s equal weighting, not a value picked here. This
+refines the Tip-Adapter finding in section 10: fused *per patch* in the 512-dim space
+it hurts (the alpha sweep); fused *per image* it helps.
+
+**Both together** (`configs/proposed.yaml`: windows {1,2,3}, w = 0.5):
+
+| image AUROC | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec, memory only | 0.856 | 0.888 | 0.904 |
+| MVTec, proposed | **0.881** | **0.913** | **0.925** |
+| VisA, memory only | 0.773 | 0.811 | 0.831 |
+| VisA, proposed | **0.815** | **0.841** | **0.855** |
+
+For reference only: WinCLIP+ reports 93.1 / 94.4 / 95.2 (MVTec) and
+83.8 / 84.6 / 87.3 (VisA) at 1 / 2 / 4 shots, with a ViT-B/16+ backbone at 240px,
+LAION-400M weights and one encoder pass per window. We did not reproduce it;
+the backbones, weights and shot counts differ. *(Verify these published figures
+against WinCLIP's Table 1 before quoting them.)*
+
+---
+
+## 10. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -520,3 +579,5 @@ python scripts/run_benchmark.py --dataset visa --precision int8 --threads 6   # 
 python scripts/run_profiling.py --engine onnx-fp32 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 python scripts/run_profiling.py --engine onnx-int8 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 ```
+
+Everything above, one target per section: `python scripts/reproduce.py --list`.

@@ -366,6 +366,18 @@ an MSME than "always use the cheap one".
 Most accurate on both datasets; the biggest gains are the fine-detail categories
 (`toothbrush` +0.117, `screw` +0.086). Cost: 1.7× B/16's memory per class.
 
+### The proposed system — windows + text fusion (ViT-B/16)
+
+| 10-shot image AUROC | MVTec | VisA |
+|---|---|---|
+| prototype memory alone | 0.904 | 0.831 |
+| + multi-scale windows | 0.921 | 0.851 |
+| + text-prompt fusion (w = 0.5) | 0.911 | 0.837 |
+| **both** (`configs/proposed.yaml`) | **0.925** | **0.855** |
+
+Both additions are single-pass: no extra encoder call. Text helps most at 1 shot
+(+0.016 MVTec, +0.018 VisA) and lets a worker type what a defect looks like.
+
 ### INT8 — MVTec AD, 3 seeds, paired against FP32
 
 | backbone | image AUROC 10-shot | pixel AUROC 10-shot | ms/image (ONNX, 6 threads) | model |
