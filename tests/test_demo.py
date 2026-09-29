@@ -89,3 +89,30 @@ def test_threshold_is_the_worst_held_out_good_score(inspector):
 def test_no_photos_is_an_error(inspector):
     with pytest.raises(ValueError):
         inspector.add_product("a", [])
+
+
+class TextEncoder(FakeEncoder):
+    """Adds prompts: every text encodes to a fixed vector per wording."""
+
+    def encode_text(self, prompts):
+        out = []
+        for p in prompts:
+            g = torch.Generator().manual_seed(sum(map(ord, p)))
+            out.append(torch.randn(8, generator=g))
+        return l2_normalise(torch.stack(out))
+
+
+def test_description_fuses_text_into_the_image_score():
+    inspector = Inspector(TextEncoder())
+    inspector.add_product("bracket", [image(0.1), image(0.2)], description="a cracked rim")
+    result = inspector.inspect("bracket", image(0.9))
+    assert result.text_score is not None
+    assert result.score == pytest.approx(0.5 * result.memory_score + 0.5 * result.text_score)
+    assert inspector.descriptions["bracket"] == "a cracked rim"
+
+
+def test_without_a_description_the_score_is_the_memory_score():
+    inspector = Inspector(TextEncoder())
+    inspector.add_product("bracket", [image(0.1)])
+    result = inspector.inspect("bracket", image(0.9))
+    assert result.text_score is None and result.score == result.memory_score

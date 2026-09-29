@@ -2,7 +2,8 @@
 
     streamlit run app/demo.py
 
-1. Add a product from a few photos of good parts -- no defect photos, no training.
+1. Add a product from a few photos of good parts -- no defect photos, no training --
+   optionally with a typed description of what a defect looks like.
 2. Inspect a part: anomaly score, heatmap, pass/fail against a threshold.
 3. Add another product and watch the first one's scores stay exactly the same.
 
@@ -98,8 +99,11 @@ with tab_upload:
     name = st.text_input("Product name", placeholder="e.g. bracket-A")
     files = st.file_uploader("Photos of good parts (1-10)", type=["png", "jpg", "jpeg", "bmp"],
                              accept_multiple_files=True)
+    description = st.text_input("What does a defect look like? (optional)",
+                                placeholder="e.g. a cracked rim, missing screw")
     if st.button("Add product", disabled=not (name and files)):
-        result = inspector.add_product(name, [Image.open(f) for f in files])
+        result = inspector.add_product(name, [Image.open(f) for f in files],
+                                       description=description or None)
         st.success(f"Added {result.product}: {result.images} photo(s), {result.prototypes:,} "
                    f"prototypes, {result.bytes_added / 1e6:.1f} MB, {result.seconds:.2f} s.")
 
@@ -111,15 +115,19 @@ with tab_dataset:
         dataset = DATASETS[c1.selectbox("Dataset", list(DATASETS))]
         category = c2.selectbox("Category", dataset_categories(dataset))
         shots = c3.selectbox("Good photos", [1, 5, 10], index=1)
+        ds_description = st.text_input("Defect description (optional)", key="ds_description",
+                                       placeholder="e.g. a broken edge")
         if category and st.button(f"Add {category} ({shots}-shot, seed 42 split)"):
             support, _ = dataset_split(dataset, category, shots)
-            result = inspector.add_product(category, [Image.open(p) for p in support])
+            result = inspector.add_product(category, [Image.open(p) for p in support],
+                                           description=ds_description or None)
             st.success(f"Added {category}: {result.prototypes:,} prototypes, "
                        f"{result.bytes_added / 1e6:.1f} MB, {result.seconds:.2f} s.")
 
 if inspector.products:
     rows = [{"product": p, "prototypes": inspector.memory.size(p),
-             "MB": round(inspector.memory.size(p) * inspector.memory.dim * 4 / 1e6, 1)}
+             "MB": round(inspector.memory.size(p) * inspector.memory.dim * 4 / 1e6, 1),
+             "description": inspector.descriptions.get(p, "")}
             for p in inspector.products]
     st.dataframe(rows, hide_index=True)
 
@@ -180,6 +188,9 @@ if image is not None:
     if truth is not None:
         st.caption(f"Ground truth: {truth.defect_type} "
                    f"({'defective' if truth.label else 'good'}).")
+    if result.text_score is not None:
+        st.caption(f"Score = 0.5 x memory {result.memory_score:.3f} + 0.5 x description "
+                   f"{result.text_score:.3f}. The heatmap is the memory's alone.")
     st.caption(f"Encode {result.encode_ms:.0f} ms + memory search {result.search_ms:.1f} ms, CPU.")
 
     # append-only, shown rather than claimed: re-inspecting the same part after
