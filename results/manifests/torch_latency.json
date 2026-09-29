@@ -1,0 +1,76 @@
+{
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "python": "3.13.5",
+    "torch": "2.8.0+cpu",
+    "torch_threads": 6,
+    "cpu_count_physical": 14,
+    "cpu_count_logical": 20,
+    "total_ram_gb": 16.9,
+    "cpu_percent_before": 14.5
+  },
+  "warmup": 5,
+  "iters": 20,
+  "batch_sizes": [
+    1,
+    8
+  ],
+  "skipped": [],
+  "rows": [
+    {
+      "backbone": "ViT-B-32-quickgelu",
+      "embed_dim": 768.0,
+      "engine": "torch",
+      "gflops": 2.95214592,
+      "grid": "7x7",
+      "latency_bs1_median_ms": 36.72,
+      "latency_bs1_p90_ms": 46.12,
+      "latency_bs1_per_image_ms": 36.72,
+      "latency_bs8_median_ms": 152.45,
+      "latency_bs8_p90_ms": 171.54,
+      "latency_bs8_per_image_ms": 19.06,
+      "memory_ms_10shot": 0.385,
+      "memory_ms_1shot": 0.264,
+      "memory_ms_5shot": 0.257,
+      "parameters": 151277313.0,
+      "threads": 6.0
+    },
+    {
+      "backbone": "ViT-B-16-quickgelu",
+      "embed_dim": 768.0,
+      "engine": "torch",
+      "gflops": 11.290418688,
+      "grid": "14x14",
+      "latency_bs1_median_ms": 87.88,
+      "latency_bs1_p90_ms": 100.15,
+      "latency_bs1_per_image_ms": 87.88,
+      "latency_bs8_median_ms": 657.99,
+      "latency_bs8_p90_ms": 715.99,
+      "latency_bs8_per_image_ms": 82.25,
+      "memory_ms_10shot": 1.697,
+      "memory_ms_1shot": 0.694,
+      "memory_ms_5shot": 1.024,
+      "parameters": 149620737.0,
+      "threads": 6.0
+    },
+    {
+      "backbone": "ViT-L-14-quickgelu",
+      "embed_dim": 1024.0,
+      "engine": "torch",
+      "gflops": 51.961653248,
+      "grid": "16x16",
+      "latency_bs1_median_ms": 397.12,
+      "latency_bs1_p90_ms": 440.68,
+      "latency_bs1_per_image_ms": 397.12,
+      "latency_bs8_median_ms": 3253.81,
+      "latency_bs8_p90_ms": 3398.98,
+      "latency_bs8_per_image_ms": 406.73,
+      "memory_ms_10shot": 2.94,
+      "memory_ms_1shot": 0.87,
+      "memory_ms_5shot": 2.515,
+      "parameters": 427616513.0,
+      "threads": 6.0
+    }
+  ]
+}

@@ -1,0 +1,445 @@
+{
+  "engine": "torch",
+  "threads": 6,
+  "minutes": 10.0,
+  "window_s": 30,
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+    "python": "3.13.5",
+    "torch": "2.8.0+cpu",
+    "torch_threads": 6,
+    "cpu_count_physical": 14,
+    "cpu_count_logical": 20,
+    "total_ram_gb": 16.9,
+    "cpu_percent_before": 7.1
+  },
+  "backbones": {
+    "ViT-B-32-quickgelu": {
+      "first_window_ms": 41.04,
+      "last_window_ms": 239.43,
+      "worst_window_ms": 254.89,
+      "slowdown_last_vs_first": 5.83,
+      "images": 8369,
+      "windows": [
+        {
+          "t_min": 0.5,
+          "median_ms": 41.04,
+          "p90_ms": 47.17,
+          "images": 708,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 1.0,
+          "median_ms": 40.67,
+          "p90_ms": 47.37,
+          "images": 705,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 1.5,
+          "median_ms": 40.58,
+          "p90_ms": 49.21,
+          "images": 706,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 2.0,
+          "median_ms": 40.42,
+          "p90_ms": 53.29,
+          "images": 694,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 2.5,
+          "median_ms": 39.74,
+          "p90_ms": 44.26,
+          "images": 726,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 3.0,
+          "median_ms": 39.57,
+          "p90_ms": 45.67,
+          "images": 726,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 3.5,
+          "median_ms": 39.82,
+          "p90_ms": 50.27,
+          "images": 710,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 4.0,
+          "median_ms": 39.66,
+          "p90_ms": 45.91,
+          "images": 726,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 4.51,
+          "median_ms": 59.86,
+          "p90_ms": 240.18,
+          "images": 274,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.01,
+          "median_ms": 73.73,
+          "p90_ms": 257.08,
+          "images": 233,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.51,
+          "median_ms": 36.27,
+          "p90_ms": 197.63,
+          "images": 418,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 6.01,
+          "median_ms": 35.79,
+          "p90_ms": 93.76,
+          "images": 631,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 6.51,
+          "median_ms": 60.35,
+          "p90_ms": 180.13,
+          "images": 353,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 7.01,
+          "median_ms": 224.82,
+          "p90_ms": 279.29,
+          "images": 133,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 7.52,
+          "median_ms": 227.46,
+          "p90_ms": 296.88,
+          "images": 131,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 8.02,
+          "median_ms": 245.12,
+          "p90_ms": 290.88,
+          "images": 125,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 8.52,
+          "median_ms": 224.88,
+          "p90_ms": 275.32,
+          "images": 131,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 9.03,
+          "median_ms": 254.89,
+          "p90_ms": 356.76,
+          "images": 114,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 9.53,
+          "median_ms": 239.43,
+          "p90_ms": 286.74,
+          "images": 125,
+          "cpu_mhz": 2400.0
+        }
+      ]
+    },
+    "ViT-B-16-quickgelu": {
+      "first_window_ms": 471.63,
+      "last_window_ms": 656.06,
+      "worst_window_ms": 681.07,
+      "slowdown_last_vs_first": 1.39,
+      "images": 1111,
+      "windows": [
+        {
+          "t_min": 0.5,
+          "median_ms": 471.63,
+          "p90_ms": 500.44,
+          "images": 65,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 1.01,
+          "median_ms": 471.03,
+          "p90_ms": 494.51,
+          "images": 65,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 1.51,
+          "median_ms": 464.47,
+          "p90_ms": 506.94,
+          "images": 65,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 2.02,
+          "median_ms": 472.49,
+          "p90_ms": 517.53,
+          "images": 65,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 2.52,
+          "median_ms": 469.14,
+          "p90_ms": 503.9,
+          "images": 64,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 3.03,
+          "median_ms": 480.58,
+          "p90_ms": 551.12,
+          "images": 63,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 3.53,
+          "median_ms": 457.42,
+          "p90_ms": 525.73,
+          "images": 64,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 4.04,
+          "median_ms": 454.41,
+          "p90_ms": 568.15,
+          "images": 66,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 4.54,
+          "median_ms": 421.34,
+          "p90_ms": 481.99,
+          "images": 70,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.05,
+          "median_ms": 451.21,
+          "p90_ms": 489.74,
+          "images": 68,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.55,
+          "median_ms": 459.32,
+          "p90_ms": 507.2,
+          "images": 67,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 6.06,
+          "median_ms": 490.37,
+          "p90_ms": 616.7,
+          "images": 60,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 6.57,
+          "median_ms": 597.28,
+          "p90_ms": 700.55,
+          "images": 53,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 7.08,
+          "median_ms": 679.27,
+          "p90_ms": 751.42,
+          "images": 45,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 7.58,
+          "median_ms": 657.19,
+          "p90_ms": 759.88,
+          "images": 46,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 8.08,
+          "median_ms": 677.72,
+          "p90_ms": 754.64,
+          "images": 44,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 8.58,
+          "median_ms": 681.07,
+          "p90_ms": 778.28,
+          "images": 45,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 9.09,
+          "median_ms": 631.23,
+          "p90_ms": 715.68,
+          "images": 49,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 9.6,
+          "median_ms": 656.06,
+          "p90_ms": 722.58,
+          "images": 47,
+          "cpu_mhz": 1520.0
+        }
+      ]
+    },
+    "ViT-L-14-quickgelu": {
+      "first_window_ms": 2000.02,
+      "last_window_ms": 2011.68,
+      "worst_window_ms": 2038.91,
+      "slowdown_last_vs_first": 1.01,
+      "images": 299,
+      "windows": [
+        {
+          "t_min": 0.53,
+          "median_ms": 2000.02,
+          "p90_ms": 2044.91,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 1.04,
+          "median_ms": 2033.33,
+          "p90_ms": 2043.04,
+          "images": 15,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 1.57,
+          "median_ms": 1994.37,
+          "p90_ms": 2014.99,
+          "images": 16,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 2.08,
+          "median_ms": 1957.06,
+          "p90_ms": 2009.06,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 2.6,
+          "median_ms": 1957.94,
+          "p90_ms": 1986.76,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 3.13,
+          "median_ms": 1985.01,
+          "p90_ms": 2020.55,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 3.66,
+          "median_ms": 1982.12,
+          "p90_ms": 2016.19,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 4.19,
+          "median_ms": 2004.26,
+          "p90_ms": 2023.01,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 4.7,
+          "median_ms": 1976.29,
+          "p90_ms": 2099.55,
+          "images": 15,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.21,
+          "median_ms": 2038.91,
+          "p90_ms": 2095.0,
+          "images": 15,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 5.73,
+          "median_ms": 1987.64,
+          "p90_ms": 2032.74,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 6.25,
+          "median_ms": 1927.82,
+          "p90_ms": 1989.02,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 6.75,
+          "median_ms": 1999.39,
+          "p90_ms": 2063.24,
+          "images": 15,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 7.27,
+          "median_ms": 1942.87,
+          "p90_ms": 2005.0,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 7.8,
+          "median_ms": 1992.62,
+          "p90_ms": 2019.07,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 8.31,
+          "median_ms": 1953.99,
+          "p90_ms": 2029.74,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 8.84,
+          "median_ms": 1984.41,
+          "p90_ms": 2003.32,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        },
+        {
+          "t_min": 9.34,
+          "median_ms": 2003.04,
+          "p90_ms": 2034.08,
+          "images": 15,
+          "cpu_mhz": 2400.0
+        },
+        {
+          "t_min": 9.88,
+          "median_ms": 2011.68,
+          "p90_ms": 2047.77,
+          "images": 16,
+          "cpu_mhz": 1520.0
+        }
+      ]
+    }
+  }
+}
