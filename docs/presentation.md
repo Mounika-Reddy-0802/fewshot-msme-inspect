@@ -200,7 +200,7 @@ right tool.
 | psutil | — | RAM and CPU load |
 | matplotlib | — | figures |
 | pytest | — | 159 tests |
-| Streamlit / FastAPI | pinned, **not yet used** | planned demo |
+| Streamlit | 1.47.0 | demo (`streamlit run app/demo.py`) |
 
 ---
 
@@ -333,10 +333,15 @@ per class.
 | **image AUROC** | 0.856 | 0.888 | 0.904 |
 | **pixel AUROC** | 0.916 | 0.932 | **0.936** |
 
-| backbone | image 10-shot | pixel 10-shot | GFLOPs | ms/image |
-|---|---|---|---|---|
-| ViT-B/16 | 0.904 | 0.936 | 11.3 | 132 |
-| ViT-B/32 | 0.904 | **0.940** | **3.0** | **60** |
+| backbone | image 10-shot | pixel 10-shot | GFLOPs | ms/image burst | ms sustained | RAM |
+|---|---|---|---|---|---|---|
+| ViT-B/32 | 0.904 | **0.940** | **3.0** | **37** | ~230 | 1.5 GB |
+| ViT-B/16 | 0.904 | 0.936 | 11.3 | 88 | ~650 | 1.5 GB |
+| ViT-L/14 | **0.933** | 0.945 | 52.0 | 397 | ~2,000 | 3.7 GB |
+
+Torch, 6 threads, batch 1. **Sustained** = after ~5 minutes of continuous
+inference: the laptop steps its clock down and runs 5–6× slower. Plan capacity
+on that figure — B/16 still inspects 10,000 parts in under 2 hours a day.
 
 **On MVTec AD the two backbones are statistically indistinguishable** — every
 paired difference is under 2× its standard error. So there ViT-B/32 delivers the
@@ -397,7 +402,7 @@ Precision never changes which backbone to pick.
 * **768-dim unprojected beats 512-dim projected** by ~+0.02, at ~4× the paired
   standard error. CLIP's text-alignment projection discards detail useful for
   image-to-image matching.
-* **Memory search is ~1% of inference cost** (0.17–1.47 ms against 60–132 ms), so
+* **Memory search is ~1% of inference cost** (0.3–2.9 ms against 37–397 ms), so
   extra shots are effectively free.
 * **Append-only verified**: 15 classes added sequentially, all prior scores
   bit-identical, ~1.9 ms and 3.0 MB per class.
@@ -457,17 +462,18 @@ MVTec AD downloaded and verified (5,354/5,354) · seeded 3-seed splits · frozen
 encoder · append-only prototype memory · Tip-Adapter (evaluated, rejected) ·
 evaluation harness · CPU profiling harness · full MVTec benchmark on two
 backbones · dimension ablation · incremental-class demonstration · frontier
-figures · **VisA benchmark on two backbones** · **INT8 accuracy and latency** ·
-**165 tests**.
+figures · VisA on three backbones · ViT-L/14 · INT8 accuracy and latency ·
+windowed + text-fused scoring · held-out class append vs from-scratch ·
+sustained-load latency · peak RAM · ₹0 cost table · Streamlit demo with typed
+defect descriptions · architecture freeze · paper draft · **187 tests**.
 
 ## Not yet done
 
 | item | why it matters |
 |---|---|
 | **NEU-DET evaluation** | data reorganised, splits not yet generated |
-| **₹0 feasibility analysis** | a headline contribution; needs writing from numbers already measured |
-| **Streamlit / FastAPI demo** | dependencies pinned, no code |
-| **Sustained-load latency** | the same script gave numbers **3.6× apart** before and after a cool-down — thermal throttling. A single latency figure would mislead |
+| **MPDD, static INT8** | optional; cut first under the Blueprint's cut order |
+| **WinCLIP / AnomalyCLIP reproduction** | cited, not reproduced; WinCLIP needs one encoder pass per window |
 
 ## Known limitations
 
@@ -476,8 +482,8 @@ figures · **VisA benchmark on two backbones** · **INT8 accuracy and latency** 
   Raw CLIP patch tokens are poorly aligned for dense prediction, which is why
   WinCLIP uses windowed aggregation. Under the 768-dim convention, prompting is
   unavailable entirely.
-* **`screw` is a resolution failure**, not a method failure: 0.705 at 10 shots.
-  Its defects are thinner than one 16-pixel patch of a 224-px image.
+* **`screw` is a resolution failure**, not a method failure: 0.705 at 10 shots
+  with B/16, 0.792 with L/14's finer grid. Its defects are thinner than a patch.
 * **Two datasets evaluated, not three.** MVTec AD and VisA; NEU-DET is pending.
 * **Small defects cost detection accuracy.** VisA image AUROC is 0.831 at 10 shots
   against 0.904 on MVTec, even though pixel AUROC is higher (0.951).

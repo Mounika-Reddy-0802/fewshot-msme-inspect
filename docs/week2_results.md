@@ -177,30 +177,73 @@ against the wrong spread would have discarded a real result.
 
 ## 4. Compute cost
 
-Idle machine, 14 threads pinned, batch size 1 (a workshop inspects one part at a
-time), 5 warmup iterations discarded, median of 20.
+Records: `torch_latency.json`, `sustained_torch.json`, `peak_ram.json`,
+`cost_feasibility.json` (all under `results/manifests/`).
 
-| backbone | params | GFLOPs | ms/image | memory search 1-shot | 10-shot |
+**Burst latency.** Torch FP32, 6 threads (one per performance core; section 7
+explains why not 14), batch size 1 -- a workshop inspects one part at a time --
+5 warm-up passes discarded, median of 20, machine idle (7-15% background load):
+
+| backbone | params | GFLOPs | ms/image | memory search 1-shot | 10-shot | RAM |
+|---|---|---|---|---|---|---|
+| ViT-B/32 | 151M | 3.0 | **37** | 0.26 ms | 0.39 ms | 1.47 GB |
+| ViT-B/16 | 150M | 11.3 | 88 | 0.69 ms | 1.70 ms | 1.46 GB |
+| ViT-L/14 | 428M | 52.0 | 397 | 0.87 ms | 2.94 ms | 3.68 GB |
+
+RAM is the inspector's peak working set above an idle Python process, measured in
+a fresh process per configuration. Torch loads CLIP's text tower too; the ONNX
+visual tower alone needs 0.64-0.67 GB in FP32 and 0.38-0.39 GB in INT8.
+
+(The first version of this table used 14 threads and read 60 / 132 ms; the
+6-thread numbers are lower and repeatable. The old run is kept as
+`profiling/backbones_14threads_d512.csv` outside the repo.)
+
+**The memory search is about 1% of inference cost.** Going from 1 shot to 10
+adds 0.1-2 ms to a 37-397 ms budget, so shots are effectively free. The backbone
+is the only meaningful cost lever.
+
+### Sustained load: the laptop slows 5-6x
+
+Ten minutes of back-to-back inference per backbone, median per 30-second window:
+
+| backbone | first window | after ~7 min | slowdown |
+|---|---|---|---|
+| ViT-B/32 | 41 ms | 225-255 ms | **5.8x** |
+| ViT-B/16 | 472 ms (already hot) | 630-680 ms | -- |
+| ViT-L/14 | 2,000 ms (already hot) | 1,930-2,040 ms | -- |
+
+B/32 ran first on a cool machine: 40 ms for four minutes, then a step between
+minutes 4.5 and 7 to ~230 ms, where it stayed. The reported CPU clock dropped
+from 2,400 to 1,520 MHz in the same windows. B/16 and L/14 started on a machine
+that had already stepped down, so their whole runs are the throttled state
+(B/16's 472-680 ms against 88 ms burst; L/14's ~2 s against 397 ms). This is the
+laptop's power/thermal management, not the method, and it confirms the earlier
+unplanned observation of a 3.6x slowdown after an hour of benchmarking.
+
+**What it means for an MSME.** Plan capacity on the sustained figure. At 10,000
+parts a day, B/16 keeps the laptop busy ~1.8 hours and B/32 ~0.7 hours even
+throttled; L/14 needs ~5.6 hours and 3.7 GB. Burst numbers are what a reviewer
+compares with other papers; sustained numbers are what a shop floor gets.
+
+### The Rs 0 table
+
+Assumptions: 45 W CPU (the i7-13700H base power; the whole laptop draws more),
+Rs 8/kWh, 10,000 parts/day, 300 days/year. Energy uses burst latency.
+
+| config | ms burst | ms sustained | Rs per year | busy h/day (worst) | RAM MB |
 |---|---|---|---|---|---|
-| ViT-B/32 | 151M | 3.0 | 60.4 | 0.17 ms | 0.27 ms |
-| ViT-B/16 | 150M | 11.3 | 132.5 | 0.45 ms | 1.47 ms |
+| B/32 ONNX INT8 | 33 | -- | 9.80 | 0.09 | 378 |
+| B/32 ONNX FP32 | 41 | -- | 12.28 | 0.11 | 667 |
+| B/16 ONNX INT8 | 72 | -- | 21.67 | 0.20 | 390 |
+| B/16 ONNX FP32 | 133 | -- | 40.04 | 0.37 | 641 |
+| B/32 torch FP32 | 37 | 239 | 11.02 | 0.67 | 1467 |
+| B/16 torch FP32 | 88 | 656 | 26.36 | 1.82 | 1455 |
+| L/14 torch FP32 | 397 | 2012 | 119.14 | 5.59 | 3680 |
 
-**The memory search is about 1% of inference cost.** Going from 1 shot to 10 adds
-0.1-1.0 ms to a 60-132 ms budget, so shots are effectively free and there is no
-reason for an MSME to skimp on them. The backbone is the only meaningful cost
-lever.
-
-### Latency is thermally sensitive
-
-An earlier profiling run, taken immediately after ~60 minutes of continuous
-benchmarking, reported **217 ms and 445 ms** for the same two backbones --
-**3.6x slower** -- at a nearly identical reported CPU load (10.7% vs 7.5%). The
-likely cause is thermal throttling of the laptop CPU.
-
-Both figures are real and answer different questions. The table above is burst
-latency on a cool machine; the slower figures are closer to sustained inspection
-on laptop-class hardware. **A single latency number for this project would
-mislead.** A proper sustained-load measurement belongs in week 5.
+Hardware spend: Rs 0 (an existing laptop). GPU: none used in this session's
+runs. The whole study's benchmarks used at least 6.8 CPU-hours, about Rs 2.45 of
+electricity. A commercial machine-vision comparison line is not included until a
+cited quote is available (`--commercial-inr`).
 
 ---
 
@@ -230,6 +273,26 @@ provably cannot alter inspection of parts already in production.
 Millisecond timings for an operation this small are load-sensitive (a second run
 measured 6.5 ms total rather than 15.8 ms). The per-class cost in bytes is the
 robust figure.
+
+### Held-out products, against from-scratch
+
+Records: `incremental_holdout_5shot.json`, `incremental_holdout_10shot.json`.
+
+The Blueprint's harder version: twelve MVTec products are "in production"; three
+held out in advance (the alphabetically last: transistor, wood, zipper) are
+appended from 5 or 10 photos. Three seeds, both shot counts:
+
+| check | result |
+|---|---|
+| the 12 existing products after the appends | **bit-identical** scores, every seed |
+| appended product vs a memory built with all 15 from the start | **bit-identical**, every seed |
+| 10-shot image AUROC of the appended products | transistor 0.733, wood 0.972, zipper 0.917 |
+| end-to-end append (read photos, encode, store), idle machine | **2.0-2.3 s** at 5 shots, 3.3-3.7 s at 10 |
+
+"Appended equals from-scratch" is the expected answer for a memory with no fitted
+parameters; it is checked, not assumed. The cost is almost entirely encoding the
+photos -- the store itself is ~2 ms. Nothing was tuned on the held-out products:
+the memory has no learned parameters and top_k = 1 is the default.
 
 ---
 
@@ -407,9 +470,8 @@ repeats agree within ~20% even at 50-60% background load. Two consequences:
 
 * The ONNX timings above are not comparable with the torch timings in section 4
   (different runtime and thread count). Compare INT8 with ONNX FP32 only.
-* The section 4 torch numbers were taken at 14 threads on an idle machine and
-  looked stable then, but they deserve a 6-thread repeat before the week-5
-  sustained-load measurement.
+* The section 4 torch numbers were first taken at 14 threads too; they have
+  since been re-measured at 6 threads (37 / 88 ms rather than 60 / 132 ms).
 
 ---
 
@@ -442,7 +504,8 @@ not established (under 2.3x SE), and two categories go backwards (`macaroni2`
 -0.048, `candle` -0.027).
 
 Memory costs 1024 x 256 x 4 bytes = 1.0 MB per support image, 10.5 MB per class
-at 10 shots -- 1.7x B/16. Its latency is measured with the idle-machine batch (pending).
+at 10 shots -- 1.7x B/16. It costs 397 ms per image burst (4.5x B/16) and
+3.7 GB of RAM (section 4).
 
 ---
 
@@ -541,8 +604,8 @@ each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution. ViT-L/14's finer grid lifts it to 0.792 (section 8),
 which supports that reading.
 
-**Not yet done:** ViT-L/14 latency, NEU-DET evaluation (splits not yet generated), and
-sustained-load latency.
+**Not yet done:** NEU-DET evaluation (splits not yet generated), MPDD, static INT8,
+and a reproduction of WinCLIP / AnomalyCLIP.
 
 ---
 
