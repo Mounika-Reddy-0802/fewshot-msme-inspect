@@ -361,11 +361,40 @@ What it buys, ONNX FP32 against ONNX INT8 on the same runtime, batch size 1,
 
 Every graph is 4x smaller on disk.
 
-**The trade, for an MSME:** INT8 B/32 at ~30 ms is the cheapest configuration
-measured and loses under 0.015 AUROC on MVTec. INT8 B/16 at ~72 ms is still
-faster than FP32 B/16 but gives up 0.02 image AUROC -- which on MVTec leaves it
-below FP32 B/32 (0.885 vs 0.904 at 10 shots) at roughly twice B/32's latency.
-Where B/16 is needed at all (small defects, section 6), keep it in FP32.
+### The same on VisA
+
+Records: `results/manifests/int8_vit_b16_visa.json`,
+`results/manifests/int8_vit_b32_visa.json`. 12 categories x 3 seeds, paired:
+
+| backbone | metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|---|
+| ViT-B/16 | image AUROC | -0.016 (2.4x SE) | -0.005 (0.9x SE) | -0.012 (2.9x SE) |
+| ViT-B/16 | pixel AUROC | -0.000 (0.1x SE) | -0.002 (1.3x SE) | -0.003 (1.7x SE) |
+| ViT-B/32 | image AUROC | -0.011 (1.7x SE) | -0.014 (2.9x SE) | -0.014 (3.6x SE) |
+| ViT-B/32 | pixel AUROC | -0.007 (2.8x SE) | -0.006 (3.7x SE) | -0.005 (3.6x SE) |
+
+**The MVTec pattern does not repeat.** On VisA, B/16 loses no more than B/32 --
+its pixel AUROC is essentially untouched -- and the worst category loss is
+`macaroni1` -0.046 rather than MVTec's `cable` -0.107. How much INT8 costs
+depends on the data, not only on how far the features move (the export's
+patch-cosine check ranked B/16 as the more fragile backbone; on VisA it is not).
+
+### The trade, for an MSME
+
+| 10-shot image AUROC | MVTec | VisA | ms/image (ONNX, 6 threads) |
+|---|---|---|---|
+| B/32 FP32 | 0.904 | 0.779 | 40 |
+| B/32 INT8 | 0.891 | 0.765 | **30** |
+| B/16 FP32 | 0.904 | **0.831** | 132 |
+| B/16 INT8 | 0.885 | 0.819 | 72 |
+
+* **Large defects (MVTec-like): INT8 B/32.** Cheapest measured, within 0.013 of
+  the best.
+* **Small defects (VisA-like): INT8 B/16.** It keeps 0.819 against FP32 B/32's
+  0.779 and FP32 B/16's 0.831, at about half FP32 B/16's latency. The backbone
+  matters far more than the precision here.
+* INT8 costs 0.005-0.02 image AUROC everywhere it was measured; nowhere does it
+  change which backbone should be chosen.
 
 ### 14 threads was the wrong setting for ONNX
 
@@ -419,8 +448,7 @@ against PatchCore's ~0.98. Screw defects are hair-thin; at 224px on a 14x14 grid
 each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution.
 
-**Not yet done:** ViT-L/14 (weights never downloaded), INT8 on VisA (only MVTec
-was quantised), NEU-DET evaluation (splits not yet generated), and
+**Not yet done:** ViT-L/14 (benchmark running), NEU-DET evaluation (splits not yet generated), and
 sustained-load latency.
 
 ---
@@ -454,6 +482,7 @@ python scripts/run_benchmark.py --precision int8 --threads 14
 python scripts/run_benchmark.py --precision int8 --backbone ViT-B-32-quickgelu --threads 14
 python scripts/compare_paired.py mvtec_ad_ViT-B-16-quickgelu mvtec_ad_ViT-B-16-quickgelu-int8 \
     --question "..." --out int8_vit_b16.json               # likewise for B/32
+python scripts/run_benchmark.py --dataset visa --precision int8 --threads 6   # and --backbone ViT-B-32-quickgelu
 python scripts/run_profiling.py --engine onnx-fp32 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 python scripts/run_profiling.py --engine onnx-int8 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 ```

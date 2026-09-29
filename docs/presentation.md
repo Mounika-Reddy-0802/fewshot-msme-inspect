@@ -363,9 +363,10 @@ an MSME than "always use the cheap one".
 | ViT-B/32 FP32 → INT8 | 0.904 → 0.891 | 0.940 → 0.933 | 40 → **30** (1.3×) | 352 → 89 MB |
 | ViT-B/16 FP32 → INT8 | 0.904 → 0.885 | 0.936 → 0.920 | 132 → 72 (1.8×) | 345 → 88 MB |
 
-Every loss is real (up to 8× the paired standard error) and B/16 loses about
-twice as much as B/32. **INT8 B/32 is the cheapest configuration measured**; INT8
-B/16 ends up below FP32 B/32 on MVTec, so where B/16 is needed, keep it FP32.
+INT8 costs 0.005–0.02 image AUROC on both datasets. On VisA, INT8 B/16 keeps
+0.819 at 10 shots — well above FP32 B/32's 0.779 — at half FP32 B/16's latency.
+**Large defects: INT8 B/32** (cheapest measured). **Small defects: INT8 B/16.**
+Precision never changes which backbone to pick.
 
 ### Other measured findings
 
@@ -441,7 +442,6 @@ figures · **VisA benchmark on two backbones** · **INT8 accuracy and latency** 
 
 | item | why it matters |
 |---|---|
-| **INT8 on VisA** | INT8 was measured on MVTec only |
 | **ViT-L/14** | third backbone; weights never downloaded |
 | **NEU-DET evaluation** | data reorganised, splits not yet generated |
 | **₹0 feasibility analysis** | a headline contribution; needs writing from numbers already measured |
