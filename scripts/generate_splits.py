@@ -11,7 +11,9 @@ categories it has already covered.
     python scripts/generate_splits.py --dataset visa
     python scripts/generate_splits.py --dataset visa --categories candle cashew
 
-Manifest is written to ${results_root}/manifests/splits/<dataset>.json.
+Manifest is written to ${results_root}/manifests/splits/<dataset>.json,
+with every path stored as posix-style (forward slashes) regardless of OS,
+so the manifest is identical whether generated on Windows, Mac or Linux.
 This file is tracked in Git (see GIT_RULES.md) even though the rest of
 results/ is not.
 """
@@ -37,6 +39,7 @@ IMAGE_EXTS = ("*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG")
 CATEGORY_SUBDIR = {
     "mvtec_ad": "",
     "visa": "visa_pytorch",
+    "neu_det": "",
 }
 
 
