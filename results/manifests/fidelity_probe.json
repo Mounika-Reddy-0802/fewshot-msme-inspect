@@ -1,0 +1,38 @@
+{
+  "images": 50,
+  "categories": 15,
+  "shots": 5,
+  "gate_patch_cosine": 0.999,
+  "backbones": {
+    "ViT-B-32-quickgelu": {
+      "engines": {
+        "onnx-fp32": {
+          "patch_cosine_vs_torch": 1.0,
+          "score_max_abs_diff": 0.0,
+          "score_rank_correlation": 1.0
+        },
+        "onnx-int8": {
+          "patch_cosine_vs_torch": 0.95726,
+          "score_max_abs_diff": 0.07528,
+          "score_rank_correlation": 0.9518
+        }
+      },
+      "fp32_gate_passed": true
+    },
+    "ViT-B-16-quickgelu": {
+      "engines": {
+        "onnx-fp32": {
+          "patch_cosine_vs_torch": 1.0,
+          "score_max_abs_diff": 0.0,
+          "score_rank_correlation": 1.0
+        },
+        "onnx-int8": {
+          "patch_cosine_vs_torch": 0.84331,
+          "score_max_abs_diff": 0.09028,
+          "score_rank_correlation": 0.9274
+        }
+      },
+      "fp32_gate_passed": true
+    }
+  }
+}

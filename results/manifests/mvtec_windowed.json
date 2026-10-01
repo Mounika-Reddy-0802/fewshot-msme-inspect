@@ -1,0 +1,72 @@
+{
+  "question": "does multi-scale window scoring (1,2,3) beat single-pass on MVTec AD",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mvtec_ad_ViT-B-16-quickgelu-win123",
+  "b": "mvtec_ad_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 15,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.866,
+        "mean_b": 0.8558,
+        "paired_mean_delta": 0.0102,
+        "paired_standard_error": 0.0073,
+        "effect_over_se": 1.4,
+        "categories_favouring_a": "12/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9075,
+        "mean_b": 0.8881,
+        "paired_mean_delta": 0.0194,
+        "paired_standard_error": 0.0059,
+        "effect_over_se": 3.3,
+        "categories_favouring_a": "13/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9212,
+        "mean_b": 0.904,
+        "paired_mean_delta": 0.0172,
+        "paired_standard_error": 0.004,
+        "effect_over_se": 4.3,
+        "categories_favouring_a": "13/15"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.9157,
+        "mean_b": 0.9157,
+        "paired_mean_delta": 0.0001,
+        "paired_standard_error": 0.0056,
+        "effect_over_se": 0.0,
+        "categories_favouring_a": "6/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9342,
+        "mean_b": 0.9316,
+        "paired_mean_delta": 0.0025,
+        "paired_standard_error": 0.0049,
+        "effect_over_se": 0.5,
+        "categories_favouring_a": "6/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9386,
+        "mean_b": 0.9362,
+        "paired_mean_delta": 0.0024,
+        "paired_standard_error": 0.0046,
+        "effect_over_se": 0.5,
+        "categories_favouring_a": "6/15"
+      }
+    }
+  }
+}

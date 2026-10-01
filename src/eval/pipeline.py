@@ -147,6 +147,8 @@ def evaluate_split(
     method: str = "memory",
     adapter_config=None,
     temperature: float = 0.07,
+    scales: tuple[int, ...] = (1,),
+    text_weight: float = 0.0,
 ) -> SplitResult:
     """Run one (category, shots, seed) split and return its metrics.
 
@@ -154,6 +156,12 @@ def evaluate_split(
     "adapter" for the Tip-Adapter cache kernel blended with text prompts. With
     no support images both fall back to pure zero-shot prompting, since there is
     nothing to build a cache from.
+
+    For the memory head, ``scales`` other than ``(1,)`` scores multi-scale
+    windows (:mod:`src.model.windows`), and ``text_weight`` > 0 fuses the image
+    score with the pooled image's text-prompt score:
+    ``(1 - w) * memory + w * text``. The anomaly map is untouched by text, since
+    768-dim patches cannot be compared with prompts.
     """
     if method not in {"memory", "adapter"}:
         raise ValueError(f"unknown method {method!r}, expected 'memory' or 'adapter'")
@@ -204,10 +212,23 @@ def evaluate_split(
                     text = None
             head = TipAdapter.from_memory(memory, category, config, text)
             scored = head(query_patches)
+        elif tuple(scales) != (1,):
+            from src.model.windows import windowed_scores
+
+            scored = windowed_scores(bank.patches(manifest["support"]), query_patches,
+                                     bank.grid, tuple(scales), top_k)
         else:
             scored = memory.score(query_patches, category)
 
         maps, image_scores = scored.patches, scored.image
+        if text_weight > 0:
+            from src.model.windows import text_image_scores
+
+            if encoder is None:
+                raise ValueError("text_weight > 0 needs the encoder for text prompts")
+            text = text_image_scores(bank.images(test_paths),
+                                     category_text_embeddings(encoder, category), temperature)
+            image_scores = (1 - text_weight) * image_scores + text_weight * text
         prototypes = memory.total_prototypes()
         memory_bytes = memory.memory_bytes()
 

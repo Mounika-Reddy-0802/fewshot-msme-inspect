@@ -30,7 +30,7 @@ backbone:
   # comparable with text embeddings, so zero-shot prompting is unavailable --
   # acceptable, since the alpha sweep showed text never helps past 0 shots.
   project_patches: false
-  precision: fp32           # fp32 | int8  (NOT YET READ -- week 5, INT8 export)
+  precision: fp32           # fp32 | int8; int8 needs scripts/export_onnx.py first
   frozen: true
 
 eval:

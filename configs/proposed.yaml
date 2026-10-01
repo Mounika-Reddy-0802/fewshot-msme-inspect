@@ -1,0 +1,13 @@
+# The full proposed system, as frozen: prototype memory scored over 1x1, 2x2 and
+# 3x3 windows, with the image score fused 50/50 with CLIP's text prompts.
+# Both additions measured against single-pass: docs/week2_results.md section 9.
+
+extends: prototype.yaml
+
+experiment:
+  name: proposed
+
+model:
+  scoring:
+    scales: [1, 2, 3]
+    text_weight: 0.5

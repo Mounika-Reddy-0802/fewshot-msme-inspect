@@ -1,0 +1,72 @@
+{
+  "question": "does multi-scale window scoring (1,2,3) beat single-pass on VisA",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-B-16-quickgelu-win123",
+  "b": "visa_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.7894,
+        "mean_b": 0.7734,
+        "paired_mean_delta": 0.016,
+        "paired_standard_error": 0.0059,
+        "effect_over_se": 2.7,
+        "categories_favouring_a": "8/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8315,
+        "mean_b": 0.8108,
+        "paired_mean_delta": 0.0207,
+        "paired_standard_error": 0.004,
+        "effect_over_se": 5.2,
+        "categories_favouring_a": "10/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8507,
+        "mean_b": 0.8311,
+        "paired_mean_delta": 0.0195,
+        "paired_standard_error": 0.0035,
+        "effect_over_se": 5.5,
+        "categories_favouring_a": "10/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.9289,
+        "mean_b": 0.9339,
+        "paired_mean_delta": -0.0051,
+        "paired_standard_error": 0.0024,
+        "effect_over_se": 2.1,
+        "categories_favouring_a": "5/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9449,
+        "mean_b": 0.9472,
+        "paired_mean_delta": -0.0023,
+        "paired_standard_error": 0.0015,
+        "effect_over_se": 1.6,
+        "categories_favouring_a": "6/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.9492,
+        "mean_b": 0.951,
+        "paired_mean_delta": -0.0018,
+        "paired_standard_error": 0.0013,
+        "effect_over_se": 1.4,
+        "categories_favouring_a": "6/12"
+      }
+    }
+  }
+}

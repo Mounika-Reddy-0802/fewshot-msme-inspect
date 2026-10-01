@@ -1,8 +1,24 @@
 # fewshot-msme-inspect
 
 Open-vocabulary few-shot defect detection that an MSME can actually run: a frozen
-OpenCLIP backbone, an appendable prototype memory and a lightweight adapter,
-benchmarked for accuracy **and** CPU cost on free-tier hardware.
+OpenCLIP backbone, an append-only prototype memory scored over multi-scale
+windows, and optional fusion with typed text prompts -- benchmarked for accuracy
+**and** CPU cost on a laptop. Nothing is trained.
+
+## Results at a glance
+
+10 good photos per product, mean over 3 seeds, image / pixel AUROC:
+
+| | MVTec AD | VisA | CPU ms/image |
+|---|---|---|---|
+| ViT-B/32, memory | 0.904 / 0.940 | 0.779 / 0.935 | 40 (INT8: 30) |
+| ViT-B/16, memory | 0.904 / 0.936 | 0.831 / 0.951 | 132 (INT8: 72) |
+| ViT-B/16, proposed (windows + text) | **0.925** / 0.939 | **0.855** / 0.949 | ~132 |
+| ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | see docs |
+
+Adding a product is bit-identical to building it in from scratch and leaves all
+other products' scores unchanged. Details, statistics and caveats:
+[docs/week2_results.md](docs/week2_results.md). Paper draft: [paper/](paper/).
 
 ## What this repo is
 
@@ -25,16 +41,21 @@ configs/        one YAML per experiment style; base.yaml holds the shared defaul
 src/data/       MVTec loader, seeded few-shot split generator
 src/model/      encoder.py   frozen OpenCLIP, pooled + patch features
                 memory.py    append-only prototype memory
-                adapter.py   Tip-Adapter cache head
+                windows.py   multi-scale window scoring, text fusion
+                adapter.py   Tip-Adapter cache head (measured, rejected)
+                export.py    ONNX export, INT8
 src/eval/       features.py  feature bank cache
                 pipeline.py  end-to-end split evaluation
                 metrics.py   image/pixel AUROC, F1-max
                 profiling.py latency, RAM, FLOPs, params
 src/baselines/  reference baselines (anomalib, CLIP zero-shot)
-src/utils/      config loading, path resolution, seeding
+src/utils/      config loading, path resolution, seeding, architecture freeze check
+src/demo/       inspector behind the Streamlit demo
+app/            demo.py -- streamlit run app/demo.py
 scripts/        runnable entry points, one per stage of the pipeline
-notebooks/      kaggle_setup.ipynb mirrors this environment for free GPU bursts
-tests/          145 tests; the append-only and seeding guarantees are asserted here
+notebooks/      colab_reproduce.ipynb (zero setup), kaggle_setup.ipynb (GPU bursts)
+tests/          the append-only, seeding and freeze guarantees are asserted here
+paper/          main.tex + refs.bib, draft
 docs/           validation logs and notes
 results/        run artifacts (gitignored) except results/manifests/ (tracked)
 data/           datasets live here by default and are never committed
@@ -47,12 +68,16 @@ re-run cheaply.
 
 ```bash
 python scripts/download_mvtec_category.py --all   # 5 GB, verifies against published counts
-python scripts/make_splits.py                     # 180 seeded manifests -> committed
-python scripts/run_benchmark.py --methods memory adapter
-python scripts/run_profiling.py --threads 14      # on an idle machine
+python scripts/generate_splits.py --seeds 42 1 2  # seeded manifests; already committed
+python scripts/run_benchmark.py                   # prototype memory, 3 seeds
+python scripts/run_benchmark.py --config proposed.yaml   # + windows + text
+python scripts/run_profiling.py --threads 6       # idle machine; 14 threads is unstable
 python scripts/run_incremental.py                 # append-only demonstration
 python scripts/make_figures.py                    # frontier figure + manifest
 ```
+
+Or regenerate any table in the results doc with one command:
+`python scripts/reproduce.py --list`.
 
 Two design decisions worth knowing before reading the code:
 
@@ -111,6 +136,19 @@ Accelerator set to GPU, Internet set to On, and a `GITHUB_TOKEN` secret (the rep
 is private). Attaching an MVTec dataset with **Add Data** mounts it read-only
 under `/kaggle/input`, so no download is needed -- the notebook finds it by its
 category folders rather than by a hardcoded dataset name.
+
+## Demo
+
+```bash
+streamlit run app/demo.py
+```
+
+Add a product from a few photos of good parts (or load any MVTec AD / VisA
+category from the committed split when `FEWSHOT_DATA_ROOT` is set), then inspect
+parts: anomaly score, heatmap, and pass/fail against a threshold suggested from
+the good photos themselves. Add a second product and re-inspect a part of the
+first -- the score is bit-identical. Runs on CPU; the logic lives in
+`src/demo/inspector.py` and uses exactly the benchmarked encoder and memory.
 
 ## Running an experiment
 

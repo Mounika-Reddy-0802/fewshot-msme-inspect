@@ -1,0 +1,99 @@
+{
+  "assumptions": {
+    "cpu_watts": 45.0,
+    "tariff_inr_per_kwh": 8.0,
+    "parts_per_day": 10000,
+    "working_days_per_year": 300
+  },
+  "hardware_spend_inr": 0,
+  "free_tier_gpu_hours": 0.0,
+  "study_benchmark_cpu_hours_lower_bound": 6.8,
+  "study_benchmark_runs": {
+    "mvtec_ad_ViT-B-16-quickgelu-int8": 16.6,
+    "mvtec_ad_ViT-B-16-quickgelu-win123": 10.3,
+    "mvtec_ad_ViT-B-16-quickgelu": 39.7,
+    "mvtec_ad_ViT-B-32-quickgelu-int8": 20.0,
+    "mvtec_ad_ViT-B-32-quickgelu": 18.8,
+    "mvtec_ad_ViT-L-14-quickgelu": 94.3,
+    "visa_ViT-B-16-quickgelu-int8": 46.2,
+    "visa_ViT-B-16-quickgelu-win123": 7.3,
+    "visa_ViT-B-16-quickgelu": 42.4,
+    "visa_ViT-B-32-quickgelu-int8": 38.0,
+    "visa_ViT-B-32-quickgelu": 10.8,
+    "visa_ViT-L-14-quickgelu": 63.4
+  },
+  "study_electricity_inr_lower_bound": 2.45,
+  "commercial_licence_inr": null,
+  "per_config": [
+    {
+      "config": "ViT-B-32 ONNX FP32",
+      "ms_per_image": 40.93,
+      "sustained_ms_per_image": null,
+      "images_per_hour": 87955,
+      "inr_per_image": 4e-06,
+      "inr_per_year": 12.279,
+      "hours_per_day_busy_worst": 0.113694,
+      "ram_mb": 667.3
+    },
+    {
+      "config": "ViT-B-32 ONNX INT8",
+      "ms_per_image": 32.67,
+      "sustained_ms_per_image": null,
+      "images_per_hour": 110192,
+      "inr_per_image": 3e-06,
+      "inr_per_year": 9.801,
+      "hours_per_day_busy_worst": 0.09075,
+      "ram_mb": 377.5
+    },
+    {
+      "config": "ViT-B-16 ONNX FP32",
+      "ms_per_image": 133.48,
+      "sustained_ms_per_image": null,
+      "images_per_hour": 26970,
+      "inr_per_image": 1.3e-05,
+      "inr_per_year": 40.044,
+      "hours_per_day_busy_worst": 0.370778,
+      "ram_mb": 641.2
+    },
+    {
+      "config": "ViT-B-16 ONNX INT8",
+      "ms_per_image": 72.23,
+      "sustained_ms_per_image": null,
+      "images_per_hour": 49840,
+      "inr_per_image": 7e-06,
+      "inr_per_year": 21.669,
+      "hours_per_day_busy_worst": 0.200639,
+      "ram_mb": 390.4
+    },
+    {
+      "config": "ViT-B-32 torch FP32",
+      "ms_per_image": 36.72,
+      "sustained_ms_per_image": 239.43,
+      "images_per_hour": 98039,
+      "inr_per_image": 4e-06,
+      "inr_per_year": 11.016,
+      "hours_per_day_busy_worst": 0.665083,
+      "ram_mb": 1467.0
+    },
+    {
+      "config": "ViT-B-16 torch FP32",
+      "ms_per_image": 87.88,
+      "sustained_ms_per_image": 656.06,
+      "images_per_hour": 40964,
+      "inr_per_image": 9e-06,
+      "inr_per_year": 26.364,
+      "hours_per_day_busy_worst": 1.822389,
+      "ram_mb": 1455.3
+    },
+    {
+      "config": "ViT-L-14 torch FP32",
+      "ms_per_image": 397.12,
+      "sustained_ms_per_image": 2011.68,
+      "images_per_hour": 9065,
+      "inr_per_image": 4e-05,
+      "inr_per_year": 119.136,
+      "hours_per_day_busy_worst": 5.588,
+      "ram_mb": 3679.6
+    }
+  ]
+}

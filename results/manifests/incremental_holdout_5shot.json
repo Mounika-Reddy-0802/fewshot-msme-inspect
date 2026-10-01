@@ -1,0 +1,97 @@
+{
+  "question": "can a held-out product be appended without retraining, matching from-scratch and leaving existing products untouched",
+  "backbone": "ViT-B-16-quickgelu",
+  "shots": 5,
+  "seeds": [
+    42,
+    1,
+    2
+  ],
+  "existing": [
+    "bottle",
+    "cable",
+    "capsule",
+    "carpet",
+    "grid",
+    "hazelnut",
+    "leather",
+    "metal_nut",
+    "pill",
+    "screw",
+    "tile",
+    "toothbrush"
+  ],
+  "held_out": [
+    "transistor",
+    "wood",
+    "zipper"
+  ],
+  "held_out_rule": "the three alphabetically last categories, fixed in advance",
+  "no_regression_all_seeds": true,
+  "appended_equals_scratch_all_seeds": true,
+  "append_seconds_end_to_end": {
+    "transistor": {
+      "median": 2.29,
+      "runs": [
+        2.433,
+        2.29,
+        2.196
+      ]
+    },
+    "wood": {
+      "median": 2.188,
+      "runs": [
+        2.149,
+        2.282,
+        2.188
+      ]
+    },
+    "zipper": {
+      "median": 1.946,
+      "runs": [
+        1.946,
+        1.972,
+        1.927
+      ]
+    }
+  },
+  "append_bytes_per_class": 3010560,
+  "mean_appended_image_auroc": {
+    "transistor": 0.7185,
+    "wood": 0.9658,
+    "zipper": 0.9144
+  },
+  "per_seed": [
+    {
+      "seed": 42,
+      "regressed": [],
+      "appended_differs_from_scratch": [],
+      "appended_image_auroc": {
+        "transistor": 0.7292,
+        "wood": 0.9561,
+        "zipper": 0.917
+      }
+    },
+    {
+      "seed": 1,
+      "regressed": [],
+      "appended_differs_from_scratch": [],
+      "appended_image_auroc": {
+        "transistor": 0.6987,
+        "wood": 0.9702,
+        "zipper": 0.9081
+      }
+    },
+    {
+      "seed": 2,
+      "regressed": [],
+      "appended_differs_from_scratch": [],
+      "appended_image_auroc": {
+        "transistor": 0.7275,
+        "wood": 0.9711,
+        "zipper": 0.9181
+      }
+    }
+  ],
+  "threads": 6
+}

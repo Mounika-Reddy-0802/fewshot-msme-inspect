@@ -35,22 +35,35 @@ CLIP_STD = (0.26862954, 0.26130258, 0.27577711)
 DEFAULT_OPSET = 17
 
 
+def onnx_path(onnx_dir: str | Path, backbone: str, dim: int, precision: str = "fp32") -> Path:
+    """Where the graph for (backbone, patch dim, precision) lives.
+
+    The dim is part of the name because a 512-dim and a 768-dim graph of the
+    same backbone are different models; one must never be loaded as the other.
+    """
+    suffix = "-int8" if precision == "int8" else ""
+    return Path(onnx_dir) / f"{backbone}-d{dim}{suffix}.onnx"
+
+
 class VisualWrapper(nn.Module):
     """Tensor-in, tensor-out view of the visual tower, for tracing.
 
     open_clip's visual module returns the pooled embedding and the *unprojected*
-    patch tokens. The projection is folded in here so the exported graph emits
-    both outputs already in the joint image-text space -- the same thing
-    ``FrozenCLIPEncoder`` does, kept identical so precisions stay comparable.
+    patch tokens. Whether the patches are then projected into the 512-dim joint
+    space follows the encoder's own ``project_patches``, so the graph emits
+    exactly what ``FrozenCLIPEncoder`` would and precisions stay comparable.
     """
 
-    def __init__(self, visual: nn.Module) -> None:
+    def __init__(self, visual: nn.Module, project_patches: bool = True) -> None:
         super().__init__()
         self.visual = visual
+        self.project_patches = project_patches
 
     def forward(self, images: torch.Tensor) -> tuple[torch.Tensor, torch.Tensor]:
         pooled, tokens = self.visual(images)
-        return pooled, tokens @ self.visual.proj
+        if self.project_patches:
+            tokens = tokens @ self.visual.proj
+        return pooled, tokens
 
 
 def export_onnx(encoder, path: str | Path, opset: int = DEFAULT_OPSET) -> Path:
@@ -66,7 +79,7 @@ def export_onnx(encoder, path: str | Path, opset: int = DEFAULT_OPSET) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
 
     encoder.model.visual.output_tokens = True
-    wrapper = VisualWrapper(encoder.model.visual).eval()
+    wrapper = VisualWrapper(encoder.model.visual, encoder.project_patches).eval()
     height, width = encoder.image_size
     example = torch.zeros(1, 3, height, width)
 
@@ -108,6 +121,7 @@ def _write_sidecar(path: Path, encoder) -> None:
                 "pretrained": encoder.pretrained,
                 "grid": list(encoder.grid_size),
                 "embed_dim": encoder.embed_dim,
+                "project_patches": encoder.project_patches,
                 "image_size": [height, width],
                 "mean": list(CLIP_MEAN),
                 "std": list(CLIP_STD),

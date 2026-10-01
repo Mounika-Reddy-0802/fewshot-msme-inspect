@@ -1,0 +1,72 @@
+{
+  "question": "does ViT-L/14 beat ViT-B/16 on VisA",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-L-14-quickgelu",
+  "b": "visa_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.7854,
+        "mean_b": 0.7734,
+        "paired_mean_delta": 0.012,
+        "paired_standard_error": 0.0079,
+        "effect_over_se": 1.5,
+        "categories_favouring_a": "8/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8277,
+        "mean_b": 0.8108,
+        "paired_mean_delta": 0.0169,
+        "paired_standard_error": 0.0074,
+        "effect_over_se": 2.3,
+        "categories_favouring_a": "8/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8431,
+        "mean_b": 0.8311,
+        "paired_mean_delta": 0.012,
+        "paired_standard_error": 0.0071,
+        "effect_over_se": 1.7,
+        "categories_favouring_a": "7/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.9496,
+        "mean_b": 0.9339,
+        "paired_mean_delta": 0.0156,
+        "paired_standard_error": 0.0034,
+        "effect_over_se": 4.6,
+        "categories_favouring_a": "11/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9608,
+        "mean_b": 0.9472,
+        "paired_mean_delta": 0.0135,
+        "paired_standard_error": 0.0033,
+        "effect_over_se": 4.1,
+        "categories_favouring_a": "10/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.9643,
+        "mean_b": 0.951,
+        "paired_mean_delta": 0.0133,
+        "paired_standard_error": 0.0035,
+        "effect_over_se": 3.9,
+        "categories_favouring_a": "10/12"
+      }
+    }
+  }
+}

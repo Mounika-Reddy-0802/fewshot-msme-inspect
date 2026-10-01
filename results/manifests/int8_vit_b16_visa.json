@@ -1,0 +1,72 @@
+{
+  "question": "does ViT-B/16 accuracy survive dynamic int8 quantisation on VisA (768-dim patches)",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-B-16-quickgelu",
+  "b": "visa_ViT-B-16-quickgelu-int8",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.7734,
+        "mean_b": 0.7574,
+        "paired_mean_delta": 0.016,
+        "paired_standard_error": 0.0068,
+        "effect_over_se": 2.4,
+        "categories_favouring_a": "8/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8108,
+        "mean_b": 0.8062,
+        "paired_mean_delta": 0.0047,
+        "paired_standard_error": 0.0054,
+        "effect_over_se": 0.9,
+        "categories_favouring_a": "7/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8311,
+        "mean_b": 0.8187,
+        "paired_mean_delta": 0.0125,
+        "paired_standard_error": 0.0043,
+        "effect_over_se": 2.9,
+        "categories_favouring_a": "9/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.9339,
+        "mean_b": 0.9338,
+        "paired_mean_delta": 0.0001,
+        "paired_standard_error": 0.002,
+        "effect_over_se": 0.1,
+        "categories_favouring_a": "5/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9472,
+        "mean_b": 0.9449,
+        "paired_mean_delta": 0.0023,
+        "paired_standard_error": 0.0017,
+        "effect_over_se": 1.3,
+        "categories_favouring_a": "6/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.951,
+        "mean_b": 0.9483,
+        "paired_mean_delta": 0.0028,
+        "paired_standard_error": 0.0016,
+        "effect_over_se": 1.7,
+        "categories_favouring_a": "8/12"
+      }
+    }
+  }
+}

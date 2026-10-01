@@ -117,3 +117,23 @@ def test_memory_search_latency_is_milliseconds():
 
     ms = measure_memory_latency(dim=64, num_patches=49, prototypes=490, warmup=1, iters=5)
     assert 0 < ms < 1000, "a single small search should be well under a second"
+
+
+def test_profile_accepts_an_encoder_without_a_torch_model():
+    """An ONNX encoder has no module to count; the profile says so with None
+    instead of crashing."""
+    from src.eval.profiling import profile_encoder
+    from src.model.encoder import EncodedBatch
+
+    class GraphOnly:
+        name = "fake-int8"
+        image_size = (8, 8)
+
+        def encode_images(self, images):
+            b = images.shape[0]
+            return EncodedBatch(torch.zeros(b, 4), torch.zeros(b, 1, 4), (1, 1))
+
+    profile = profile_encoder(GraphOnly(), batch_sizes=(1,), warmup=0, iters=2)
+    row = profile.as_row()
+    assert row["parameters"] is None and row["gflops"] is None
+    assert row["latency_bs1_median_ms"] >= 0

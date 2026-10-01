@@ -8,7 +8,8 @@
       "torch_vs_fp32_image": 1.0,
       "torch_vs_fp32_patches": 1.0,
       "fp32_vs_int8_image": 0.99273,
-      "fp32_vs_int8_patches": 0.97048
+      "fp32_vs_int8_patches": 0.97048,
+      "patch_dim": 512
     },
     {
       "backbone": "ViT-B-16-quickgelu",
@@ -18,7 +19,30 @@
       "torch_vs_fp32_image": 1.0,
       "torch_vs_fp32_patches": 1.0,
       "fp32_vs_int8_image": 0.97872,
-      "fp32_vs_int8_patches": 0.90572
+      "fp32_vs_int8_patches": 0.90572,
+      "patch_dim": 512
+    },
+    {
+      "backbone": "ViT-B-32-quickgelu",
+      "patch_dim": 768,
+      "fp32_mb": 351.8,
+      "int8_mb": 88.9,
+      "compression": 3.96,
+      "torch_vs_fp32_image": 1.0,
+      "torch_vs_fp32_patches": 1.0,
+      "fp32_vs_int8_image": 0.99273,
+      "fp32_vs_int8_patches": 0.97104
+    },
+    {
+      "backbone": "ViT-B-16-quickgelu",
+      "patch_dim": 768,
+      "fp32_mb": 345.1,
+      "int8_mb": 87.6,
+      "compression": 3.94,
+      "torch_vs_fp32_image": 1.0,
+      "torch_vs_fp32_patches": 1.0,
+      "fp32_vs_int8_image": 0.97872,
+      "fp32_vs_int8_patches": 0.87317
     }
   ]
 }

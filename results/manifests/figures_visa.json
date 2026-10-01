@@ -1,0 +1,237 @@
+{
+  "source_rows": 540,
+  "backbones": [
+    "ViT-B-16-quickgelu",
+    "ViT-B-16-quickgelu-int8",
+    "ViT-B-32-quickgelu",
+    "ViT-B-32-quickgelu-int8",
+    "ViT-L-14-quickgelu"
+  ],
+  "categories": [
+    "candle",
+    "capsules",
+    "cashew",
+    "chewinggum",
+    "fryum",
+    "macaroni1",
+    "macaroni2",
+    "pcb1",
+    "pcb2",
+    "pcb3",
+    "pcb4",
+    "pipe_fryum"
+  ],
+  "shots": [
+    1,
+    5,
+    10
+  ],
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "figures": {
+    "shots_vs_accuracy": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_visa.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_visa.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.7734135313531353,
+            0.8108161624495783,
+            0.8311422258892556
+          ]
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.7574040154015402,
+            0.8061595434543454,
+            0.8186826640997433
+          ]
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.6806609827649432,
+            0.7610498624862486,
+            0.7790119820315364
+          ]
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.669341309130913,
+            0.7475776769343602,
+            0.765051035936927
+          ]
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.7853735698569857,
+            0.8277054088742207,
+            0.8431404107077375
+          ]
+        }
+      ]
+    },
+    "accuracy_latency_frontier": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_visa.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_visa.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 1,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 0.821,
+          "total_ms_per_image": 73.051,
+          "image_auroc": 0.7574040154015402
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 5,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 2.139,
+          "total_ms_per_image": 74.369,
+          "image_auroc": 0.8061595434543454
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-int8",
+          "shots": 10,
+          "backbone_ms": 72.23,
+          "memory_search_ms": 3.647,
+          "total_ms_per_image": 75.87700000000001,
+          "image_auroc": 0.8186826640997433
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 1,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 0.694,
+          "total_ms_per_image": 88.574,
+          "image_auroc": 0.7734135313531353
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 5,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.024,
+          "total_ms_per_image": 88.904,
+          "image_auroc": 0.8108161624495783
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 10,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.697,
+          "total_ms_per_image": 89.577,
+          "image_auroc": 0.8311422258892556
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 1,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 0.546,
+          "total_ms_per_image": 33.216,
+          "image_auroc": 0.669341309130913
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 5,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 0.585,
+          "total_ms_per_image": 33.255,
+          "image_auroc": 0.7475776769343602
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu-int8",
+          "shots": 10,
+          "backbone_ms": 32.67,
+          "memory_search_ms": 1.019,
+          "total_ms_per_image": 33.689,
+          "image_auroc": 0.765051035936927
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 1,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.264,
+          "total_ms_per_image": 36.984,
+          "image_auroc": 0.6806609827649432
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 5,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.257,
+          "total_ms_per_image": 36.977,
+          "image_auroc": 0.7610498624862486
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 10,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.385,
+          "total_ms_per_image": 37.105,
+          "image_auroc": 0.7790119820315364
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 1,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 0.87,
+          "total_ms_per_image": 397.99,
+          "image_auroc": 0.7853735698569857
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 5,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.515,
+          "total_ms_per_image": 399.635,
+          "image_auroc": 0.8277054088742207
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 10,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.94,
+          "total_ms_per_image": 400.06,
+          "image_auroc": 0.8431404107077375
+        }
+      ]
+    }
+  }
+}

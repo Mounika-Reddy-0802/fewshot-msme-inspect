@@ -20,6 +20,8 @@ model:
   scoring:
     top_k: 1                # neighbours averaged into the anomaly score
     temperature: 0.07
+    scales: [1]             # window sizes; [1] is single-pass (src/model/windows.py)
+    text_weight: 0.0        # image score = (1 - w) * memory + w * text prompts
 
 dataset:
   shots: 5

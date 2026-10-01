@@ -1,0 +1,54 @@
+{
+  "method": "fresh process per config; OS peak working set minus RSS after imports; model load + 5 forwards, batch 1",
+  "rows": [
+    {
+      "backbone": "ViT-B-32-quickgelu",
+      "engine": "torch",
+      "baseline_mb": 195.9,
+      "peak_mb": 1662.9,
+      "inspector_mb": 1467.0
+    },
+    {
+      "backbone": "ViT-B-32-quickgelu",
+      "engine": "onnx-fp32",
+      "baseline_mb": 196.4,
+      "peak_mb": 863.7,
+      "inspector_mb": 667.3
+    },
+    {
+      "backbone": "ViT-B-32-quickgelu",
+      "engine": "onnx-int8",
+      "baseline_mb": 196.0,
+      "peak_mb": 573.5,
+      "inspector_mb": 377.5
+    },
+    {
+      "backbone": "ViT-B-16-quickgelu",
+      "engine": "torch",
+      "baseline_mb": 197.0,
+      "peak_mb": 1652.3,
+      "inspector_mb": 1455.3
+    },
+    {
+      "backbone": "ViT-B-16-quickgelu",
+      "engine": "onnx-fp32",
+      "baseline_mb": 196.3,
+      "peak_mb": 837.4,
+      "inspector_mb": 641.2
+    },
+    {
+      "backbone": "ViT-B-16-quickgelu",
+      "engine": "onnx-int8",
+      "baseline_mb": 197.0,
+      "peak_mb": 587.4,
+      "inspector_mb": 390.4
+    },
+    {
+      "backbone": "ViT-L-14-quickgelu",
+      "engine": "torch",
+      "baseline_mb": 196.7,
+      "peak_mb": 3876.2,
+      "inspector_mb": 3679.6
+    }
+  ]
+}

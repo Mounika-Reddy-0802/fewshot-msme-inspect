@@ -1,0 +1,72 @@
+{
+  "question": "does ViT-L/14 beat ViT-B/16 on MVTec AD",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mvtec_ad_ViT-L-14-quickgelu",
+  "b": "mvtec_ad_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 15,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.8834,
+        "mean_b": 0.8558,
+        "paired_mean_delta": 0.0276,
+        "paired_standard_error": 0.0089,
+        "effect_over_se": 3.1,
+        "categories_favouring_a": "11/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.92,
+        "mean_b": 0.8881,
+        "paired_mean_delta": 0.0319,
+        "paired_standard_error": 0.0078,
+        "effect_over_se": 4.1,
+        "categories_favouring_a": "12/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9335,
+        "mean_b": 0.904,
+        "paired_mean_delta": 0.0295,
+        "paired_standard_error": 0.0064,
+        "effect_over_se": 4.6,
+        "categories_favouring_a": "12/15"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.9295,
+        "mean_b": 0.9157,
+        "paired_mean_delta": 0.0139,
+        "paired_standard_error": 0.0053,
+        "effect_over_se": 2.6,
+        "categories_favouring_a": "9/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9416,
+        "mean_b": 0.9316,
+        "paired_mean_delta": 0.0099,
+        "paired_standard_error": 0.004,
+        "effect_over_se": 2.5,
+        "categories_favouring_a": "9/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9447,
+        "mean_b": 0.9362,
+        "paired_mean_delta": 0.0086,
+        "paired_standard_error": 0.0037,
+        "effect_over_se": 2.3,
+        "categories_favouring_a": "9/15"
+      }
+    }
+  }
+}

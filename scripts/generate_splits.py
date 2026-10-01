@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.utils.config import load_config  # noqa: E402
-from src.utils.paths import data_root, dataset_dir, results_root  # noqa: E402
+from src.utils.paths import data_root, dataset_dir, repo_root  # noqa: E402
 from src.utils.seed import seed_everything  # noqa: E402
 
 SHOT_COUNTS = (0, 1, 5, 10)
@@ -105,14 +105,19 @@ def main() -> int:
         "--categories", nargs="+", default=None,
         help="defaults to every category currently present for this dataset",
     )
+    parser.add_argument(
+        "--seeds", nargs="+", type=int, default=None,
+        help="one manifest per seed; defaults to the seed in base.yaml. "
+             "Extra seeds are what give a result error bars -- with a single "
+             "draw, a category that dips at 5 shots cannot be told apart from "
+             "an unlucky support image.",
+    )
     args = parser.parse_args()
 
     config = load_config("base.yaml")
-    seed = config["experiment"]["seed"]
-    seed_everything(seed)
-
-    import random
-    rng = random.Random(seed)
+    default_seed = config["experiment"]["seed"]
+    seeds = args.seeds or [default_seed]
+    seed_everything(default_seed)
 
     root = category_root(args.dataset)
     categories = args.categories or discover_categories(root)
@@ -121,29 +126,47 @@ def main() -> int:
         print(f"no categories found under {root} -- run the download script first")
         return 1
 
-    print(f"seed {seed} -- generating splits for {len(categories)} {args.dataset} categories: {categories}")
-
-    manifest = {
-        "dataset": args.dataset,
-        "seed": seed,
-        "shot_counts": list(SHOT_COUNTS),
-        "categories": {},
-    }
+    print(f"seeds {seeds} -- generating splits for {len(categories)} "
+          f"{args.dataset} categories: {categories}")
 
     relpath_root = data_root()  # every path in the manifest is relative to this
 
-    for category in categories:
-        category_dir = root / category
-        manifest["categories"][category] = build_category_split(category_dir, relpath_root, rng)
-        n_test = len(manifest["categories"][category]["test"])
-        n_good = manifest["categories"][category]["num_train_good_available"]
-        print(f"  {category:<12} {n_good} train/good available, {n_test} test images")
-
-    out_dir = results_root() / "manifests" / "splits"
+    # Manifests are the reproducibility record and must be committed, so they go
+    # to the repository rather than to FEWSHOT_RESULTS_ROOT, which usually points
+    # outside it.
+    out_dir = repo_root() / "results" / "manifests" / "splits"
     out_dir.mkdir(parents=True, exist_ok=True)
-    out_path = out_dir / f"{args.dataset}.json"
-    out_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    print(f"\nwritten to {out_path}")
+
+    import random
+
+    for seed in seeds:
+        rng = random.Random(seed)      # fresh per seed, so the draws are independent
+        manifest = {
+            "dataset": args.dataset,
+            "seed": seed,
+            "shot_counts": list(SHOT_COUNTS),
+            "categories": {},
+        }
+        for category in categories:
+            manifest["categories"][category] = build_category_split(
+                root / category, relpath_root, rng
+            )
+
+        # the default seed keeps the original filename, so existing references
+        # and Member B's workflow are unaffected
+        name = (
+            f"{args.dataset}.json" if seed == default_seed
+            else f"{args.dataset}_seed{seed}.json"
+        )
+        (out_dir / name).write_text(json.dumps(manifest, indent=2), encoding="utf-8")
+
+        first = categories[0]
+        print(f"  seed {seed:<4} -> {name:<28}"
+              f"{manifest['categories'][first]['num_train_good_available']} "
+              f"train/good in {first}, "
+              f"{len(manifest['categories'][first]['test'])} test")
+
+    print(f"\n{len(seeds)} manifest(s) written to {out_dir}")
     return 0
 
 

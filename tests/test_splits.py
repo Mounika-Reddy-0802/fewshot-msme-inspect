@@ -145,3 +145,91 @@ def test_resolve_gives_existing_files(fake_root):
     assert len(support) == 5 and all(p.exists() for p in support)
     assert len(test) == 9
     assert all(s.mask.exists() for s in test if s.mask)
+
+
+# --- multiple seeds ---------------------------------------------------------
+
+def test_manifest_paths_finds_every_seed(tmp_path):
+    """The default seed keeps the plain name; extra seeds are siblings."""
+    from src.data.splits import manifest_paths
+
+    (tmp_path / "mvtec_ad.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "mvtec_ad_seed1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "mvtec_ad_seed2.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "visa.json").write_text("{}", encoding="utf-8")
+
+    found = [p.name for p in manifest_paths(tmp_path, "mvtec_ad")]
+    assert found == ["mvtec_ad.json", "mvtec_ad_seed1.json", "mvtec_ad_seed2.json"]
+    assert "visa.json" not in found
+
+
+def test_manifest_paths_puts_the_default_seed_first(tmp_path):
+    from src.data.splits import manifest_paths
+
+    (tmp_path / "mvtec_ad_seed1.json").write_text("{}", encoding="utf-8")
+    (tmp_path / "mvtec_ad.json").write_text("{}", encoding="utf-8")
+    assert manifest_paths(tmp_path, "mvtec_ad")[0].name == "mvtec_ad.json"
+
+
+def test_manifest_paths_of_nothing(tmp_path):
+    from src.data.splits import manifest_paths
+
+    assert manifest_paths(tmp_path, "mvtec_ad") == []
+
+
+def test_committed_manifests_cover_several_seeds():
+    """A single seed cannot distinguish a real dip from an unlucky draw, so the
+    repository must carry more than one."""
+    from src.data.splits import load_manifest, manifest_paths
+    from src.utils.paths import repo_root
+
+    paths = manifest_paths(repo_root() / "results" / "manifests" / "splits", "mvtec_ad")
+    seeds = sorted(load_manifest(p)["seed"] for p in paths)
+    assert len(seeds) >= 3, f"only seeds {seeds} committed"
+    assert len(set(seeds)) == len(seeds), "duplicate seeds"
+
+
+def test_each_committed_seed_is_nested_and_distinct():
+    from src.data.splits import load_manifest, manifest_paths
+    from src.utils.paths import repo_root
+
+    paths = manifest_paths(repo_root() / "results" / "manifests" / "splits", "mvtec_ad")
+    draws = set()
+    for p in paths:
+        manifest = load_manifest(p)
+        for block in manifest["categories"].values():
+            one, five, ten = (set(block["shots"][k]) for k in ("1", "5", "10"))
+            assert one < five < ten, f"{p.name} is not nested"
+        draws.add(tuple(manifest["categories"]["bottle"]["shots"]["5"]))
+    assert len(draws) == len(paths), "seeds produced identical draws"
+
+
+# --- mask naming conventions ------------------------------------------------
+
+def test_finds_mvtec_style_masks(tmp_path):
+    """MVTec: test/broken/000.png -> ground_truth/broken/000_mask.png"""
+    from src.data.splits import _mask_for
+
+    gt = tmp_path / "ds" / "cat" / "ground_truth" / "broken"
+    gt.mkdir(parents=True)
+    (gt / "000_mask.png").write_bytes(b"")
+    assert _mask_for("ds/cat/test/broken/000.png", tmp_path) is not None
+
+
+def test_finds_visa_style_masks(tmp_path):
+    """VisA: test/bad/000.JPG -> ground_truth/bad/000.png -- a different
+    convention entirely. Guessing wrong is silent: the image gets an all-zero
+    mask and its pixel metrics become meaningless without any error."""
+    from src.data.splits import _mask_for
+
+    gt = tmp_path / "ds" / "cat" / "ground_truth" / "bad"
+    gt.mkdir(parents=True)
+    (gt / "000.png").write_bytes(b"")
+    assert _mask_for("ds/cat/test/bad/000.JPG", tmp_path) is not None
+
+
+def test_missing_mask_returns_none(tmp_path):
+    from src.data.splits import _mask_for
+
+    (tmp_path / "ds" / "cat" / "ground_truth" / "bad").mkdir(parents=True)
+    assert _mask_for("ds/cat/test/bad/000.JPG", tmp_path) is None

@@ -1,0 +1,38 @@
+{
+  "question": "is int8 faster than fp32 on this CPU, same ONNX runtime",
+  "design": "onnx-fp32 vs onnx-int8, batch size 1, 5 warmup, median of 20; two alternating runs each; 6 threads (one per performance core)",
+  "machine": "Intel i7-13700H (6 performance + 8 efficiency cores), CPU only",
+  "backbones": {
+    "ViT-B-32-quickgelu": {
+      "fp32_ms_bs1_runs": [
+        40.93,
+        38.74
+      ],
+      "int8_ms_bs1_runs": [
+        26.58,
+        32.67
+      ],
+      "speedup_median": 1.34,
+      "fp32_mb": 351.8,
+      "int8_mb": 88.9
+    },
+    "ViT-B-16-quickgelu": {
+      "fp32_ms_bs1_runs": [
+        133.48,
+        131.29
+      ],
+      "int8_ms_bs1_runs": [
+        71.36,
+        72.23
+      ],
+      "speedup_median": 1.84,
+      "fp32_mb": 345.1,
+      "int8_mb": 87.6
+    }
+  },
+  "notes": [
+    "At 14 threads the same graphs were unusable: fp32 ViT-B/32 measured 36 ms in one run and 526 ms in the next. 14 threads span both core types of this hybrid CPU, so the slowest efficiency core gates every parallel op, and OneDrive sync was competing for them. At 6 threads repeats agree within ~20%.",
+    "These are not comparable with the torch numbers in backbones.csv (14 threads, torch runtime). Compare onnx-int8 with onnx-fp32 only.",
+    "Peak RAM is not reported: onnxruntime allocates at session load, before the forward pass the harness measures, so it reads ~0 MB."
+  ]
+}
