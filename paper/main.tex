@@ -272,7 +272,8 @@ bit-identically to a memory built with all fifteen from the start
 (\texttt{incremental\_holdout\_*.json}). Appending a product end to end (reading
 the photos, encoding, storing) takes 2.0--2.3\,s from 5 photos and 3.3--3.7\,s from
 10 on the idle laptop, almost all of it encoding, and 3.0\,MB (B/16, 5 shots); sequentially adding all fifteen
-products takes 1.9\,ms of memory work each (\texttt{incremental\_5shot.json}).
+products takes 1.4--1.9\,ms of memory work each, measured on two machines
+(\texttt{incremental\_5shot.json}).
 
 \subsection{Cost}\label{sec:cost}
 Burst latency (torch FP32, batch 1) is 37\,ms for B/32 (3.0 GFLOPs), 88\,ms for

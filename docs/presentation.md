@@ -57,7 +57,7 @@ range. It needed all 209 normal training images and 22 minutes of CPU.
    machine load.
 2. **Append-only class addition, proven rather than asserted.** Adding all 15
    MVTec classes one at a time leaves every previously added class scoring
-   **bit-identically** (`torch.equal`, not "close enough"). Cost: **~1.9 ms and
+   **bit-identically** (`torch.equal`, not "close enough"). Cost: **~1.4-1.9 ms and
    3.0 MB per class.**
 3. **Zero training anywhere in the pipeline.** No epochs, no optimiser, no
    learning rate. Deployment is a file copy.
@@ -405,7 +405,7 @@ Precision never changes which backbone to pick.
 * **Memory search is ~1% of inference cost** (0.3–2.9 ms against 37–397 ms), so
   extra shots are effectively free.
 * **Append-only verified**: 15 classes added sequentially, all prior scores
-  bit-identical, ~1.9 ms and 3.0 MB per class.
+  bit-identical, ~1.4-1.9 ms and 3.0 MB per class.
 
 ## 3.6 Training configuration
 
@@ -422,7 +422,7 @@ Precision never changes which backbone to pick.
 | trainable parameters | **0 of 150 M** (`requires_grad=False`, asserted by test) |
 | gradient steps taken | **0** |
 
-"Fitting" a class = appending l2-normalised vectors to a list: **~1.9 ms**, no
+"Fitting" a class = appending l2-normalised vectors to a list: **~1.4-1.9 ms**, no
 gradients, no GPU.
 
 `configs/adapter.yaml` contains a `training:` block (epochs 20, lr 0.001, AdamW,
@@ -506,5 +506,5 @@ patch area — tells a workshop which one to buy compute for.
 
 **3. Adding a product cannot break the ones already running.**
 15 classes added one at a time; after every addition, every previous class scored
-**bit-identically**. ~1.9 ms and 3.0 MB each. This is the property a factory
+**bit-identically**. ~1.4-1.9 ms and 3.0 MB each. This is the property a factory
 actually needs, and it is verified with `torch.equal`, not argued.

@@ -257,7 +257,7 @@ previously added class was re-scored and compared with `torch.equal`.
 | | |
 |---|---|
 | classes added | 15 |
-| cost per class | **~1.9 ms, 3.0 MB** |
+| cost per class | **~1.4-1.9 ms, 3.0 MB** (two machines) |
 | total memory, 15 classes | 43.1 MiB |
 | mean image AUROC (5-shot) | 0.886 |
 | existing-class scores after each addition | **bit-identical** |
