@@ -26,6 +26,7 @@ import argparse
 import json
 # Import sys so the repository root can be added to Python's import search path.
 import sys
+# Import Path for platform-independent filesystem path operations.
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
