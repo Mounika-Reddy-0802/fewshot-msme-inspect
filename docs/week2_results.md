@@ -561,10 +561,10 @@ it hurts (the alpha sweep); fused *per image* it helps.
 | VisA, proposed | **0.815** | **0.841** | **0.855** |
 
 For reference only: WinCLIP+ reports 93.1 / 94.4 / 95.2 (MVTec) and
-83.8 / 84.6 / 87.3 (VisA) at 1 / 2 / 4 shots, with a ViT-B/16+ backbone at 240px,
-LAION-400M weights and one encoder pass per window. We did not reproduce it;
-the backbones, weights and shot counts differ. *(Verify these published figures
-against WinCLIP's Table 1 before quoting them.)*
+83.8 / 84.6 / 87.3 (VisA) image AUROC at 1 / 2 / 4 shots, means over five seeds
+(Jeong et al., CVPR 2023, Table 1; pixel AUROC 95.2-96.2 / 96.4-97.2 in Table 4),
+with a ViT-B/16+ backbone at 240px, LAION-400M weights and one encoder pass per
+window. We did not reproduce it; the backbones, weights and shot counts differ.
 
 ---
 

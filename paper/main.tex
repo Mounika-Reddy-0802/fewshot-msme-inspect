@@ -177,9 +177,9 @@ image level it helps. On VisA windows add $+0.016$ to $+0.021$ image AUROC
 smears defects already smaller than a patch (\texttt{visa\_windowed.json}).
 
 \paragraph{Against WinCLIP.} WinCLIP+ reports 93.1 / 94.4 / 95.2 image AUROC on
-MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots~\cite{jeong2023winclip}
-\todo{verify against its Table before submission}. It uses a ViT-B/16+ backbone
-at 240\,px with LAION-400M weights and one encoder pass per window. Our
+MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots, means over five seeds
+(\cite{jeong2023winclip}, Table~1). It uses a ViT-B/16+ backbone at 240\,px with
+LAION-400M weights and one encoder pass per window. Our
 single-pass B/16 system reaches 0.881 (MVTec) and 0.815 (VisA) at one shot. We
 did not reproduce WinCLIP; the comparison is across backbones, weights and shot
 counts and should be read as indicative only.
