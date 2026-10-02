@@ -20,6 +20,7 @@ results/ is not.
 
 from __future__ import annotations
 
+# Import the command-line parsing tools used to define and read script options.
 import argparse
 import json
 import sys
@@ -35,13 +36,12 @@ SHOT_COUNTS = (0, 1, 5, 10)
 IMAGE_EXTS = ("*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG")
 
 # VisA's categories live one level deeper (visa_pytorch/<category>) than
-# MVTec's (<category> directly under the dataset root).
+# MVTec's (<category> directly under the dataset root). 
 CATEGORY_SUBDIR = {
     "mvtec_ad": "",
     "visa": "visa_pytorch",
     "neu_det": "",
 }
-
 
 def category_root(dataset: str) -> Path:
     root = dataset_dir(dataset)
