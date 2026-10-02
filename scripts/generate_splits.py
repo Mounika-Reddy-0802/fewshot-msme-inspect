@@ -24,6 +24,7 @@ from __future__ import annotations
 import argparse
 # Import JSON serialization so generated manifests can be written as structured files.
 import json
+# Import sys so the repository root can be added to Python's import search path.
 import sys
 from pathlib import Path
 
