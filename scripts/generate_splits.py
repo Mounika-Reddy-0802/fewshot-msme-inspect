@@ -22,6 +22,7 @@ from __future__ import annotations
 
 # Import the command-line parsing tools used to define and read script options.
 import argparse
+# Import JSON serialization so generated manifests can be written as structured files.
 import json
 import sys
 from pathlib import Path
