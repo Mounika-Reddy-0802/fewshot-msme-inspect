@@ -37,19 +37,75 @@ the start and leaves every existing product's scores unchanged. Inspecting
 \end{abstract}
 
 \section{Introduction}
-\todo{Member-authored. Motivation: MSMEs, no defect photos, no GPU, product
-changeover. Contributions list: (1) CPU benchmark across backbone $\times$
-precision $\times$ shots with paired statistics; (2) append-only class addition,
-verified bit-identical; (3) a defect-size rule for choosing a backbone; (4) a
-Rs 0 feasibility analysis; (5) an open release.}
+\todo{AI-assisted draft: rewrite in your own words before submission.}
+
+A small manufacturer that wants automated visual inspection meets three
+obstacles before accuracy is even a question. It has photographs of good parts
+but almost none of defective ones, because a new line has not failed yet. It
+has a laptop, not a GPU server or a machine-learning team. And its product mix
+changes: a new part arrives, and the inspection system must take it on without
+being retrained and without disturbing the parts already being inspected.
+
+Industrial anomaly detection has largely solved the first obstacle by learning
+only from normal images~\cite{bergmann2019mvtec}, and memory-bank methods such
+as PatchCore~\cite{roth2022patchcore} reach near-perfect accuracy on standard
+benchmarks. They do so with hundreds of normal images per product and with
+results reported as accuracy alone. Vision--language models have since brought
+the number of images down to a handful~\cite{jeong2023winclip}, but they are
+evaluated on GPUs, and what they cost on the hardware a small manufacturer
+actually owns is not reported.
+
+This paper measures that cost. We study a deliberately simple, training-free
+detector: a frozen CLIP image encoder~\cite{radford2021clip,cherti2023openclip},
+an append-only memory of the patch features of a few good photos per product,
+and, optionally, multi-scale window scoring and fusion with text prompts. We
+report accuracy and CPU cost together, across three backbones, two numerical
+precisions and one to ten shots, on two public benchmarks, with every
+comparison paired over three seeds. Our contributions:
+\begin{itemize}
+\item a CPU-only benchmark of accuracy against latency, memory and FLOPs, with
+  paired statistics and burst as well as sustained-load latency;
+\item append-only product addition, verified to be bit-identical to building
+  the product in from the start and to leave every other product unchanged;
+\item a practical rule for choosing a backbone: the smallest defect that matters
+  against the image area one patch covers;
+\item a cost analysis showing that inspection on an existing laptop costs
+  tens of rupees a year in electricity and no hardware;
+\item an open release with one command per table and a working demo.
+\end{itemize}
 
 \section{Related work}
-\todo{Member-authored. Memory-bank methods: PatchCore~\cite{roth2022patchcore},
-PaDiM~\cite{defard2021padim}. Vision--language: CLIP~\cite{radford2021clip},
-OpenCLIP~\cite{cherti2023openclip}, WinCLIP~\cite{jeong2023winclip},
-AnomalyCLIP~\cite{zhou2024anomalyclip}. Training-free adaptation:
-Tip-Adapter~\cite{zhang2022tipadapter}. Tooling: anomalib~\cite{akcay2022anomalib}.
-Gap: none report CPU latency, INT8 cost, or class addition.}
+\todo{AI-assisted draft: rewrite in your own words before submission.}
+
+\paragraph{Learning from normal images.} MVTec AD~\cite{bergmann2019mvtec} and
+VisA~\cite{zou2022visa} established the standard protocol of training only on
+defect-free images and testing on both. Embedding-based methods model the
+distribution of features from an ImageNet-pretrained network:
+PaDiM~\cite{defard2021padim} fits a Gaussian per patch position, and
+PatchCore~\cite{roth2022patchcore} keeps a coreset of patch features and scores a
+test patch by its distance to the nearest one. Our memory follows PatchCore's
+nearest-neighbour principle but stores every support patch, since a few-shot
+memory is small enough not to need a coreset, and keeps one memory per product
+so that products are independent. Anomalib~\cite{akcay2022anomalib} provides
+reference implementations, which we use for our PatchCore sanity check.
+
+\paragraph{Vision--language anomaly detection.} CLIP~\cite{radford2021clip}
+aligns images and text in one embedding space, which makes zero-shot detection
+possible by comparing an image with prompts for normal and defective objects.
+WinCLIP~\cite{jeong2023winclip} adds window-level features for localisation
+and, with a few normal images, a reference memory (WinCLIP+).
+AnomalyCLIP~\cite{zhou2024anomalyclip} learns object-agnostic prompts instead.
+Both report accuracy on GPU; neither reports CPU latency, quantisation cost,
+or what happens to existing products when one is added. We borrow WinCLIP's two
+ideas -- window aggregation and fusing text with the memory -- but compute
+windows from a single encoder pass, and measure what each idea is worth.
+
+\paragraph{Training-free adaptation.} Tip-Adapter~\cite{zhang2022tipadapter}
+adapts CLIP to few-shot classification with a key--value cache of support
+features and no training. We implemented its cache kernel as an anomaly head
+and found that at its best setting it reproduces nearest-neighbour scoring
+exactly, because the kernel is monotonic in cosine similarity and AUROC is
+rank-based; we report this as a negative result rather than use it.
 
 \section{Method}
 
@@ -177,9 +233,9 @@ image level it helps. On VisA windows add $+0.016$ to $+0.021$ image AUROC
 smears defects already smaller than a patch (\texttt{visa\_windowed.json}).
 
 \paragraph{Against WinCLIP.} WinCLIP+ reports 93.1 / 94.4 / 95.2 image AUROC on
-MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots~\cite{jeong2023winclip}
-\todo{verify against its Table before submission}. It uses a ViT-B/16+ backbone
-at 240\,px with LAION-400M weights and one encoder pass per window. Our
+MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots, means over five seeds
+(\cite{jeong2023winclip}, Table~1). It uses a ViT-B/16+ backbone at 240\,px with
+LAION-400M weights and one encoder pass per window. Our
 single-pass B/16 system reaches 0.881 (MVTec) and 0.815 (VisA) at one shot. We
 did not reproduce WinCLIP; the comparison is across backbones, weights and shot
 counts and should be read as indicative only.
@@ -216,7 +272,8 @@ bit-identically to a memory built with all fifteen from the start
 (\texttt{incremental\_holdout\_*.json}). Appending a product end to end (reading
 the photos, encoding, storing) takes 2.0--2.3\,s from 5 photos and 3.3--3.7\,s from
 10 on the idle laptop, almost all of it encoding, and 3.0\,MB (B/16, 5 shots); sequentially adding all fifteen
-products takes 1.9\,ms of memory work each (\texttt{incremental\_5shot.json}).
+products takes 1.4--1.9\,ms of memory work each, measured on two machines
+(\texttt{incremental\_5shot.json}).
 
 \subsection{Cost}\label{sec:cost}
 Burst latency (torch FP32, batch 1) is 37\,ms for B/32 (3.0 GFLOPs), 88\,ms for
@@ -243,7 +300,21 @@ localise well (pixel $\ge$0.95). We did not reproduce WinCLIP or AnomalyCLIP, no
 test static INT8. \todo{NEU-DET, MPDD.}
 
 \section{Conclusion}
-\todo{Member-authored.}
+\todo{AI-assisted draft: rewrite in your own words before submission.}
+
+A frozen CLIP encoder with an append-only memory inspects parts from ten good
+photos at 0.90--0.93 image AUROC on MVTec AD on a laptop CPU, and adding a
+product changes nothing about the products already in place -- a property we
+verify exactly rather than approximately. The cost picture is more useful than
+any single latency: the cheapest backbone is enough when defects are large but
+not when they are smaller than its patches, INT8 trims 0.005--0.02 AUROC for a
+1.3--1.8$\times$ speed-up without changing that choice, and a laptop that runs at
+37\,ms per image when cool settles at five to six times that under continuous
+use. Even at the throttled rate, a laptop the workshop already owns inspects
+10,000 parts a day with hours to spare, for tens of rupees of electricity a
+year. The open questions are the ones public benchmarks cannot answer: defects
+thinner than a patch, and the gap between benchmark photographs and a shop
+floor.
 
 \paragraph{Reproducibility.} Code, split manifests and one command per table:
 \texttt{python scripts/reproduce.py --list}. \todo{repository URL and tag v1.0.}

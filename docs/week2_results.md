@@ -257,7 +257,7 @@ previously added class was re-scored and compared with `torch.equal`.
 | | |
 |---|---|
 | classes added | 15 |
-| cost per class | **~1.9 ms, 3.0 MB** |
+| cost per class | **~1.4-1.9 ms, 3.0 MB** (two machines) |
 | total memory, 15 classes | 43.1 MiB |
 | mean image AUROC (5-shot) | 0.886 |
 | existing-class scores after each addition | **bit-identical** |
@@ -561,10 +561,10 @@ it hurts (the alpha sweep); fused *per image* it helps.
 | VisA, proposed | **0.815** | **0.841** | **0.855** |
 
 For reference only: WinCLIP+ reports 93.1 / 94.4 / 95.2 (MVTec) and
-83.8 / 84.6 / 87.3 (VisA) at 1 / 2 / 4 shots, with a ViT-B/16+ backbone at 240px,
-LAION-400M weights and one encoder pass per window. We did not reproduce it;
-the backbones, weights and shot counts differ. *(Verify these published figures
-against WinCLIP's Table 1 before quoting them.)*
+83.8 / 84.6 / 87.3 (VisA) image AUROC at 1 / 2 / 4 shots, means over five seeds
+(Jeong et al., CVPR 2023, Table 1; pixel AUROC 95.2-96.2 / 96.4-97.2 in Table 4),
+with a ViT-B/16+ backbone at 240px, LAION-400M weights and one encoder pass per
+window. We did not reproduce it; the backbones, weights and shot counts differ.
 
 ---
 
