@@ -25,7 +25,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.data.splits import load_manifest  # noqa: E402
-from src.utils.paths import results_root  # noqa: E402
+from src.utils.paths import repo_root  # noqa: E402
 
 MANIFEST_NAME = re.compile(r"^(?P<dataset>.+?)(?:_seed\d+)?\.json$")
 
@@ -89,7 +89,8 @@ def check_cross_seed_duplicates(draws: dict, errors: list[str]) -> None:
 
 
 def main() -> int:
-    splits_dir = results_root() / "manifests" / "splits"
+    # committed manifests live in the repo, not under FEWSHOT_RESULTS_ROOT
+    splits_dir = repo_root() / "results" / "manifests" / "splits"
     if not splits_dir.is_dir():
         print(f"no manifests found at {splits_dir}")
         return 1
