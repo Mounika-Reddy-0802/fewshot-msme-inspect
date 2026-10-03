@@ -45,10 +45,22 @@ def compare(a: dict, b: dict, metric: str) -> dict:
     for key in keys:
         by_shot[key[1]].append(key)
 
+    def value(row):
+        try:
+            v = float(row[metric])
+        except (TypeError, ValueError):
+            return None
+        return None if v != v else v                  # NaN: undefined for this split
+
     out = {}
     for shots, group in sorted(by_shot.items()):
-        va = [float(a[k][metric]) for k in group]
-        vb = [float(b[k][metric]) for k in group]
+        # a metric that is undefined for a split (pixel AUROC on NEU-DET, which
+        # has no masks) is left out rather than poisoning the mean
+        group = [k for k in group if value(a[k]) is not None and value(b[k]) is not None]
+        if len(group) < 2:
+            continue
+        va = [value(a[k]) for k in group]
+        vb = [value(b[k]) for k in group]
         deltas = [x - y for x, y in zip(va, vb)]
         se = statistics.stdev(deltas) / math.sqrt(len(deltas))
         delta = statistics.fmean(deltas)
@@ -91,7 +103,7 @@ def main() -> int:
         "b": args.b,
         "seeds": sorted({k[2] for k in shared}),
         "categories": len({k[0] for k in shared}),
-        "per_metric": {m: compare(a, b, m) for m in METRICS},
+        "per_metric": {m: rows for m in METRICS if (rows := compare(a, b, m))},
     }
 
     for metric, rows in manifest["per_metric"].items():
