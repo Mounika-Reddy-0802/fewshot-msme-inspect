@@ -212,7 +212,7 @@ right tool.
 |---|---|---|---|
 | **MVTec AD** | 15 | **5,354** (3,629 train, 1,725 test) | ✅ downloaded, verified, fully evaluated |
 | **VisA** | 12 | ~10,800 | ✅ downloaded, 3-seed splits, evaluated on both backbones |
-| **NEU-DET** | 6 | 1,800 | 🟡 downloaded + reorganised; splits not yet generated |
+| **NEU-DET** | 6 | 1,800 | ✅ one-class-as-normal splits, evaluated on 3 backbones, verified across machines |
 | MPDD | 6 | — | optional, not started |
 
 MVTec AD was verified **per category against published counts** — all 15 match
@@ -471,7 +471,6 @@ defect descriptions · architecture freeze · paper draft · **187 tests**.
 
 | item | why it matters |
 |---|---|
-| **NEU-DET evaluation** | data reorganised, splits not yet generated |
 | **MPDD, static INT8** | optional; cut first under the Blueprint's cut order |
 | **WinCLIP / AnomalyCLIP reproduction** | cited, not reproduced; WinCLIP needs one encoder pass per window |
 
@@ -484,7 +483,8 @@ defect descriptions · architecture freeze · paper draft · **187 tests**.
   unavailable entirely.
 * **`screw` is a resolution failure**, not a method failure: 0.705 at 10 shots
   with B/16, 0.792 with L/14's finer grid. Its defects are thinner than a patch.
-* **Two datasets evaluated, not three.** MVTec AD and VisA; NEU-DET is pending.
+* **NEU-DET is image-level only** (no masks), and text fusion hurts there: its
+  "normal" class is itself a defect type.
 * **Small defects cost detection accuracy.** VisA image AUROC is 0.831 at 10 shots
   against 0.904 on MVTec, even though pixel AUROC is higher (0.951).
 * **`toothbrush` remains non-monotonic** — the smallest category (60 train, 42

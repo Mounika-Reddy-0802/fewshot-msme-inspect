@@ -2,9 +2,9 @@
 
 Blueprint §19 asks that every headline number be recomputed by the member who did
 not produce it. This file records what has been checked, how, and what is still
-open. **Status: partly done.** The MVTec and VisA checks below are a same-machine
-clean-room rerun, not the independent check the Blueprint asks for; the NEU-DET
-numbers have not been checked by anyone but their author.
+open. **Status:** NEU-DET is cross-verified across machines (Member B produced
+it, Member A reproduced it). The MVTec and VisA checks below are a same-machine
+clean-room rerun; an independent rerun by Member B is still open.
 
 ## 1. Headline numbers, as committed
 
@@ -16,8 +16,8 @@ Image AUROC, prototype memory, mean over 3 seeds (42, 1, 2), FP32.
 | MVTec AD | ViT-B/32 | 0.837 | 0.884 | 0.904 | week2_results §2 |
 | VisA | ViT-B/16 | 0.773 | 0.811 | 0.831 | week2_results §6 |
 | VisA | ViT-B/32 | 0.681 | 0.761 | 0.779 | week2_results §6 |
-| NEU-DET | ViT-B/16 | 0.810 | 0.854 | 0.870 | Member B, unverified |
-| NEU-DET | ViT-B/32 | 0.818 | 0.867 | 0.893 | Member B, unverified |
+| NEU-DET | ViT-B/16 | 0.821 | 0.868 | 0.887 | week2_results §10, verified |
+| NEU-DET | ViT-B/32 | 0.818 | 0.867 | 0.893 | week2_results §10, verified |
 
 **Correction to the first version of this file (2026-10-02).** It listed MVTec
 B/32 as 0.846 / 0.886 / 0.904 and VisA B/32 as 0.681 / 0.748 / 0.765. Neither was a
@@ -55,12 +55,22 @@ thread scheduling); it does not move any reported mean.
 
 * **Independent rerun by Member B** of `python scripts/reproduce.py mvtec backbones
   incremental` on her own machine, compared against week2_results §1, 2, 5 and 6.
-* **NEU-DET verification by Member A.** Needs the same copy of the data Member B
-  used (Kaggle `kaustubhdikshit/neu-surface-defect-database`). NEU-DET also still
-  needs the L/14 and proposed-config runs, paired comparisons and a write-up in
-  week2_results.
+### NEU-DET: verified across machines (2026-10-03)
 
-### NEU-DET class breakdown (Member B's run, unverified)
+Member A downloaded the same Kaggle copy (`kaustubhdikshit/neu-surface-defect-database`),
+ran Member B's `reorganize_neu_det.py` and `build_neu_det_oneclass.py` unchanged,
+and re-ran the benchmark.
+
+* All 2,448 image paths in the committed NEU-DET manifests exist in the rebuilt
+  layout, and `generate_splits.py --dataset neu_det --seeds 42 1 2` regenerates
+  the three manifests **byte-identically** on the second machine.
+* Every per-class, per-shot image AUROC below matches Member A's run to within
+  **0.0005**, for both backbones.
+* One error in the first report: the B/16 **mean** row read 0.810 / 0.854 / 0.870.
+  The mean of the per-class values below is **0.821 / 0.868 / 0.887**, which is
+  also what the rerun gives. The B/32 mean was right.
+
+### NEU-DET class breakdown (Member B's run, reproduced by Member A)
 
 | class | ViT-B/16 (1 / 5 / 10-shot) | ViT-B/32 (1 / 5 / 10-shot) |
 |---|---|---|
@@ -70,7 +80,7 @@ thread scheduling); it does not move any reported mean.
 | pitted_surface | 0.878 / 0.921 / 0.917 | 0.709 / 0.834 / 0.864 |
 | rolled-in_scale | 0.974 / 0.979 / 0.982 | 0.938 / 0.992 / 0.994 |
 | scratches | 0.724 / 0.757 / 0.768 | 0.709 / 0.683 / 0.723 |
-| **mean** | **0.810 / 0.854 / 0.870** | **0.818 / 0.867 / 0.893** |
+| **mean** | **0.821 / 0.868 / 0.887** | **0.818 / 0.867 / 0.893** |
 
 ## 4. Incremental class addition (both machines)
 

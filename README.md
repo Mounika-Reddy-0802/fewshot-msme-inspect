@@ -9,12 +9,17 @@ windows, and optional fusion with typed text prompts -- benchmarked for accuracy
 
 10 good photos per product, mean over 3 seeds, image / pixel AUROC:
 
-| | MVTec AD | VisA | CPU ms/image |
-|---|---|---|---|
-| ViT-B/32, memory | 0.904 / 0.940 | 0.779 / 0.935 | 40 (INT8: 30) |
-| ViT-B/16, memory | 0.904 / 0.936 | 0.831 / 0.951 | 132 (INT8: 72) |
-| ViT-B/16, proposed (windows + text) | **0.925** / 0.939 | **0.855** / 0.949 | ~132 |
-| ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | see docs |
+| | MVTec AD | VisA | NEU-DET (image only) | CPU ms/image, burst |
+|---|---|---|---|---|
+| ViT-B/32, memory | 0.904 / 0.940 | 0.779 / 0.935 | 0.893 | 37 (ONNX INT8: 33) |
+| ViT-B/16, memory | 0.904 / 0.936 | 0.831 / 0.951 | 0.887 | 88 (ONNX INT8: 72) |
+| ViT-B/16 + windows | 0.921 / 0.939 | 0.851 / 0.949 | **0.935** | ~90 (est.) |
+| ViT-B/16 + windows + text | **0.925** / 0.939 | **0.855** / 0.949 | 0.881 | ~90 (est.) |
+| ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | 0.897 | 397 |
+
+Text fusion helps on products with a meaningful "normal" (MVTec, VisA) and hurts
+on NEU-DET, where the normal class is itself a defect type. A laptop throttles to
+5-6x the burst latency under continuous use.
 
 Adding a product is bit-identical to building it in from scratch and leaves all
 other products' scores unchanged. Details, statistics and caveats:
@@ -31,7 +36,7 @@ headline claims we are building evidence for:
   appending prototypes, not by retraining;
 * a **zero-cost feasibility analysis** for a small manufacturer.
 
-Datasets: MVTec AD, VisA, NEU-DET (0/1/5/10-shot seeded splits), MPDD optional.
+Datasets: MVTec AD, VisA, NEU-DET (1/5/10-shot seeded splits, 3 seeds), MPDD optional.
 Baselines: PatchCore / PaDiM via anomalib, plus CLIP zero-shot prompting.
 
 ## Layout

@@ -1,4 +1,4 @@
-# Results: frozen CLIP + prototype memory on MVTec AD and VisA
+# Results: frozen CLIP + prototype memory on MVTec AD, VisA and NEU-DET
 
 Reproducible from the committed manifests and the scripts in `scripts/`. Raw CSVs
 live outside the repo (gitignored); the manifests identifying each run are
@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 10 covers what that costs -- little.
+prompt cannot score a patch. Section 11 covers what that costs -- little.
 
 ---
 
@@ -368,7 +368,7 @@ defects are smaller than a B/32 patch and get averaged away inside it. The
 largest B/16 gains at 10 shots are exactly the small-defect categories --
 capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
 
-This is the same mechanism as the `screw` failure on MVTec (section 10), now
+This is the same mechanism as the `screw` failure on MVTec (section 11), now
 visible across a whole dataset. For an MSME the practical rule is: if the
 defects that matter are smaller than about 2% of the frame, pay for B/16 (or
 crop tighter); otherwise B/32 is enough.
@@ -548,7 +548,7 @@ against a "normal" one. Fused as `(1 - w) * memory + w * text`, image AUROC:
 Every fused gain is 2.4-4.8x its paired SE, largest at 1 shot, where the memory
 knows least. Text alone is far worse. The weights are a fixed grid reported in
 full; w = 0.5 is WinCLIP+'s equal weighting, not a value picked here. This
-refines the Tip-Adapter finding in section 10: fused *per patch* in the 512-dim space
+refines the Tip-Adapter finding in section 11: fused *per patch* in the 512-dim space
 it hurts (the alpha sweep); fused *per image* it helps.
 
 **Both together** (`configs/proposed.yaml`: windows {1,2,3}, w = 0.5):
@@ -568,7 +568,79 @@ window. We did not reproduce it; the backbones, weights and shot counts differ.
 
 ---
 
-## 10. Limitations, stated plainly
+## 10. Third dataset: NEU-DET
+
+Records: `neu_det_backbones.json`, `neu_det_l14_vs_b16.json`,
+`neu_det_windowed.json`, `neu_det_text.json`, `figures_neu_det.json` (all under
+`results/manifests/`). Layout and splits by Member B
+(`scripts/build_neu_det_oneclass.py`, `results/manifests/splits/neu_det*.json`).
+
+**Protocol.** NEU-DET has six classes of steel-surface defect and no defect-free
+images, so each class takes a turn as "normal": support photos come from that
+class, and the test set is its 60 held-out images plus 60 drawn evenly from the
+other five classes. The question is "given photos of one surface, is this one
+different?" -- a cross-domain test of the same frozen method on steel rather than
+objects. There are no masks, so image AUROC only.
+
+Image AUROC, ViT-B/16, mean over three seeds, +/- population std:
+
+| class (as normal) | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| crazing | 0.991 +/-0.000 | 0.993 +/-0.002 | 0.994 +/-0.003 |
+| rolled-in_scale | 0.974 +/-0.010 | 0.979 +/-0.009 | 0.982 +/-0.000 |
+| pitted_surface | 0.878 +/-0.028 | 0.921 +/-0.022 | 0.917 +/-0.015 |
+| inclusion | 0.658 +/-0.034 | 0.780 +/-0.049 | 0.831 +/-0.026 |
+| patches | 0.704 +/-0.036 | 0.779 +/-0.010 | 0.828 +/-0.035 |
+| scratches | 0.724 +/-0.025 | 0.757 +/-0.052 | 0.768 +/-0.041 |
+| **mean** | **0.821** | **0.868** | **0.887** |
+
+All configurations, mean image AUROC:
+
+| configuration | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| ViT-B/32 | 0.818 | 0.867 | 0.893 |
+| ViT-B/16 | 0.821 | 0.868 | 0.887 |
+| ViT-L/14 | 0.838 | 0.883 | 0.897 |
+| **ViT-B/16 + windows {1,2,3}** | **0.865** | **0.917** | **0.935** |
+| ViT-B/16 + windows + text (w = 0.5) | 0.825 | 0.866 | 0.881 |
+
+Paired over 18 measurements per shot count (6 classes x 3 seeds):
+
+| delta | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| B/16 - B/32 | +0.004 (0.1x SE) | +0.001 (0.1x SE) | -0.007 (0.4x SE) |
+| L/14 - B/16 | +0.016 (0.7x SE) | +0.015 (0.9x SE) | +0.011 (1.1x SE) |
+| windows - single-pass | **+0.044 (3.3x SE)** | **+0.049 (4.9x SE)** | **+0.049 (5.6x SE)** |
+| text fused - windows only | -0.040 (3.4x SE) | -0.051 (3.9x SE) | -0.054 (4.0x SE) |
+
+**The backbone does not matter here, and the defect-size rule says why.**
+Measured from the bounding-box annotations, a NEU-DET defect covers 39% of the
+200x200 image on average (scratches 18%, pitted_surface 81%) -- even allowing
+that boxes overstate area, far above a B/32 patch's 2%. Large defects: B/32 and
+B/16 are indistinguishable, as on MVTec (4.6% defects) and unlike VisA
+(0.04-0.9%). L/14's gain is not established: under 1.1x SE, and only 2 of 6
+classes improve. Three datasets, one consistent rule.
+
+**Windows matter most on textures.** +0.044 to +0.049 at 3.3-5.6x SE, every class
+better at 10 shots, `inclusion` +0.071 and `patches` +0.103. A steel texture is
+judged better over a neighbourhood than patch by patch -- the same reason windows
+helped on MVTec, larger here because every NEU-DET image is a texture.
+
+**Text hurts, and should.** Under this protocol the "normal" class is itself a
+defect type, so a prompt like "a photo of a crazing with a defect" asks the wrong
+question; fusing it costs 0.040-0.054 at 3.4-4.0x SE, every class worse. Text
+fusion is for products with a meaningful normal; it is not part of the NEU-DET
+recommendation.
+
+**Verification.** Member B's per-class B/16 and B/32 numbers were reproduced on
+Member A's machine to within 0.0005, from her own scripts and the Kaggle copy of
+the data, and regenerating the split manifests here gave byte-identical files.
+(The B/16 mean she first reported, 0.810 / 0.854 / 0.870, was mis-averaged; the
+mean of her own per-class values is the 0.821 / 0.868 / 0.887 above.)
+
+---
+
+## 11. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -604,7 +676,7 @@ each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution. ViT-L/14's finer grid lifts it to 0.792 (section 8),
 which supports that reading.
 
-**Not yet done:** NEU-DET evaluation (splits not yet generated), MPDD, static INT8,
+**Not yet done:** MPDD, static INT8,
 and a reproduction of WinCLIP / AnomalyCLIP.
 
 ---
