@@ -87,9 +87,25 @@ TARGETS: dict[str, tuple[str, list[list[str]]]] = {
         ["scripts/make_figures.py"], ["scripts/make_figures.py", "--dataset", "visa"],
     ]),
     "cost": ("the Rs 0 cost and feasibility table", [["scripts/cost_table.py"]]),
+    "neu_det": ("NEU-DET, one-class-as-normal, three backbones and windows", [
+        ["scripts/reorganize_neu_det.py"],
+        ["scripts/build_neu_det_oneclass.py"],
+        ["scripts/check_splits.py"],
+        bench("--dataset", "neu_det"), bench("--dataset", "neu_det", "--backbone", B32),
+        bench("--dataset", "neu_det", "--backbone", L14),
+        bench("--dataset", "neu_det", "--scales", "1", "2", "3"),
+        paired(f"neu_det_{B16}", f"neu_det_{B32}",
+               "does ViT-B/32 match ViT-B/16 on NEU-DET", "neu_det_backbones.json"),
+        paired(f"neu_det_{L14}", f"neu_det_{B16}",
+               "does ViT-L/14 beat ViT-B/16 on NEU-DET", "neu_det_l14_vs_b16.json"),
+        paired(f"neu_det_{B16}-win123", f"neu_det_{B16}",
+               "does multi-scale window scoring (1,2,3) beat single-pass on NEU-DET",
+               "neu_det_windowed.json"),
+        ["scripts/make_figures.py", "--dataset", "neu_det"],
+    ]),
 }
 ORDER = ["mvtec", "backbones", "incremental", "int8", "l14", "ablations",
-         "profiling", "sustained", "figures", "cost"]
+         "neu_det", "profiling", "sustained", "figures", "cost"]
 
 
 def main() -> int:
