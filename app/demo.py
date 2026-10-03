@@ -7,6 +7,9 @@
 2. Inspect a part: anomaly score, heatmap, pass/fail against a threshold.
 3. Add another product and watch the first one's scores stay exactly the same.
 
+Products are saved under $FEWSHOT_RESULTS_ROOT/demo/ after every addition and
+reloaded when the app starts, so they survive closing it.
+
 With FEWSHOT_DATA_ROOT set, any MVTec AD or VisA category can be loaded in one
 click from the committed seed-42 split, so the demo shows the benchmarked
 method on the benchmarked data.
@@ -25,7 +28,7 @@ from PIL import Image  # noqa: E402
 
 from src.data.splits import load_manifest, manifest_path, resolve_split, split_for  # noqa: E402
 from src.demo.inspector import Inspector  # noqa: E402
-from src.utils.paths import data_root, repo_root  # noqa: E402
+from src.utils.paths import data_root, repo_root, results_root  # noqa: E402
 
 BACKBONES = {
     "ViT-B/32 -- fast, fine for large defects": "ViT-B-32-quickgelu",
@@ -83,13 +86,29 @@ with st.sidebar:
     st.caption("Rule of thumb from the benchmark: if the defects you care about "
                "are smaller than ~2% of the photo, use ViT-B/16.")
 
+# products are kept on disk per backbone, so closing the app loses nothing
+store = results_root() / "demo" / f"{backbone}.pt"
+
 encoder = load_encoder(backbone)
 # one inspector per backbone: a memory built from B/32 features cannot score B/16 ones
 key = f"inspector::{backbone}"
 if key not in st.session_state:
     st.session_state[key] = Inspector(encoder)
     st.session_state["history"] = {}
+    if store.exists():
+        st.session_state[f"loaded::{backbone}"] = st.session_state[key].load(store)
 inspector: Inspector = st.session_state[key]
+
+with st.sidebar:
+    loaded = st.session_state.get(f"loaded::{backbone}")
+    if loaded:
+        st.caption(f"Reopened {len(loaded)} saved product(s): {', '.join(loaded)}.")
+    st.caption(f"Products are saved to {store}")
+    if inspector.products and st.button("Forget all products"):
+        store.unlink(missing_ok=True)
+        for k in (key, f"loaded::{backbone}", "history"):
+            st.session_state.pop(k, None)
+        st.rerun()
 
 # ---------------------------------------------------------------- add a product
 st.header("1. Add a product from good photos")
@@ -104,6 +123,7 @@ with tab_upload:
     if st.button("Add product", disabled=not (name and files)):
         result = inspector.add_product(name, [Image.open(f) for f in files],
                                        description=description or None)
+        inspector.save(store)
         st.success(f"Added {result.product}: {result.images} photo(s), {result.prototypes:,} "
                    f"prototypes, {result.bytes_added / 1e6:.1f} MB, {result.seconds:.2f} s.")
 
@@ -121,6 +141,7 @@ with tab_dataset:
             support, _ = dataset_split(dataset, category, shots)
             result = inspector.add_product(category, [Image.open(p) for p in support],
                                            description=ds_description or None)
+            inspector.save(store)
             st.success(f"Added {category}: {result.prototypes:,} prototypes, "
                        f"{result.bytes_added / 1e6:.1f} MB, {result.seconds:.2f} s.")
 

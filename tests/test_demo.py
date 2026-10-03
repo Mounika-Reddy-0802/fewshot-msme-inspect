@@ -13,6 +13,7 @@ class FakeEncoder:
     """Each 'image' is a tensor already; its patches are fixed random vectors
     seeded by the image's value, so identical images encode identically."""
 
+    name = "fake"
     embed_dim = 8
     grid_size = (2, 2)
     image_size = (16, 16)
@@ -116,3 +117,31 @@ def test_without_a_description_the_score_is_the_memory_score():
     inspector.add_product("bracket", [image(0.1)])
     result = inspector.inspect("bracket", image(0.9))
     assert result.text_score is None and result.score == result.memory_score
+
+
+def test_saved_products_reload_bit_identically(tmp_path):
+    first = Inspector(TextEncoder())
+    first.add_product("a", [image(0.1), image(0.2)], description="a crack")
+    first.add_product("b", [image(0.5)])
+    before = {n: first.inspect(n, image(0.7)).score for n in ("a", "b")}
+    threshold = first.suggested_threshold("a")
+    first.save(tmp_path / "products.pt")
+
+    second = Inspector(TextEncoder())
+    assert second.load(tmp_path / "products.pt") == ["a", "b"]
+    assert {n: second.inspect(n, image(0.7)).score for n in ("a", "b")} == before
+    assert second.suggested_threshold("a") == threshold
+    assert second.descriptions == {"a": "a crack"}
+    assert second.load(tmp_path / "products.pt") == []      # nothing loaded twice
+
+
+def test_loading_under_another_backbone_is_refused(tmp_path):
+    first = Inspector(FakeEncoder())
+    first.add_product("a", [image(0.1)])
+    first.save(tmp_path / "p.pt")
+
+    class Other(FakeEncoder):
+        name = "other-backbone"
+
+    with pytest.raises(ValueError):
+        Inspector(Other()).load(tmp_path / "p.pt")

@@ -129,6 +129,50 @@ class Inspector:
             search_ms=(searched - encoded) * 1000,
         )
 
+    def save(self, path) -> None:
+        """Write every product to one file, so the app can be closed and
+        reopened without adding them again. The file records which backbone made
+        the features; loading it under another backbone is refused."""
+        from pathlib import Path
+
+        path = Path(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save({
+            "encoder": self.encoder.name,
+            "dim": self.memory.dim,
+            "grid": self.memory.grid,
+            "top_k": self.memory.top_k,
+            "support": {k: torch.stack(v) for k, v in self._support.items()},
+            "pooled": {k: torch.stack(v) for k, v in self._pooled.items()},
+            "text": dict(self._text),
+            "descriptions": dict(self.descriptions),
+        }, path)
+
+    def load(self, path) -> list[str]:
+        """Add every product saved in ``path``; returns their names.
+
+        Products are rebuilt by appending the saved patches, exactly as
+        add_product() stored them, so scores are bit-identical to before the
+        save. A product already in memory is not loaded twice."""
+        state = torch.load(path, map_location="cpu", weights_only=False)
+        if state["encoder"] != self.encoder.name or state["dim"] != self.memory.dim:
+            raise ValueError(
+                f"saved with {state['encoder']} ({state['dim']}-dim); this inspector "
+                f"uses {self.encoder.name} ({self.memory.dim}-dim)"
+            )
+        loaded = []
+        for name, patches in state["support"].items():
+            if name in self.memory:
+                continue
+            self.memory.add_class(name, patches)
+            self._support[name] = list(patches)
+            self._pooled[name] = list(state["pooled"][name])
+            if name in state["text"]:
+                self._text[name] = state["text"][name]
+                self.descriptions[name] = state["descriptions"][name]
+            loaded.append(name)
+        return loaded
+
     def suggested_threshold(self, name: str) -> float | None:
         """Highest leave-one-out score among the good photos, or None if there
         are fewer than two (a photo scored against itself is always 0).
