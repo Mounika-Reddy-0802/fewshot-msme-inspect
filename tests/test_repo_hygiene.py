@@ -46,10 +46,14 @@ def test_project_directories_are_not_ignored(path):
 
 
 @needs_git
-@pytest.mark.parametrize("path", ["data", "results/runs", "results/validation"])
+@pytest.mark.parametrize("path", ["data/", "results/runs/", "results/validation/"])
 def test_artifact_directories_stay_ignored(path):
     """The flip side: anchoring the rules must not stop them ignoring the real
-    dataset and results directories."""
+    dataset and results directories.
+
+    The trailing slash matters: rules like `/data/` only match directories, and
+    in a fresh clone `data/` does not exist yet, so without the slash git cannot
+    tell it is a directory and the check fails on a clean checkout."""
     assert _is_ignored(path)
 
 
