@@ -1,0 +1,43 @@
+{
+  "question": "does ViT-L/14 beat ViT-B/16 on NEU-DET",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "neu_det_ViT-L-14-quickgelu",
+  "b": "neu_det_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.8378,
+        "mean_b": 0.8214,
+        "paired_mean_delta": 0.0163,
+        "paired_standard_error": 0.0224,
+        "effect_over_se": 0.7,
+        "categories_favouring_a": "2/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.8829,
+        "mean_b": 0.8683,
+        "paired_mean_delta": 0.0146,
+        "paired_standard_error": 0.0154,
+        "effect_over_se": 0.9,
+        "categories_favouring_a": "2/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.8972,
+        "mean_b": 0.8866,
+        "paired_mean_delta": 0.0106,
+        "paired_standard_error": 0.0096,
+        "effect_over_se": 1.1,
+        "categories_favouring_a": "2/6"
+      }
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "question": "does text fusion (w=0.5, category-name prompts) help on NEU-DET, where the normal class is itself a defect type",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "neu_det_ViT-B-16-quickgelu-win123-text0.5",
+  "b": "neu_det_ViT-B-16-quickgelu-win123",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.8252,
+        "mean_b": 0.8655,
+        "paired_mean_delta": -0.0403,
+        "paired_standard_error": 0.0117,
+        "effect_over_se": 3.4,
+        "categories_favouring_a": "0/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.8659,
+        "mean_b": 0.9171,
+        "paired_mean_delta": -0.0511,
+        "paired_standard_error": 0.0132,
+        "effect_over_se": 3.9,
+        "categories_favouring_a": "0/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.8812,
+        "mean_b": 0.935,
+        "paired_mean_delta": -0.0539,
+        "paired_standard_error": 0.0134,
+        "effect_over_se": 4.0,
+        "categories_favouring_a": "0/6"
+      }
+    }
+  }
+}

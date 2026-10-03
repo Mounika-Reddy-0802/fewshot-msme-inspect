@@ -1,0 +1,155 @@
+{
+  "source_rows": 162,
+  "backbones": [
+    "ViT-B-16-quickgelu",
+    "ViT-B-32-quickgelu",
+    "ViT-L-14-quickgelu"
+  ],
+  "categories": [
+    "crazing",
+    "inclusion",
+    "patches",
+    "pitted_surface",
+    "rolled-in_scale",
+    "scratches"
+  ],
+  "shots": [
+    1,
+    5,
+    10
+  ],
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "figures": {
+    "shots_vs_accuracy": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_neu_det.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_neu_det.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8214197530864198,
+            0.8683024691358024,
+            0.8865740740740741
+          ]
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.817716049382716,
+            0.8669444444444445,
+            0.8932253086419752
+          ]
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8377623456790124,
+            0.8828703703703703,
+            0.8971604938271605
+          ]
+        }
+      ]
+    },
+    "accuracy_latency_frontier": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_neu_det.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_neu_det.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 1,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 0.694,
+          "total_ms_per_image": 88.574,
+          "image_auroc": 0.8214197530864198
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 5,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.024,
+          "total_ms_per_image": 88.904,
+          "image_auroc": 0.8683024691358024
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 10,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.697,
+          "total_ms_per_image": 89.577,
+          "image_auroc": 0.8865740740740741
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 1,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.264,
+          "total_ms_per_image": 36.984,
+          "image_auroc": 0.817716049382716
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 5,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.257,
+          "total_ms_per_image": 36.977,
+          "image_auroc": 0.8669444444444445
+        },
+        {
+          "backbone": "ViT-B-32-quickgelu",
+          "shots": 10,
+          "backbone_ms": 36.72,
+          "memory_search_ms": 0.385,
+          "total_ms_per_image": 37.105,
+          "image_auroc": 0.8932253086419752
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 1,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 0.87,
+          "total_ms_per_image": 397.99,
+          "image_auroc": 0.8377623456790124
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 5,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.515,
+          "total_ms_per_image": 399.635,
+          "image_auroc": 0.8828703703703703
+        },
+        {
+          "backbone": "ViT-L-14-quickgelu",
+          "shots": 10,
+          "backbone_ms": 397.12,
+          "memory_search_ms": 2.94,
+          "total_ms_per_image": 400.06,
+          "image_auroc": 0.8971604938271605
+        }
+      ]
+    }
+  }
+}
