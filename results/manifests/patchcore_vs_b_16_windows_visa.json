@@ -1,0 +1,72 @@
+{
+  "question": "how does our ViT-B-16-quickgelu-win123 compare with few-shot PatchCore (WideResNet-50, same support photos) on visa",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-B-16-quickgelu-win123",
+  "b": "visa_patchcore-wideresnet502",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.7894,
+        "mean_b": 0.7928,
+        "paired_mean_delta": -0.0034,
+        "paired_standard_error": 0.0156,
+        "effect_over_se": 0.2,
+        "categories_favouring_a": "6/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8315,
+        "mean_b": 0.848,
+        "paired_mean_delta": -0.0165,
+        "paired_standard_error": 0.0101,
+        "effect_over_se": 1.6,
+        "categories_favouring_a": "5/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8507,
+        "mean_b": 0.8652,
+        "paired_mean_delta": -0.0146,
+        "paired_standard_error": 0.0086,
+        "effect_over_se": 1.7,
+        "categories_favouring_a": "6/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.9289,
+        "mean_b": 0.9447,
+        "paired_mean_delta": -0.0158,
+        "paired_standard_error": 0.0059,
+        "effect_over_se": 2.7,
+        "categories_favouring_a": "4/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9449,
+        "mean_b": 0.9643,
+        "paired_mean_delta": -0.0193,
+        "paired_standard_error": 0.0042,
+        "effect_over_se": 4.6,
+        "categories_favouring_a": "3/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.9492,
+        "mean_b": 0.9695,
+        "paired_mean_delta": -0.0202,
+        "paired_standard_error": 0.004,
+        "effect_over_se": 5.1,
+        "categories_favouring_a": "2/12"
+      }
+    }
+  }
+}

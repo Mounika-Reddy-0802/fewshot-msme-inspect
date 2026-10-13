@@ -87,6 +87,16 @@ TARGETS: dict[str, tuple[str, list[list[str]]]] = {
         ["scripts/make_figures.py"], ["scripts/make_figures.py", "--dataset", "visa"],
     ]),
     "cost": ("the Rs 0 cost and feasibility table", [["scripts/cost_table.py"]]),
+    "patchcore": ("section 11: few-shot PatchCore on our splits, paired against ours", [
+        ["scripts/run_patchcore_fewshot.py", "--dataset", "mvtec_ad"],
+        ["scripts/run_patchcore_fewshot.py", "--dataset", "visa"],
+        *[paired(f"{ds}_{ours}", f"{ds}_patchcore-wideresnet502",
+                 f"how does our {ours} compare with few-shot PatchCore (WideResNet-50, "
+                 f"same support photos) on {ds}",
+                 f"patchcore_vs_{tag}_{ds}.json")
+          for ds in ("mvtec_ad", "visa")
+          for ours, tag in ((B16, "b_16"), (f"{B16}-win123", "b_16_windows"), (L14, "l_14"))],
+    ]),
     "neu_det": ("NEU-DET, one-class-as-normal, three backbones and windows", [
         ["scripts/reorganize_neu_det.py"],
         ["scripts/build_neu_det_oneclass.py"],
@@ -105,7 +115,7 @@ TARGETS: dict[str, tuple[str, list[list[str]]]] = {
     ]),
 }
 ORDER = ["mvtec", "backbones", "incremental", "int8", "l14", "ablations",
-         "neu_det", "profiling", "sustained", "figures", "cost"]
+         "neu_det", "patchcore", "profiling", "sustained", "figures", "cost"]
 
 
 def main() -> int:
