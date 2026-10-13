@@ -34,7 +34,9 @@ def load(name: str) -> dict[tuple, dict]:
         return {
             (r["category"], int(r["shots"]), int(r["seed"])): r
             for r in csv.DictReader(handle)
-            if r.get("method", "memory") == "memory"
+            # one scoring head per run: some CSVs also hold adapter or
+            # zero-shot rows, which would overwrite the memory rows on the same key
+            if r.get("method", "memory") not in ("adapter", "zeroshot")
         }
 
 
