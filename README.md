@@ -14,9 +14,13 @@ windows, and optional fusion with typed text prompts -- benchmarked for accuracy
 | ViT-B/32, memory | 0.904 / 0.940 | 0.779 / 0.935 | 0.893 | 37 (ONNX INT8: 33) |
 | ViT-B/16, memory | 0.904 / 0.936 | 0.831 / 0.951 | 0.887 | 88 (ONNX INT8: 72) |
 | ViT-B/16 + windows | 0.921 / 0.939 | 0.851 / 0.949 | **0.935** | ~90 (est.) |
-| ViT-B/16 + windows + text | **0.925** / 0.939 | **0.855** / 0.949 | 0.881 | ~90 (est.) |
+| ViT-B/16 + windows + text | 0.925 / 0.939 | 0.855 / 0.949 | 0.881 | ~90 (est.) |
 | ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | 0.897 | 397 |
+| *Baseline: PatchCore, same photos* | 0.926 / **0.965** | **0.865** / **0.969** | -- | not yet profiled |
 
+Against few-shot PatchCore given the same photos, detection is a statistical tie
+and PatchCore localises better (its feature map is twice as fine); what this
+method adds is append-only products, typed descriptions and a measured CPU cost.
 Text fusion helps on products with a meaningful "normal" (MVTec, VisA) and hurts
 on NEU-DET, where the normal class is itself a defect type. A laptop throttles to
 5-6x the burst latency under continuous use.
@@ -99,6 +103,14 @@ the four added images, not a different draw. Verified across all 45
 ## Setup
 
 Python 3.10+ and about 6 GB of disk for the environment.
+
+**Windows: keep the environment on a short path.** torch and anomalib unpack
+files with very long internal paths, and Windows refuses paths over 260
+characters unless long paths are enabled. A venv inside a deep folder (an
+OneDrive sync folder, a temp directory) fails partway with `WinError 206`, after
+installing only the small packages. Put it somewhere like `C:\venvs\fewshot`,
+or enable long paths (`LongPathsEnabled` = 1 under
+`HKLM\SYSTEM\CurrentControlSet\Control\FileSystem`, then reboot).
 
 ```bash
 python -m venv .venv                 # or somewhere outside a synced folder

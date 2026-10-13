@@ -20,7 +20,7 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 11 covers what that costs -- little.
+prompt cannot score a patch. Section 12 covers what that costs -- little.
 
 ---
 
@@ -368,7 +368,7 @@ defects are smaller than a B/32 patch and get averaged away inside it. The
 largest B/16 gains at 10 shots are exactly the small-defect categories --
 capsules +0.147, macaroni1 +0.120, macaroni2 +0.119, candle +0.093.
 
-This is the same mechanism as the `screw` failure on MVTec (section 11), now
+This is the same mechanism as the `screw` failure on MVTec (section 12), now
 visible across a whole dataset. For an MSME the practical rule is: if the
 defects that matter are smaller than about 2% of the frame, pay for B/16 (or
 crop tighter); otherwise B/32 is enough.
@@ -548,7 +548,7 @@ against a "normal" one. Fused as `(1 - w) * memory + w * text`, image AUROC:
 Every fused gain is 2.4-4.8x its paired SE, largest at 1 shot, where the memory
 knows least. Text alone is far worse. The weights are a fixed grid reported in
 full; w = 0.5 is WinCLIP+'s equal weighting, not a value picked here. This
-refines the Tip-Adapter finding in section 11: fused *per patch* in the 512-dim space
+refines the Tip-Adapter finding in section 12: fused *per patch* in the 512-dim space
 it hurts (the alpha sweep); fused *per image* it helps.
 
 **Both together** (`configs/proposed.yaml`: windows {1,2,3}, w = 0.5):
@@ -640,7 +640,70 @@ mean of her own per-class values is the 0.821 / 0.868 / 0.887 above.)
 
 ---
 
-## 11. Limitations, stated plainly
+## 11. Baseline: PatchCore given the same photos
+
+Records: `patchcore_vs_b_16_*.json`, `patchcore_vs_b_16_windows_*.json`,
+`patchcore_vs_l_14_*.json` under `results/manifests/`. Code:
+`src/baselines/patchcore_fewshot.py`, `scripts/run_patchcore_fewshot.py`.
+
+PatchCore is the strongest memory-bank method, normally fitted on hundreds of
+images. Here it gets **exactly our support photos**: same manifests, 1/5/10 shots,
+seeds 42/1/2, the same test images, masks and metric code. anomalib's own
+`PatchcoreModel`: WideResNet-50-2 (ImageNet), layers 2+3, 3x3 pooling,
+re-weighted scores with 9 neighbours, Gaussian-smoothed maps. Coreset subsampling
+is off -- with 10 photos or fewer the bank is already small, so this is PatchCore
+at its strongest. Images at 224px with the same crop as ours.
+
+| few-shot PatchCore | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec image / pixel | 0.842 / 0.938 | 0.899 / 0.958 | 0.926 / 0.965 |
+| VisA image / pixel | 0.793 / 0.945 | 0.848 / 0.964 | 0.865 / 0.969 |
+
+Paired against ours, delta is ours - PatchCore (paired SE in brackets):
+
+| ours | metric | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|---|
+| B/16 | MVTec image | +0.014 (0.7x) | -0.011 (0.8x) | -0.022 (1.7x) |
+| B/16 + windows | MVTec image | +0.024 (1.7x) | +0.008 (0.8x) | -0.005 (0.5x) |
+| L/14 | MVTec image | **+0.042 (2.0x)** | +0.021 (1.4x) | +0.007 (0.5x) |
+| B/16 | VisA image | -0.019 (1.2x) | **-0.037 (3.1x)** | **-0.034 (3.3x)** |
+| B/16 + windows | VisA image | -0.003 (0.2x) | -0.017 (1.6x) | -0.015 (1.7x) |
+| L/14 | VisA image | -0.007 (0.4x) | -0.020 (1.6x) | -0.022 (1.9x) |
+| B/16 + windows | MVTec pixel | **-0.022 (3.0x)** | **-0.024 (4.7x)** | **-0.027 (6.4x)** |
+| B/16 + windows | VisA pixel | **-0.016 (2.7x)** | **-0.019 (4.6x)** | **-0.020 (5.1x)** |
+| L/14 | VisA pixel | +0.005 (0.9x) | -0.004 (1.0x) | -0.005 (1.7x) |
+
+**Detection: a tie.** With windows (or L/14) our image AUROC is statistically
+indistinguishable from PatchCore's on both datasets; L/14 is ahead at one shot on
+MVTec (+0.042, 2.0x SE). Plain single-pass B/16 trails on VisA (-0.034, 3.3x SE),
+which windows close. With text fusion added (section 9, image level, means only)
+ours reaches 0.881 / 0.913 / 0.925 on MVTec and 0.815 / 0.841 / 0.855 on VisA,
+against PatchCore's 0.842 / 0.899 / 0.926 and 0.793 / 0.848 / 0.865.
+
+**Localisation: PatchCore wins.** Its WideResNet feature map is 28x28 at 224px,
+against CLIP B/16's 14x14, and it shows: +0.02-0.03 pixel AUROC at 3-6x SE. Only
+L/14's 16x16 grid draws level on VisA.
+
+**Where each wins, per category (10 shots, windows vs PatchCore).** Ours on fine,
+textured defects: `screw` +0.120, `grid` +0.087, VisA `capsules` +0.050,
+`macaroni1` +0.049. PatchCore on structured layouts, where a defect is a part in
+the wrong place: `transistor` -0.173, `hazelnut` -0.081, VisA `pcb3` -0.115,
+`pcb4` -0.071.
+
+**So the case for this method is not raw accuracy.** At equal photos it matches
+PatchCore at detection and loses at localisation. What it adds is what PatchCore
+does not have: a product added in seconds without touching the others (section
+5), typed defect descriptions (section 9), one backbone shared by detection and
+text, and a measured CPU cost (sections 4 and 7). PatchCore's own CPU cost under
+the same harness is the remaining "before" number (Member B's task).
+
+Runtime of this baseline on the laptop: 33 minutes for MVTec, 3.3 hours for VisA
+(all 27 categories x 3 seeds x 3 shot counts, test features embedded once per
+category).
+
+---
+
+## 12. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
