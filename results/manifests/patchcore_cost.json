@@ -1,0 +1,55 @@
+{
+  "method": "patchcore (anomalib)",
+  "category": "bottle",
+  "patchcore": {
+    "backbone": "wide_resnet50_2",
+    "layers": [
+      "layer2",
+      "layer3"
+    ],
+    "coreset_sampling_ratio": 0.1,
+    "num_neighbors": 9
+  },
+  "threads": 6,
+  "batch_size": 1,
+  "warmup": 5,
+  "iters": 20,
+  "latency_median_ms": 806.13,
+  "latency_p90_ms": 2053.22,
+  "peak_ram_mb": 1245.3,
+  "parameters": 24862528,
+  "parameters_mb_fp32": 99.5,
+  "memory_bank_shape": [
+    21401,
+    1536
+  ],
+  "memory_bank_mb": 131.5,
+  "model_size_mb_fp32": 230.9,
+  "fit": {
+    "fit_seconds": 1589.4,
+    "train_images": 209,
+    "threads": 6,
+    "bank_shape": [
+      21401,
+      1536
+    ]
+  },
+  "machine": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 140 Stepping 1, GenuineIntel",
+    "python": "3.12.10",
+    "torch": "2.8.0+cpu",
+    "torch_threads": 6,
+    "cpu_count_physical": 2,
+    "cpu_count_logical": 4,
+    "total_ram_gb": 16.9,
+    "cpu_percent_before": 34.4,
+    "cpu_mhz_at_start": 2995
+  },
+  "notes": [
+    "latency is the model forward only (feature extraction, nearest-neighbour search, anomaly map); image decode and resize are excluded, as in the CLIP numbers",
+    "input is seeded noise at 224x224; pixel content does not affect CPU timing",
+    "peak RAM is the peak working set above an idle Python process with torch and anomalib imported, measured in a fresh process after loading the model and bank",
+    "the memory bank is a 10% coreset of ALL training patches, so cost grows with the training set size, unlike the few-shot prototype memory"
+  ]
+}

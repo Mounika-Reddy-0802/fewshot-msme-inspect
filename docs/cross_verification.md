@@ -3,8 +3,8 @@
 Blueprint §19 asks that every headline number be recomputed by the member who did
 not produce it. This file records what has been checked, how, and what is still
 open. **Status:** NEU-DET is cross-verified across machines (Member B produced
-it, Member A reproduced it). The MVTec and VisA checks below are a same-machine
-clean-room rerun; an independent rerun by Member B is still open.
+it, Member A reproduced it). The MVTec and VisA checks below include Member B's
+fresh-install rerun from a clean clone and venv.
 
 ## 1. Headline numbers, as committed
 
@@ -51,10 +51,45 @@ python scripts/run_benchmark.py --dataset visa --backbone ViT-B-32-quickgelu --t
 The single 0.0002 difference is float noise from re-extraction (fp16 storage,
 thread scheduling); it does not move any reported mean.
 
-## 3. Still open
+### Member B fresh-install rerun
 
-* **Independent rerun by Member B** of `python scripts/reproduce.py mvtec backbones
-  incremental` on her own machine, compared against week2_results §1, 2, 5 and 6.
+Machine: Intel 11th Gen Core i3-1115G4, 2 cores / 4 logical processors, 16.9 GB
+RAM | Windows 11 | Python 3.12.10 | torch 2.8.0+cpu. The clone was created at
+`C:\dev\fewshot-msme-inspect` with a new `.venv` from `requirements.txt`;
+packages loaded from that venv, with 6 benchmark threads and a new results
+folder at `D:\fewshot-rerun-clean`. `python -m pytest -q`: **193 passed**.
+
+Command: `python scripts/reproduce.py mvtec backbones`
+
+| dataset | backbone | metric | rerun 1/5/10-shot | week2_results.md | match |
+|---|---|---|---|---|---|
+| MVTec AD | B/16 | image | 0.856 / 0.888 / 0.904 | same | yes |
+| MVTec AD | B/16 | pixel | 0.916 / 0.932 / 0.936 | same | yes |
+| MVTec AD | B/32 | image | 0.837 / 0.884 / 0.904 | same | yes |
+| VisA | B/16 | image | 0.773 / 0.811 / 0.831 | same | yes |
+| VisA | B/32 | image | 0.681 / 0.761 / 0.779 | same | yes |
+| VisA | B/16 - B/32 | image | +0.093 / +0.050 / +0.052 | same | yes |
+| VisA | B/16 - B/32 | pixel | +0.029 / +0.017 / +0.016 | same | yes |
+
+The MVTec paired comparison gave image `+0.019 / +0.004 / +0.000` and pixel
+`-0.004 / -0.003 / -0.004`. An earlier run in the old checkout produced MVTec
+B/16 image `0.846 / 0.886 / 0.904`; the fresh results folder resolved the
+mismatch, consistent with a stale feature cache.
+
+### PatchCore CPU cost profile
+
+The clean environment fit PatchCore on bottle in 1,589.4 seconds and produced a
+21,401 x 1,536 memory bank. In a fresh profiling process, the median forward
+latency was 806.1 ms (p90 2,053.2 ms) and peak RAM above idle was 1,245.3 MB.
+The profile reported 24.9 M parameters and a 131.5 MB memory bank. The timing
+run had 34.4% background CPU load, so these measurements should be treated as a
+loaded-machine result and repeated when the machine is idle if a quieter timing
+is required.
+
+## 3. Cross-machine verification and open items
+
+* Colab notebook execution and bottle output still need to be recorded.
+* Two live demo rehearsals still need to be completed and noted below.
 ### NEU-DET: verified across machines (2026-10-03)
 
 Member A downloaded the same Kaggle copy (`kaustubhdikshit/neu-surface-defect-database`),
