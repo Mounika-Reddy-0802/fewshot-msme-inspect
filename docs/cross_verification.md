@@ -88,8 +88,24 @@ is required.
 
 ## 3. Cross-machine verification and open items
 
-* Colab notebook execution and bottle output still need to be recorded.
 * Two live demo rehearsals still need to be completed and noted below.
+
+### Colab reproduction
+
+The executed [Colab notebook](../notebooks/colab_reproduce.ipynb) ran on a CPU
+runtime from commit `d60bd36` (`add member b rerun and patchcore profile`).
+It downloaded the MVTec AD bottle category, extracted 109 images, and completed
+the benchmark with one CPU thread in about 1.8 minutes. The notebook's final
+cell reproduced the committed bottle image AUROC values over the three seeds:
+
+| shots | Colab image AUROC | committed value | match |
+|---|---:|---:|---|
+| 1 | 0.985 | 0.985 | yes |
+| 5 | 0.992 | 0.992 | yes |
+| 10 | 0.994 | 0.994 | yes |
+
+The run completed without errors. It emitted only the expected unauthenticated
+Hugging Face Hub rate-limit warning; the CPU benchmark itself completed normally.
 ### NEU-DET: verified across machines (2026-10-03)
 
 Member A downloaded the same Kaggle copy (`kaustubhdikshit/neu-surface-defect-database`),
