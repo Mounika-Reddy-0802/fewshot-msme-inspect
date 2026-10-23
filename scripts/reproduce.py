@@ -90,6 +90,13 @@ TARGETS: dict[str, tuple[str, list[list[str]]]] = {
     "patchcore": ("section 11: few-shot PatchCore on our splits, paired against ours", [
         ["scripts/run_patchcore_fewshot.py", "--dataset", "mvtec_ad"],
         ["scripts/run_patchcore_fewshot.py", "--dataset", "visa"],
+        # CPU cost on an idle machine; let it cool between the fit and the profiles
+        ["scripts/profile_patchcore.py", "--stage", "fit", "--category", "bottle"],
+        ["scripts/profile_patchcore.py", "--stage", "profile", "--category", "bottle",
+         "--out", "results/manifests/patchcore_cost_i7_fullshot.json"],
+        ["scripts/profile_patchcore.py", "--stage", "fit-fewshot", "--category", "bottle", "--shots", "10"],
+        ["scripts/profile_patchcore.py", "--stage", "profile", "--category", "bottle_10shot",
+         "--out", "results/manifests/patchcore_cost_i7_10shot.json"],
         *[paired(f"{ds}_{ours}", f"{ds}_patchcore-wideresnet502",
                  f"how does our {ours} compare with few-shot PatchCore (WideResNet-50, "
                  f"same support photos) on {ds}",

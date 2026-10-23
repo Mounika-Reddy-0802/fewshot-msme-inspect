@@ -12,6 +12,10 @@ Two stages, run as separate processes:
     # close everything else and let the laptop cool for ~15 minutes
     python scripts/profile_patchcore.py --stage profile --category bottle
 
+    # the 10-photo bank PatchCore gets in the accuracy comparison
+    python scripts/profile_patchcore.py --stage fit-fewshot --category bottle --shots 10
+    python scripts/profile_patchcore.py --stage profile --category bottle_10shot
+
 * fit      builds PatchCore as the week-1 validation does (hyperparameters from
            configs/baseline.yaml) and saves its memory bank outside the repo.
            This is the slow part (coreset selection) and it heats the CPU,
@@ -219,9 +223,41 @@ def stage_profile(args: argparse.Namespace, config: dict) -> int:
     return 0
 
 
+def stage_fit_fewshot(args: argparse.Namespace, config: dict) -> int:
+    """The bank PatchCore gets in the accuracy comparison: every patch of the
+    seed-42 k-shot support photos, no coreset (src/baselines/patchcore_fewshot.py).
+    Saved as category ``<category>_<k>shot`` for the profile stage."""
+    import torch
+
+    from src.baselines.patchcore_fewshot import FewShotPatchCore
+    from src.data.splits import category_root, load_manifest, manifest_path, split_for
+    from src.utils.paths import dataset_dir
+
+    pin_threads(args.threads)
+    manifest = load_manifest(manifest_path(repo_root() / "results" / "manifests" / "splits", "mvtec_ad"))
+    root = dataset_dir("mvtec_ad").parent
+    split = split_for(manifest, args.category, args.shots, root)
+    base = category_root("mvtec_ad", root) / args.category
+    emb, _ = FewShotPatchCore().embed([base / p for p in split["support"]])
+    bank = emb.float().reshape(-1, emb.shape[-1])
+
+    name = f"{args.category}_{args.shots}shot"
+    path = bank_path(name)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    torch.save(bank, path)
+    meta_path(name).write_text(json.dumps({
+        "fit_seconds": None, "train_images": args.shots,
+        "support": f"seed-{manifest['seed']} {args.shots}-shot split, no coreset",
+        "bank_shape": list(bank.shape),
+    }, indent=2), encoding="utf-8")
+    print(f"bank {tuple(bank.shape)} saved to {path}; profile with --category {name}")
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    parser.add_argument("--stage", required=True, choices=["fit", "profile"])
+    parser.add_argument("--stage", required=True, choices=["fit", "fit-fewshot", "profile"])
+    parser.add_argument("--shots", type=int, default=10, help="fit-fewshot: support photos")
     parser.add_argument("--category", default="bottle")
     parser.add_argument("--threads", type=int, default=6)
     parser.add_argument("--warmup", type=int, default=5)
@@ -230,7 +266,8 @@ def main() -> int:
     args = parser.parse_args()
 
     config = load_config("baseline.yaml")
-    return stage_fit(args, config) if args.stage == "fit" else stage_profile(args, config)
+    stages = {"fit": stage_fit, "fit-fewshot": stage_fit_fewshot, "profile": stage_profile}
+    return stages[args.stage](args, config)
 
 
 if __name__ == "__main__":
