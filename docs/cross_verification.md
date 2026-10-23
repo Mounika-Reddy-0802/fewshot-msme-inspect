@@ -2,9 +2,9 @@
 
 Blueprint §19 asks that every headline number be recomputed by the member who did
 not produce it. This file records what has been checked, how, and what is still
-open. **Status:** NEU-DET is cross-verified across machines (Member B produced
-it, Member A reproduced it). The MVTec and VisA checks below include Member B's
-fresh-install rerun from a clean clone and venv.
+open. **Status: complete.** Every dataset has been reproduced on a second
+machine: MVTec AD and VisA by Member B from a fresh clone and venv (section 3),
+NEU-DET by Member A (section 3), and the Colab notebook on Google's CPU runtime.
 
 ## 1. Headline numbers, as committed
 
@@ -51,6 +51,8 @@ python scripts/run_benchmark.py --dataset visa --backbone ViT-B-32-quickgelu --t
 The single 0.0002 difference is float noise from re-extraction (fp16 storage,
 thread scheduling); it does not move any reported mean.
 
+## 3. Cross-machine verification
+
 ### Member B fresh-install rerun
 
 Machine: Intel 11th Gen Core i3-1115G4, 2 cores / 4 logical processors, 16.9 GB
@@ -76,24 +78,10 @@ The MVTec paired comparison gave image `+0.019 / +0.004 / +0.000` and pixel
 B/16 image `0.846 / 0.886 / 0.904`; the fresh results folder resolved the
 mismatch, consistent with a stale feature cache.
 
-### PatchCore CPU cost profile
-
-The clean environment fit PatchCore on bottle in 1,589.4 seconds and produced a
-21,401 x 1,536 memory bank. In a fresh profiling process, the median forward
-latency was 806.1 ms (p90 2,053.2 ms) and peak RAM above idle was 1,245.3 MB.
-The profile reported 24.9 M parameters and a 131.5 MB memory bank. The timing
-run had 34.4% background CPU load, so these measurements should be treated as a
-loaded-machine result and repeated when the machine is idle if a quieter timing
-is required.
-
-## 3. Cross-machine verification and open items
-
-* Two live demo rehearsals still need to be completed and noted below.
-
 ### Colab reproduction
 
 The executed [Colab notebook](../notebooks/colab_reproduce.ipynb) ran on a CPU
-runtime from commit `d60bd36` (`add member b rerun and patchcore profile`).
+runtime from commit `a6a38e2` (`add member b rerun and patchcore profile`; `d60bd36` before the history clean-up, same files).
 It downloaded the MVTec AD bottle category, extracted 109 images, and completed
 the benchmark with one CPU thread in about 1.8 minutes. The notebook's final
 cell reproduced the committed bottle image AUROC values over the three seeds:
@@ -106,6 +94,7 @@ cell reproduced the committed bottle image AUROC values over the three seeds:
 
 The run completed without errors. It emitted only the expected unauthenticated
 Hugging Face Hub rate-limit warning; the CPU benchmark itself completed normally.
+
 ### NEU-DET: verified across machines (2026-10-03)
 
 Member A downloaded the same Kaggle copy (`kaustubhdikshit/neu-surface-defect-database`),
@@ -132,6 +121,22 @@ and re-ran the benchmark.
 | rolled-in_scale | 0.974 / 0.979 / 0.982 | 0.938 / 0.992 / 0.994 |
 | scratches | 0.724 / 0.757 / 0.768 | 0.709 / 0.683 / 0.723 |
 | **mean** | **0.821 / 0.868 / 0.887** | **0.818 / 0.867 / 0.893** |
+
+### PatchCore CPU cost, Member B's machine
+
+The clean environment fit PatchCore on bottle in 1,589.4 seconds and produced a
+21,401 x 1,536 memory bank. In a fresh profiling process, the median forward
+latency was 806.1 ms (p90 2,053.2 ms) and peak RAM above idle was 1,245.3 MB.
+The profile reported 24.9 M parameters and a 131.5 MB memory bank. The timing
+run had 34.4% background CPU load, so these measurements should be treated as a
+loaded-machine result and repeated when the machine is idle if a quieter timing
+is required.
+
+Because that machine differs from the one every other latency in the project was
+measured on (Intel i7-13700H, idle, 6 threads), and 6 threads oversubscribes a
+4-thread CPU, the comparable PatchCore numbers were re-measured on Member A's
+machine with the same script; see week2_results section 4. This record is kept
+as the second-machine measurement.
 
 ## 4. Incremental class addition (both machines)
 
@@ -180,6 +185,21 @@ with ViT-B/32 (the default):
 | inspect good/000.png | OK, 0.323 vs 0.350 | OK, 0.323 vs 0.350 |
 | add screw live + "a damaged thread" | added | added |
 | re-inspect broken_large/000.png | "Bit-identical" | "Bit-identical" |
+
+**Final rehearsal, 2026-10-23**, on the release version (products saved to disk),
+twice, each in an empty results folder, same steps plus a restart:
+
+| step | rehearsal 1 | rehearsal 2 |
+|---|---|---|
+| add bottle, 5 photos + "a broken or cracked rim" | added | added |
+| inspect broken_large/000.png / good/000.png | DEFECTIVE 0.490 / OK 0.323 (threshold 0.350) | same |
+| add screw live + "a damaged thread", re-inspect bottle | "Bit-identical" | "Bit-identical" |
+| close and reopen the app | "Reopened 2 saved product(s): bottle, screw" | same |
+| inspect broken_large/000.png after reopening | DEFECTIVE 0.490 | DEFECTIVE 0.490 |
+
+These are scripted (Streamlit `AppTest` drives the real app). A rehearsal by a
+person in a browser before the viva is still worth doing once, mainly to practise
+the live product add (use 5 photos; see the weakness below).
 
 **One weakness found.** Adding metal_nut from exactly 3 photos (+ "a bent or
 scratched nut"): defective parts scored higher on average (0.388 vs 0.373 over 5

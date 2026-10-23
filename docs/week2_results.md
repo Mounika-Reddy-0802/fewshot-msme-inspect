@@ -239,6 +239,20 @@ Rs 8/kWh, 10,000 parts/day, 300 days/year. Energy uses burst latency.
 | B/32 torch FP32 | 37 | 239 | 11.02 | 0.67 | 1467 |
 | B/16 torch FP32 | 88 | 656 | 26.36 | 1.82 | 1455 |
 | L/14 torch FP32 | 397 | 2012 | 119.14 | 5.59 | 3680 |
+| *PatchCore, 10 photos* | 93 | -- | 27.99 | 0.26 | 596 |
+| *PatchCore, all 209 photos* | 170 | -- | 51.00 | 0.47 | 1210 |
+
+**The baseline's "before" numbers** (`patchcore_cost_i7_10shot.json`,
+`patchcore_cost_i7_fullshot.json`), timed with `scripts/profile_patchcore.py` on
+the same laptop and harness, each run in a fresh process after a 5-minute
+cool-down, repeats within 10%. PatchCore given our 10 photos runs at 93 ms and
+0.6 GB -- about the same as our B/16 in torch (88 ms) and 2.8x slower than our
+cheapest configuration, B/32 INT8 (33 ms). Full PatchCore, fitted on all 209
+bottle images, needs a 17.5-minute fit and runs at 170 ms with a 131 MB memory
+bank; adding a product to our memory takes 2-4 s (section 5). One timing taken
+two minutes after another run on a hot CPU read 553 ms and was discarded -- the
+same throttling as above. Member B's earlier profile on a 2-core laptop under
+34% load (806 ms, `patchcore_cost.json`) is kept as a second-machine figure.
 
 Hardware spend: Rs 0 (an existing laptop). GPU: none used in this session's
 runs. The whole study's benchmarks used at least 6.8 CPU-hours, about Rs 2.45 of
@@ -694,8 +708,9 @@ the wrong place: `transistor` -0.173, `hazelnut` -0.081, VisA `pcb3` -0.115,
 PatchCore at detection and loses at localisation. What it adds is what PatchCore
 does not have: a product added in seconds without touching the others (section
 5), typed defect descriptions (section 9), one backbone shared by detection and
-text, and a measured CPU cost (sections 4 and 7). PatchCore's own CPU cost under
-the same harness is the remaining "before" number (Member B's task).
+text, and a measured CPU cost (sections 4 and 7). Per image the two cost about the
+same: PatchCore with 10 photos takes 93 ms against our B/16's 88 ms, and our
+B/32 INT8 takes 33 ms (section 4).
 
 Runtime of this baseline on the laptop: 33 minutes for MVTec, 3.3 hours for VisA
 (all 27 categories x 3 seeds x 3 shot counts, test features embedded once per

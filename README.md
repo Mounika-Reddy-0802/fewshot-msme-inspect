@@ -16,7 +16,7 @@ windows, and optional fusion with typed text prompts -- benchmarked for accuracy
 | ViT-B/16 + windows | 0.921 / 0.939 | 0.851 / 0.949 | **0.935** | ~90 (est.) |
 | ViT-B/16 + windows + text | 0.925 / 0.939 | 0.855 / 0.949 | 0.881 | ~90 (est.) |
 | ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | 0.897 | 397 |
-| *Baseline: PatchCore, same photos* | 0.926 / **0.965** | **0.865** / **0.969** | -- | not yet profiled |
+| *Baseline: PatchCore, same photos* | 0.926 / **0.965** | **0.865** / **0.969** | -- | 93 |
 
 Against few-shot PatchCore given the same photos, detection is a statistical tie
 and PatchCore localises better (its feature map is twice as fine); what this
