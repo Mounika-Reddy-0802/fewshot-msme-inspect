@@ -291,9 +291,12 @@ fine as B/16's $14\times14$, and only L/14's $16\times16$ draws level on VisA.
 Per category the two have different strengths: ours on fine, textured defects
 (\texttt{screw} $+0.120$, \texttt{grid} $+0.087$, VisA \texttt{capsules}
 $+0.050$), PatchCore where a defect is a part out of place
-(\texttt{transistor} $-0.173$, VisA \texttt{pcb3} $-0.115$). The case for this
-detector is therefore not raw accuracy but what PatchCore lacks: products added
-in seconds without touching the others, typed descriptions, and a measured cost.
+(\texttt{transistor} $-0.173$, VisA \texttt{pcb3} $-0.115$). Per image the two
+cost about the same on this laptop: PatchCore with 10 photos runs at 93\,ms and
+0.6\,GB, our B/16 at 88\,ms, our B/32 INT8 at 33\,ms (Section~\ref{sec:cost}).
+The case for this detector is therefore not raw accuracy or speed but what
+PatchCore lacks: products added in seconds without touching the others, typed
+descriptions, and one backbone shared by images and text.
 
 \paragraph{Against WinCLIP.} WinCLIP+ reports 93.1 / 94.4 / 95.2 image AUROC on
 MVTec AD and 83.8 / 84.6 / 87.3 on VisA at 1 / 2 / 4 shots, means over five seeds
@@ -359,7 +362,10 @@ B/32 holds 40\,ms for four minutes, then settles at about 230\,ms, $5.8\times$
 slower; B/16 and L/14 run at 630--680\,ms and about 2\,s once throttled. Capacity
 should be planned on the sustained figure. At 14 threads, timings on this hybrid
 CPU were unusable (the same graph measured 36 and 526\,ms in consecutive runs);
-at 6 threads repeats agree within 20\%. Assuming 45\,W and Rs~8/kWh, 10,000 parts
+at 6 threads repeats agree within 20\%. Under the same harness, PatchCore given
+our 10 photos runs at 93\,ms (0.6\,GB); fitted on all 209 \texttt{bottle} images it
+needs a 17.5-minute fit and runs at 170\,ms with a 131\,MB memory bank
+(\texttt{patchcore\_cost\_i7\_*.json}). Assuming 45\,W and Rs~8/kWh, 10,000 parts
 a day for 300 days costs Rs~9.80 a year with B/32 INT8 and Rs~40 with B/16 FP32;
 even throttled, the laptop is busy at most 1.8 hours a day with B/16 (5.6 with
 L/14). The study's benchmarks used at least 6.8 CPU-hours and no GPU; hardware
