@@ -9,6 +9,8 @@ Measured inputs, read from the committed run records:
   (int8_latency.json, torch_latency.json), and torch after 10 minutes of
   continuous load (sustained_torch.json);
 * **RAM** -- peak working set of the loaded inspector (peak_ram.json);
+* **the PatchCore baseline** -- latency and RAM on the same laptop
+  (patchcore_cost_i7_10shot.json, patchcore_cost_i7_fullshot.json);
 * **compute spent on the study** -- the wall-clock of every benchmark run, from
   the .meta.json files next to each benchmark CSV. A lower bound: sweeps,
   ablations and aborted runs are not included.
@@ -90,6 +92,14 @@ def main() -> int:
         rows.append(row(f"{backbone.replace('-quickgelu', '')} torch FP32",
                         rec["latency_bs1_median_ms"], ram.get((backbone, "torch")),
                         sustained.get(backbone, {}).get("last_window_ms")))
+
+    # the baseline, timed on the same laptop under the same harness
+    # (scripts/profile_patchcore.py); rows appear once those records exist
+    for name, label in (("patchcore_cost_i7_10shot.json", "PatchCore, 10 photos"),
+                        ("patchcore_cost_i7_fullshot.json", "PatchCore, all 209 photos")):
+        if (manifests / name).exists():
+            rec = load(name)
+            rows.append(row(label, rec["latency_median_ms"], rec["peak_ram_mb"]))
 
     record = {
         "assumptions": {"cpu_watts": args.watts, "tariff_inr_per_kwh": args.tariff,
