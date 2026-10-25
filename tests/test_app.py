@@ -30,7 +30,7 @@ def test_project_page_renders(app, page):
     assert app.title
 
 
-@pytest.mark.parametrize("dataset", ["MVTec AD", "VisA", "NEU-DET"])
+@pytest.mark.parametrize("dataset", ["MVTec AD", "VisA", "NEU-DET", "MPDD"])
 def test_results_page_renders_every_dataset(app, dataset):
     app.switch_page("views/results.py").run()
     [r for r in app.radio if r.label == "Dataset"][0].set_value(dataset).run()

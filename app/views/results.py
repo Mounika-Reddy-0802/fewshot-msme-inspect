@@ -18,12 +18,17 @@ blurb = {
     "visa": "12 products incl. circuit boards and macaroni. Defects are tiny: 0.04-0.9% of the image.",
     "neu_det": "6 steel-surface textures; each takes a turn as 'normal'. Defects are large (~39%). "
                "No pixel masks, so detection only.",
+    "mpdd": "6 metal parts (brackets, connectors, plates, tubes) photographed under varied light "
+            "and orientation - the closest public stand-in for a shop floor.",
 }[ds]
 st.caption(blurb)
 
 st.header("1 · More good photos help, and the model choice depends on defect size")
 curves = R.shots_curves(ds)
-curves = curves[~curves["model"].str.contains("INT8")]
+if len(curves):
+    curves = curves[~curves["model"].str.contains("INT8")]
+else:
+    st.info("No results recorded for this dataset yet.")
 if len(curves):
     st.altair_chart(S.line_chart(curves, "shots", "image AUROC", "model", [S.BLUE, S.ORANGE, S.AQUA],
                                  x_title="good photos per product"), use_container_width=True)
@@ -34,7 +39,7 @@ st.markdown({
     "visa": "On VisA **ViT-B/16 beats ViT-B/32 by 0.05-0.09**: the defects are smaller than one "
             "B/32 patch (2% of the image) and get averaged away.",
     "neu_det": "On steel the defects are large, so again **ViT-B/32 is as good as ViT-B/16**.",
-}[ds])
+}.get(ds, ""))
 
 st.header("2 · What each idea adds (ViT-B/16)")
 abl = R.ablation(ds)
@@ -60,7 +65,7 @@ st.markdown({
     "neu_det": "Windows help most on textures (+0.049). Text **hurts** here, and should: the "
                "'normal' class is itself a defect type, so a prompt like 'a crazing with a defect' "
                "asks the wrong question.",
-}[ds])
+}.get(ds, "Multi-layer features with windows against the last block alone."))
 
 if ds != "neu_det":
     st.header("3 · Against PatchCore given the same photos")
@@ -85,7 +90,7 @@ if ds != "neu_det":
                     "is a tie** once windows are on; **PatchCore localises better** - its feature "
                     "map is twice as fine as CLIP B/16's.")
 
-st.header(("4" if ds != "neu_det" else "3") + " · Accuracy against CPU cost")
+st.header("Accuracy against CPU cost")
 fr = R.frontier(ds)
 if len(fr):
     models = list(dict.fromkeys(fr["model"]))

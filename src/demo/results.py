@@ -108,11 +108,14 @@ def ablation(dataset: str) -> pd.DataFrame:
             add("+ windows", shots, r["0.0"]["mean_image_auroc"])
             add("+ windows + text", shots, r["0.5"]["mean_image_auroc"])
     else:
-        for shots, r in _paired("neu_det_windowed.json").items():
+        for shots, r in _paired(f"{dataset}_windowed.json").items():
             add("memory only", shots, r["mean_b"])
             add("+ windows", shots, r["mean_a"])
-        for shots, r in _paired("neu_det_text.json").items():
+        for shots, r in _paired(f"{dataset}_text.json").items():
             add("+ windows + text", shots, r["mean_a"])
+        if not rows:
+            for shots, r in _paired(f"ml_windows_vs_b16_{dataset}.json").items():
+                add("memory only", shots, r["mean_b"])
     for shots, r in _paired(f"ml_vs_b16_{dataset}.json").items():
         add("multi-layer", shots, r["mean_a"])
     for shots, r in _paired(f"ml_windows_vs_b16_{dataset}.json").items():
