@@ -145,3 +145,35 @@ def test_loading_under_another_backbone_is_refused(tmp_path):
 
     with pytest.raises(ValueError):
         Inspector(Other()).load(tmp_path / "p.pt")
+
+
+def test_windowed_inspector_keeps_products_independent():
+    inspector = Inspector(FakeEncoder(), scales=(1, 2))
+    inspector.add_product("a", [image(0.1), image(0.2)])
+    before = inspector.inspect("a", image(0.7)).score
+    inspector.add_product("b", [image(0.5)])
+    assert inspector.inspect("a", image(0.7)).score == before
+
+
+def test_batch_matches_one_at_a_time():
+    inspector = Inspector(FakeEncoder(), scales=(1, 2))
+    inspector.add_product("a", [image(0.1), image(0.2), image(0.3)])
+    parts = [image(0.4), image(0.8), image(0.1)]
+    batch = [r.score for r in inspector.inspect_many("a", parts, batch_size=2)]
+    single = [inspector.inspect("a", p).score for p in parts]
+    assert batch == pytest.approx(single, abs=1e-6)
+
+
+def test_threshold_is_the_largest_good_photo_score():
+    inspector = Inspector(FakeEncoder())
+    inspector.add_product("a", [image(0.1), image(0.2), image(0.3)])
+    scores = inspector.good_photo_scores("a")
+    assert len(scores) == 3 and inspector.suggested_threshold("a") == max(scores)
+
+
+def test_worst_patch_points_at_the_highest_patch_score():
+    inspector = Inspector(FakeEncoder())
+    inspector.add_product("a", [image(0.1)])
+    result = inspector.inspect("a", image(0.9))
+    row, col = result.worst_patch
+    assert result.patch_map[row, col] == result.patch_map.max()

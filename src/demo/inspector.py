@@ -29,7 +29,7 @@ from src.eval.pipeline import ANOMALOUS_PROMPTS, NORMAL_PROMPTS
 from src.eval.scoring import upsample_maps
 from src.model.encoder import l2_normalise
 from src.model.memory import PrototypeMemory
-from src.model.windows import text_image_scores
+from src.model.windows import text_image_scores, windowed_scores
 
 TEXT_WEIGHT = 0.5
 
@@ -51,12 +51,18 @@ class Inspection:
     heatmap: torch.Tensor        # (H, W) at the encoder's input resolution
     encode_ms: float
     search_ms: float
+    worst_patch: tuple[int, int] = (0, 0)     # (row, col) of the most anomalous patch
+    patch_map: torch.Tensor | None = None     # (h, w) raw patch scores before smoothing
 
 
 class Inspector:
-    def __init__(self, encoder, top_k: int = 1, sigma: float = 4.0) -> None:
+    def __init__(self, encoder, top_k: int = 1, sigma: float = 4.0,
+                 scales: tuple[int, ...] = (1,)) -> None:
+        """``scales`` (1,) is the single-pass memory; (1, 2, 3) adds the multi-scale
+        windows of src/model/windows.py, as in configs/proposed.yaml."""
         self.encoder = encoder
         self.sigma = sigma
+        self.scales = tuple(scales)
         self.memory = PrototypeMemory(encoder.embed_dim, encoder.grid_size, top_k=top_k)
         self._support: dict[str, list[torch.Tensor]] = {}   # per image, for leave-one-out
         self._pooled: dict[str, list[torch.Tensor]] = {}
@@ -111,23 +117,52 @@ class Inspector:
         text_score = float(text_image_scores(pooled.unsqueeze(0), text)[0])
         return (1 - TEXT_WEIGHT) * memory_score + TEXT_WEIGHT * text_score, text_score
 
+    def _score(self, name: str, patches: torch.Tensor, support=None):
+        """Memory scores for (B, P, D) query patches against one product only."""
+        if self.scales == (1,) and support is None:
+            return self.memory.score(patches, name)
+        bank = torch.stack(support if support is not None else self._support[name])
+        if self.scales == (1,):
+            m = PrototypeMemory(self.memory.dim, self.memory.grid, self.memory.top_k)
+            m.add_class("x", bank)
+            return m.score(patches, "x")
+        return windowed_scores(bank, patches, self.memory.grid, self.scales, self.memory.top_k)
+
+    def _inspection(self, name, patches, pooled, encode_ms, started) -> list[Inspection]:
+        scores = self._score(name, patches)
+        search_ms = (time.perf_counter() - started) * 1000
+        maps = upsample_maps(scores.patches, self.encoder.image_size, sigma=self.sigma)
+        out = []
+        w = scores.patches.shape[-1]
+        for i in range(patches.shape[0]):
+            memory_score = float(scores.image[i])
+            score, text_score = self._fuse(name, memory_score, pooled[i])
+            flat = int(scores.patches[i].flatten().argmax())
+            out.append(Inspection(
+                score=score, memory_score=memory_score, text_score=text_score,
+                heatmap=maps[i], encode_ms=encode_ms, search_ms=search_ms,
+                worst_patch=(flat // w, flat % w), patch_map=scores.patches[i],
+            ))
+        return out
+
     def inspect(self, name: str, image) -> Inspection:
         start = time.perf_counter()
         patches, pooled = self._encode([image])
         encoded = time.perf_counter()
-        scores = self.memory.score(patches, name)
-        searched = time.perf_counter()
-        heatmap = upsample_maps(scores.patches, self.encoder.image_size, sigma=self.sigma)[0]
-        memory_score = float(scores.image[0])
-        score, text_score = self._fuse(name, memory_score, pooled[0])
-        return Inspection(
-            score=score,
-            memory_score=memory_score,
-            text_score=text_score,
-            heatmap=heatmap,
-            encode_ms=(encoded - start) * 1000,
-            search_ms=(searched - encoded) * 1000,
-        )
+        return self._inspection(name, patches, pooled, (encoded - start) * 1000, encoded)[0]
+
+    def inspect_many(self, name: str, images, batch_size: int = 16, progress=None) -> list[Inspection]:
+        """Score a list of images; ``progress(done, total)`` is called per batch."""
+        results = []
+        for i in range(0, len(images), batch_size):
+            start = time.perf_counter()
+            patches, pooled = self._encode(images[i:i + batch_size])
+            encoded = time.perf_counter()
+            per_image_ms = (encoded - start) * 1000 / patches.shape[0]
+            results += self._inspection(name, patches, pooled, per_image_ms, encoded)
+            if progress:
+                progress(len(results), len(images))
+        return results
 
     def save(self, path) -> None:
         """Write every product to one file, so the app can be closed and
@@ -173,17 +208,21 @@ class Inspector:
             loaded.append(name)
         return loaded
 
-    def suggested_threshold(self, name: str) -> float | None:
-        """Highest leave-one-out score among the good photos, or None if there
-        are fewer than two (a photo scored against itself is always 0).
-        Scored exactly as inspect() scores, text fusion included."""
+    def good_photo_scores(self, name: str) -> list[float]:
+        """Each good photo scored against the others (leave-one-out), exactly as
+        inspect() scores a part, text fusion included. Empty below two photos (a
+        photo scored against itself is always 0)."""
         support = self._support.get(name, [])
         if len(support) < 2:
-            return None
-        worst = 0.0
+            return []
+        scores = []
         for i, held_out in enumerate(support):
-            others = PrototypeMemory(self.memory.dim, self.memory.grid, self.memory.top_k)
-            others.add_class("x", torch.stack(support[:i] + support[i + 1:]))
-            memory_score = float(others.score(held_out.unsqueeze(0), "x").image[0])
-            worst = max(worst, self._fuse(name, memory_score, self._pooled[name][i])[0])
-        return worst
+            s = self._score(name, held_out.unsqueeze(0), support=support[:i] + support[i + 1:])
+            scores.append(self._fuse(name, float(s.image[0]), self._pooled[name][i])[0])
+        return scores
+
+    def suggested_threshold(self, name: str) -> float | None:
+        """Highest leave-one-out score among the good photos: the lowest threshold
+        that flags none of them. None if there are fewer than two."""
+        scores = self.good_photo_scores(name)
+        return max(scores) if scores else None
