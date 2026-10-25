@@ -154,18 +154,27 @@ is private). Attaching an MVTec dataset with **Add Data** mounts it read-only
 under `/kaggle/input`, so no download is needed -- the notebook finds it by its
 category folders rather than by a hardcoded dataset name.
 
-## Demo
+## The app
 
 ```bash
+set FEWSHOT_DATA_ROOT=C:\path\to\datasets        # optional: one-click benchmark products
+set FEWSHOT_RESULTS_ROOT=C:\path\to\results       # where products are saved
 streamlit run app/demo.py
 ```
 
-Add a product from a few photos of good parts (or load any MVTec AD / VisA
-category from the committed split when `FEWSHOT_DATA_ROOT` is set), then inspect
-parts: anomaly score, heatmap, and pass/fail against a threshold suggested from
-the good photos themselves. Add a second product and re-inspect a part of the
-first -- the score is bit-identical. Runs on CPU; the logic lives in
-`src/demo/inspector.py` and uses exactly the benchmarked encoder and memory.
+| page | what it shows |
+|---|---|
+| **Overview** | the problem, the method in one diagram, headline numbers read from the result records |
+| **How it works** | the five steps (patches, memory, patch score, windows/text, threshold) with a real example |
+| **Results** | every finding as an interactive chart, per dataset, each with its data table |
+| **About & reproduce** | team, data and licences, protocol, commands, limitations |
+| **1 - Add a product** | from 1-10 good photos (uploaded, or a benchmark category), optional defect description |
+| **2 - Inspect a part** | verdict, heatmap, box on the most unusual patch, the real defect outline for benchmark images, where the score sits among the good photos, and a step-by-step explanation with the actual numbers |
+| **3 - Check a batch** | a whole test set at once: live AUROC, accuracy, caught / missed / false alarms, score histogram, the mistakes |
+
+The sidebar chooses the model (ViT-B/32, ViT-B/16, ViT-B/16 multi-layer, or ViT-B/32 INT8 via
+ONNX) and whether multi-scale windows are on. Products are saved after every addition and
+reopened next time. The project pages need no datasets: they read `results/manifests/`.
 
 ## Running an experiment
 
