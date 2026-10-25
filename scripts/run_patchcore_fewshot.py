@@ -44,6 +44,8 @@ def main() -> int:
     parser.add_argument("--dataset", default="mvtec_ad")
     parser.add_argument("--categories", nargs="+", default=None)
     parser.add_argument("--shots", nargs="+", type=int, default=[1, 5, 10])
+    parser.add_argument("--splits-dir", default=None,
+                        help="read split manifests from here instead of results/manifests/splits")
     parser.add_argument("--threads", type=int, default=12)
     parser.add_argument("--out", default=None)
     args = parser.parse_args()
@@ -52,7 +54,8 @@ def main() -> int:
     data_root = dataset_dir(args.dataset).parent
     root = category_root(args.dataset, data_root)
     manifests = [load_manifest(p) for p in
-                 manifest_paths(repo_root() / "results" / "manifests" / "splits", args.dataset)]
+                 manifest_paths(Path(args.splits_dir) if args.splits_dir else
+                                repo_root() / "results" / "manifests" / "splits", args.dataset)]
     categories = args.categories or manifest_categories(manifests[0])
 
     pc = FewShotPatchCore()

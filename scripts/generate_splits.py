@@ -83,7 +83,8 @@ def discover_categories(root: Path) -> list[str]:
     ]
 
 
-def build_category_split(category_dir: Path, relpath_root: Path, rng) -> dict:
+def build_category_split(category_dir: Path, relpath_root: Path, rng,
+                         shot_counts=SHOT_COUNTS) -> dict:
     good_images = glob_images(category_dir / "train" / "good")
     good_images = [p.relative_to(relpath_root).as_posix() for p in good_images]
 
@@ -92,7 +93,7 @@ def build_category_split(category_dir: Path, relpath_root: Path, rng) -> dict:
 
     rng.shuffle(good_images)
 
-    shots = {str(k): good_images[:k] for k in SHOT_COUNTS}
+    shots = {str(k): good_images[:k] for k in shot_counts}
 
     return {
         "test": test_images,
@@ -115,7 +116,17 @@ def main() -> int:
              "draw, a category that dips at 5 shots cannot be told apart from "
              "an unlucky support image.",
     )
+    parser.add_argument(
+        "--shots", nargs="+", type=int, default=list(SHOT_COUNTS),
+        help="shot counts to draw (nested); default 0 1 5 10",
+    )
+    parser.add_argument(
+        "--out-dir", default=None,
+        help="write elsewhere than results/manifests/splits, e.g. for a second protocol; "
+             "the committed default manifests are then left untouched",
+    )
     args = parser.parse_args()
+    shot_counts = tuple(sorted(set(args.shots)))
 
     config = load_config("base.yaml")
     default_seed = config["experiment"]["seed"]
@@ -137,7 +148,7 @@ def main() -> int:
     # Manifests are the reproducibility record and must be committed, so they go
     # to the repository rather than to FEWSHOT_RESULTS_ROOT, which usually points
     # outside it.
-    out_dir = repo_root() / "results" / "manifests" / "splits"
+    out_dir = Path(args.out_dir) if args.out_dir else repo_root() / "results" / "manifests" / "splits"
     out_dir.mkdir(parents=True, exist_ok=True)
 
     import random
@@ -147,12 +158,12 @@ def main() -> int:
         manifest = {
             "dataset": args.dataset,
             "seed": seed,
-            "shot_counts": list(SHOT_COUNTS),
+            "shot_counts": list(shot_counts),
             "categories": {},
         }
         for category in categories:
             manifest["categories"][category] = build_category_split(
-                root / category, relpath_root, rng
+                root / category, relpath_root, rng, shot_counts
             )
 
         # the default seed keeps the original filename, so existing references

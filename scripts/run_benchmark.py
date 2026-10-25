@@ -88,6 +88,8 @@ def main() -> int:
                              "running both costs almost nothing extra")
     parser.add_argument("--batch-size", type=int, default=16)
     parser.add_argument("--workers", type=int, default=0)
+    parser.add_argument("--splits-dir", default=None,
+                        help="read split manifests from here instead of results/manifests/splits")
     parser.add_argument("--threads", type=int, default=None,
                         help="pin torch threads so timings are comparable")
     parser.add_argument("--project-patches", dest="project_patches",
@@ -121,7 +123,7 @@ def main() -> int:
     precision = args.precision or config["backbone"].get("precision", "fp32")
     # directory that directly contains the category folders
     root = category_root(dataset, dataset_dir(dataset).parent)
-    splits_dir = repo_root() / "results" / "manifests" / "splits"
+    splits_dir = Path(args.splits_dir) if args.splits_dir else repo_root() / "results" / "manifests" / "splits"
     # fp32 keeps its original file name so earlier results stay where they were
     scoring = config["model"]["scoring"]
     scales = args.scales or scoring.get("scales", [1])
