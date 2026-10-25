@@ -22,9 +22,9 @@ We ask whether a small manufacturer can start automated visual inspection with
 nothing more than a few photographs of good parts and the laptop it already has.
 Our detector keeps a frozen OpenCLIP image encoder, stores the patch features of
 1--10 normal photos in a separate memory for each product, and flags test patches
-that resemble none of them; it trains nothing. We evaluate it on MVTec AD, VisA,
-NEU-DET and MPDD with three backbones, FP32 and INT8, three random draws of the
-support photos, and paired statistics, and we time every configuration on one
+that resemble none of them; it trains nothing. We evaluate it on four datasets
+(MVTec AD, VisA, NEU-DET, MPDD) with up to three backbones in FP32 and INT8, three
+random draws of the support photos, and paired statistics, and we time every configuration on one
 consumer CPU. With ten photos and the last transformer block, ViT-B/16 reaches
 0.904 image AUROC on MVTec AD. Taking patch tokens from blocks 6, 9 and 12 as well
 raises this to 0.938, and to 0.945 with windowed scoring, for under 10\% more
