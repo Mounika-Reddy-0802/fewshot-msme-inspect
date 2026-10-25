@@ -48,7 +48,7 @@ def load_benchmark(benchmark_dir: Path, dataset: str) -> list[dict]:
     <dataset>_<backbone>.csv; pooling datasets would average VisA into MVTec."""
     rows = []
     for path in sorted(benchmark_dir.glob(f"{dataset}_*.csv")):
-        if "-win" in path.stem or "-text" in path.stem:
+        if "-win" in path.stem or "-text" in path.stem or path.stem.endswith("-sliced"):
             continue        # scoring ablations reuse the backbone name; see compare_paired.py
         for row in read_csv(path):
             row["shots"] = int(row["shots"])

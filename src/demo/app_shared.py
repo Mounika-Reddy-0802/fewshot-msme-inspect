@@ -23,6 +23,16 @@ from src.utils.paths import data_root, repo_root, results_root
 BLUE, ORANGE, AQUA, YELLOW, MAGENTA = "#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4"
 INK, MUTED = "#0b0b0b", "#52514e"
 
+# colour follows the model on every chart, so a model keeps its colour across pages
+MODEL_COLOURS = {"ViT-B/16": BLUE, "PatchCore (same photos)": ORANGE, "ViT-B/32": AQUA,
+                 "ViT-L/14": YELLOW, "ViT-B/16 multi-layer": MAGENTA}
+
+
+def colours_for(models) -> list[str]:
+    spare = iter(c for c in (BLUE, ORANGE, AQUA, YELLOW, MAGENTA) if c not in
+                 {MODEL_COLOURS.get(m) for m in models})
+    return [MODEL_COLOURS.get(m) or next(spare, MUTED) for m in models]
+
 ENGINES = {
     "b32": {"label": "ViT-B/32 (fastest, ~37 ms per part)", "backbone": "ViT-B-32-quickgelu",
             "kind": "torch", "store": "ViT-B-32-quickgelu.pt",

@@ -26,6 +26,7 @@ BACKBONE_LABELS = {
     "ViT-B-32-quickgelu-int8": "ViT-B/32 INT8",
     "ViT-B-16-quickgelu-int8": "ViT-B/16 INT8",
     "ViT-B-16-quickgelu-ml6-9-12": "ViT-B/16 multi-layer",
+    "patchcore-wideresnet502": "PatchCore (same photos)",
 }
 
 
@@ -175,7 +176,15 @@ def headline() -> dict:
     holdout = record("incremental_holdout_10shot.json")
     cost = {r["config"]: r for r in record("cost_feasibility.json").get("per_config", [])}
     neu_win = _paired("neu_det_windowed.json").get("10", {}).get("mean_a")
+    mlw = {ds: _paired(f"ml_windows_vs_b16_{ds}.json").get("10", {}) for ds in ("mvtec_ad", "visa", "mpdd")}
+    mlw_px = _paired("ml_windows_vs_b16_mvtec_ad.json", "pixel_auroc").get("10", {})
+    ml_ms = record("ml_latency.json").get("ms_per_image_runs")
     return {
+        "mvtec_ml": mlw["mvtec_ad"].get("mean_a"),
+        "mvtec_ml_pixel": mlw_px.get("mean_a"),
+        "visa_ml": mlw["visa"].get("mean_a"),
+        "mpdd_ml": mlw["mpdd"].get("mean_a"),
+        "ml_ms": max(ml_ms) if ml_ms else None,
         "mvtec_best": mean_at("mvtec_ad", "ViT-L/14"),
         "mvtec_proposed": proposed["mvtec_ad"],
         "visa_proposed": proposed["visa"],

@@ -33,7 +33,12 @@ with c2:
         "- ViT-B/16: 14 x 14 = 196 patches, 0.5% each\n"
         "- ViT-L/14: 16 x 16 = 256 patches, 0.4% each (slow)\n\n"
         "A defect smaller than one patch gets averaged away. That single fact explains when the "
-        "cheap model is enough and when it is not.")
+        "cheap model is enough and when it is not.\n\n"
+        "**Release 1.1: multi-layer features.** The model is a stack of 12 blocks. The last one "
+        "summarises the whole image and blurs where things are; earlier blocks keep local "
+        "detail. So each patch is now described by blocks 6, 9 and 12 together (2,304 numbers "
+        "instead of 768). On MVTec AD this raised detection from 0.904 to 0.938 and "
+        "localisation from 0.936 to 0.957, for about 7% more time per part.")
 
 st.header("2 · Remember the good patches")
 st.markdown(

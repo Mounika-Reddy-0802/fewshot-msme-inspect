@@ -30,7 +30,8 @@ if len(curves):
 else:
     st.info("No results recorded for this dataset yet.")
 if len(curves):
-    st.altair_chart(S.line_chart(curves, "shots", "image AUROC", "model", [S.BLUE, S.ORANGE, S.AQUA],
+    st.altair_chart(S.line_chart(curves, "shots", "image AUROC", "model",
+                                 S.colours_for(dict.fromkeys(curves["model"])),
                                  x_title="good photos per product"), use_container_width=True)
     S.show_data(curves.pivot_table(index="model", columns="shots", values="image AUROC").round(3).reset_index())
 st.markdown({
@@ -39,7 +40,13 @@ st.markdown({
     "visa": "On VisA **ViT-B/16 beats ViT-B/32 by 0.05-0.09**: the defects are smaller than one "
             "B/32 patch (2% of the image) and get averaged away.",
     "neu_det": "On steel the defects are large, so again **ViT-B/32 is as good as ViT-B/16**.",
+    "mpdd": "On MPDD, with only last-block features, ViT-B/16 is already ahead of PatchCore at "
+            "every photo count (0.808 against 0.758 at 10 photos).",
 }.get(ds, ""))
+if ds in ("mvtec_ad", "visa"):
+    st.caption("**ViT-B/16 multi-layer** (magenta) describes each patch with blocks 6, 9 and 12 of "
+               "the model instead of the last block only. It is the most accurate line on both "
+               "datasets, ahead of the 4x slower ViT-L/14.")
 
 st.header("2 · What each idea adds (ViT-B/16)")
 abl = R.ablation(ds)
@@ -65,7 +72,19 @@ st.markdown({
     "neu_det": "Windows help most on textures (+0.049). Text **hurts** here, and should: the "
                "'normal' class is itself a defect type, so a prompt like 'a crazing with a defect' "
                "asks the wrong question.",
-}.get(ds, "Multi-layer features with windows against the last block alone."))
+    "mpdd": "On MPDD multi-layer features with windows are level with the last block alone "
+            "(0.824 against 0.808 at 10 photos, 1.1 x SE): the gain seen elsewhere does not "
+            "carry over to these metal parts.",
+}.get(ds, ""))
+st.markdown({
+    "mvtec_ad": "**Multi-layer features are the biggest single gain**: 0.904 to 0.938 at 10 photos, "
+                "and 0.945 with windows. Localisation rises from 0.936 to 0.962. Every one of the 15 "
+                "products improves at 5 and 10 photos. Block 6 alone gives almost all of it "
+                "(0.936 image, 0.963 pixel); block 9 alone less (0.926).",
+    "visa": "Multi-layer features lift VisA from 0.831 to 0.872 (0.881 with windows).",
+    "neu_det": "Multi-layer features help on steel too (0.887 to 0.911), but no more than windows "
+               "alone (0.935); together they are level with windows alone.",
+}.get(ds, ""))
 
 if ds != "neu_det":
     st.header("3 · Against PatchCore given the same photos")
@@ -86,15 +105,48 @@ if ds != "neu_det":
             ).properties(height=40 * len(sub)), use_container_width=True)
         S.show_data(vs.round(3))
         st.markdown("Blue = this project, orange = PatchCore. A difference counts only when it is "
-                    "more than twice its paired standard error ('x SE' in the table). **Detection "
-                    "is a tie** once windows are on; **PatchCore localises better** - its feature "
-                    "map is twice as fine as CLIP B/16's.")
+                    "more than twice its paired standard error ('x SE' in the table). With last-block "
+                    "features PatchCore localises better (its feature map is twice as fine). "
+                    "**Multi-layer features change that**: detection is ahead of PatchCore at 1, 5 "
+                    "and 10 photos, and localisation is level on MVTec AD. PatchCore keeps a lead "
+                    "of about 0.01 in localisation on VisA and MPDD.")
+
+if ds == "mvtec_ad":
+    st.header("4 · Against WinCLIP, on WinCLIP's own protocol")
+    wc = R.record("winclip_protocol_mvtec_ad.json")
+    if wc:
+        pub = wc["published_winclip_table1"]
+        rows = []
+        for k in ("1", "2", "4"):
+            rows += [
+                {"photos": int(k), "model": "this project (multi-layer + windows + text)",
+                 "image AUROC": wc["ours_x100"][k]["image_auroc"],
+                 "pixel AUROC": wc["ours_x100"][k]["pixel_auroc"]},
+                {"photos": int(k), "model": "PatchCore, our run",
+                 "image AUROC": wc["patchcore_x100"][k]["image_auroc"],
+                 "pixel AUROC": wc["patchcore_x100"][k]["pixel_auroc"]},
+                {"photos": int(k), "model": "WinCLIP+ (published)",
+                 "image AUROC": pub["winclip_plus"][k]["image"], "pixel AUROC": pub["winclip_plus"][k]["pixel"]},
+                {"photos": int(k), "model": "PatchCore (published in WinCLIP)",
+                 "image AUROC": pub["patchcore"][k]["image"], "pixel AUROC": None},
+            ]
+        wdf = pd.DataFrame(rows)
+        st.altair_chart(S.line_chart(wdf, "photos", "image AUROC", "model",
+                                     [S.BLUE, S.ORANGE, S.AQUA, S.YELLOW],
+                                     x_title="good photos (1, 2, 4)", height=280),
+                        use_container_width=True)
+        S.show_data(wdf)
+        st.caption("MVTec AD, 1/2/4 photos, five seeds (0-4), as in the WinCLIP paper; AUROC x 100. "
+                   "Our PatchCore run lands within 0.8 points of the PatchCore row in WinCLIP's own "
+                   "table, so the two protocols match. WinCLIP+ was not re-run: it uses a "
+                   "LAION-trained ViT-B/16+ at 240 px and one encoder pass per window, far more "
+                   "work per part than our single pass.")
 
 st.header("Accuracy against CPU cost")
 fr = R.frontier(ds)
 if len(fr):
     models = list(dict.fromkeys(fr["model"]))
-    colours = [S.BLUE, S.ORANGE, S.AQUA, S.YELLOW, S.MAGENTA][:len(models)]
+    colours = S.colours_for(models)
     st.altair_chart(alt.Chart(fr).mark_point(size=110, filled=True).encode(
         x=alt.X("ms per part:Q", title="CPU time per part (ms, cool laptop)"),
         y=alt.Y("image AUROC:Q", scale=alt.Scale(zero=False)),

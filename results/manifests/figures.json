@@ -1,11 +1,9 @@
 {
-  "source_rows": 1215,
+  "source_rows": 945,
   "backbones": [
     "ViT-B-16-quickgelu",
     "ViT-B-16-quickgelu-int8",
-    "ViT-B-16-quickgelu-ml6",
     "ViT-B-16-quickgelu-ml6-9-12",
-    "ViT-B-16-quickgelu-ml9",
     "ViT-B-32-quickgelu",
     "ViT-B-32-quickgelu-int8",
     "ViT-L-14-quickgelu",
@@ -72,19 +70,6 @@
           ]
         },
         {
-          "backbone": "ViT-B-16-quickgelu-ml6",
-          "shots": [
-            1,
-            5,
-            10
-          ],
-          "mean_image_auroc": [
-            0.8898260283034078,
-            0.9238894427600033,
-            0.9362152824413067
-          ]
-        },
-        {
           "backbone": "ViT-B-16-quickgelu-ml6-9-12",
           "shots": [
             1,
@@ -95,19 +80,6 @@
             0.8982924445736322,
             0.9277000477282461,
             0.9379373382811234
-          ]
-        },
-        {
-          "backbone": "ViT-B-16-quickgelu-ml9",
-          "shots": [
-            1,
-            5,
-            10
-          ],
-          "mean_image_auroc": [
-            0.8830901512689298,
-            0.9150243068874956,
-            0.9258155387743844
           ]
         },
         {

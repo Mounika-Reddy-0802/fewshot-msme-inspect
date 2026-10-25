@@ -32,7 +32,7 @@ def load_rows(benchmark_dir: Path, dataset: str) -> list[dict]:
     """Rows for one dataset; run_benchmark.py writes <dataset>_<backbone>.csv."""
     rows = []
     for path in sorted(benchmark_dir.glob(f"{dataset}_*.csv")):
-        if "-win" in path.stem or "-text" in path.stem:
+        if "-win" in path.stem or "-text" in path.stem or path.stem.endswith("-sliced"):
             continue        # scoring ablations reuse the backbone name; see compare_paired.py
         with path.open(encoding="utf-8") as handle:
             rows.extend(csv.DictReader(handle))

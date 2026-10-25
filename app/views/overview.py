@@ -41,32 +41,42 @@ digraph {
 """, use_container_width=True)
 
 st.subheader("What the measurements show")
+def num(x, fmt="{:.3f}"):
+    return fmt.format(x) if x is not None else "-"
+
+
 m1, m2, m3, m4 = st.columns(4)
-m1.metric("MVTec AD, 10 photos", f"{h['mvtec_proposed']:.3f}" if h["mvtec_proposed"] else "-",
-          help="Image AUROC of ViT-B/16 with windows and text, mean over 3 seeds. "
-               "1.0 = perfect separation of good and defective parts.")
-m2.metric("Steel surfaces (NEU-DET)", f"{h['neu_windows']:.3f}" if h["neu_windows"] else "-",
+m1.metric("MVTec AD, 10 photos", num(h["mvtec_ml"]),
+          help="Image AUROC, ViT-B/16 multi-layer + windows, mean over 3 seeds. 1.0 = good and "
+               "defective parts perfectly separated; 0.5 = coin toss.")
+m2.metric("Defect location (MVTec AD)", num(h["mvtec_ml_pixel"]),
+          help="Pixel AUROC: how well the heatmap marks the defective pixels.")
+m3.metric("VisA (tiny defects)", num(h["visa_ml"]),
+          help="Image AUROC, ViT-B/16 multi-layer + windows, 10 photos.")
+m4.metric("Steel surfaces (NEU-DET)", num(h["neu_windows"]),
           help="Image AUROC, ViT-B/16 with windows, 10 photos.")
-m3.metric("Fastest check", f"{h['fastest_ms']:.0f} ms" if h["fastest_ms"] else "-",
-          help="ViT-B/32 INT8 per part on a cool laptop CPU (Intel i7-13700H).")
-m4.metric("Electricity per year", f"Rs {h['rs_per_year_b16']:.0f}" if h["rs_per_year_b16"] else "-",
-          help="ViT-B/16, 10,000 parts a day, 300 days, 45 W, Rs 8 per kWh.")
 m5, m6, m7, m8 = st.columns(4)
-m5.metric("VisA (tiny defects)", f"{h['visa_proposed']:.3f}" if h["visa_proposed"] else "-",
-          help="Image AUROC, ViT-B/16 with windows and text, 10 photos.")
-m6.metric("Best MVTec model", f"{h['mvtec_best']:.3f}" if h["mvtec_best"] else "-",
-          help="ViT-L/14, 10 photos. Slower: about 400 ms per part.")
-m7.metric("Add a product", f"{h['append_seconds']:.1f} s" if h["append_seconds"] else "-",
+m5.metric("Time per part", num(h["ml_ms"], "{:.0f} ms"),
+          help="ViT-B/16 multi-layer on a cool laptop CPU (Intel i7-13700H, 6 threads). "
+               f"Fastest option: ViT-B/32 INT8 at {num(h['fastest_ms'], '{:.0f}')} ms.")
+m6.metric("Electricity per year", num(h["rs_per_year_b16"], "Rs {:.0f}"),
+          help="ViT-B/16, 10,000 parts a day, 300 days, 45 W, Rs 8 per kWh.")
+m7.metric("Add a product", num(h["append_seconds"], "{:.1f} s"),
           help="From 10 photos, end to end: read, encode, store. No retraining.")
 m8.metric("Other products after an add", "unchanged" if h["append_bit_identical"] else "-",
           help="Checked bit-for-bit on every seed: adding a product never changes another one's scores.")
 
 st.subheader("Honest comparison with the standard method")
 st.markdown(
-    "Given **the same 10 photos**, PatchCore (the strongest classical method) and this system "
-    "**detect defects equally well**; PatchCore **marks the exact defect location** a little "
-    "better. What this system adds: a new product in seconds without touching the others, a "
-    "typed description of the defect, and measured cost on a laptop. See *Results*.")
+    "Given **the same photos**, this system **detects defects better than PatchCore** (the "
+    "strongest classical method) on MVTec AD, VisA and MPDD, at 1, 5 and 10 photos. At "
+    "**marking where** the defect is, it is level with PatchCore on MVTec AD; PatchCore keeps "
+    "a lead of about 0.01 on VisA's tiny defects and on MPDD.\n\n"
+    "On the WinCLIP paper's own protocol (MVTec AD, 1/2/4 photos, five seeds) it scores "
+    "**89.4 / 91.2 / 92.9**, 2-4 points below the published WinCLIP+ (93.1 / 94.4 / 95.2), "
+    "which runs the encoder once per window. What this system adds: a new product in seconds "
+    "without touching the others, a typed defect description, and measured laptop cost. "
+    "See *Results*.")
 
 st.subheader("Showing it in three minutes")
 st.markdown(
@@ -78,4 +88,4 @@ st.markdown(
     "4. **Add a second product** (e.g. `screw`), inspect the same bottle again: the score is "
     "*bit-identical*.")
 st.caption("Capstone project by Mounika Reddy (modelling and efficiency) and Ashi Sharma "
-           "(data, evaluation and dissemination). Release 1.1.")
+           "(data, evaluation and dissemination). Release 1.1: multi-layer features.")
