@@ -38,7 +38,7 @@ with c2:
         "summarises the whole image and blurs where things are; earlier blocks keep local "
         "detail. So each patch is now described by blocks 6, 9 and 12 together (2,304 numbers "
         "instead of 768). On MVTec AD this raised detection from 0.904 to 0.938 and "
-        "localisation from 0.936 to 0.957, for about 7% more time per part.")
+        "localisation from 0.936 to 0.957, for under 10% more time per part.")
 
 st.header("2 · Remember the good patches")
 st.markdown(

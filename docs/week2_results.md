@@ -826,7 +826,7 @@ LAION-400M ViT-B/16+ at 240 px and runs the encoder once per window, many encode
 passes per image against our one.
 
 **Cost** (`ml_latency.json`). ViT-B/16 multi-layer, torch FP32, 6 threads, batch 1:
-94-97 ms per image (two runs) against 88 ms for the last block, about +7%: the
+94-97 ms per image (two runs) against 88 ms for the last block, +7-10%: the
 blocks are computed anyway and only kept. The memory search grows with the
 feature width, 4.4-5.0 ms at 10 shots. RAM for the memory triples (2,304 floats per
 patch): 196 patches x 10 shots x 9.2 KB = 18 MB per product.

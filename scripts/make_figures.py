@@ -30,8 +30,21 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from src.utils.paths import repo_root, results_root  # noqa: E402
 
-# colourblind-safe, and distinguishable in greyscale print
-PALETTE = ["#0173B2", "#DE8F05", "#029E73", "#CC78BC", "#CA9161"]
+# colourblind-safe, and distinguishable in greyscale print. Colour follows the
+# model, never its position in a sorted list; INT8 shares its model's colour and
+# is drawn hollow (frontier) or dashed (shots curve).
+LABELS = {"ViT-B-32-quickgelu": "ViT-B/32", "ViT-B-16-quickgelu": "ViT-B/16",
+          "ViT-L-14-quickgelu": "ViT-L/14", "ViT-B-16-quickgelu-ml6-9-12": "ViT-B/16 multi-layer",
+          "patchcore-wideresnet502": "PatchCore (same photos)"}
+COLOURS = {"ViT-B/32": "#029E73", "ViT-B/16": "#0173B2", "ViT-L/14": "#CA9161",
+           "ViT-B/16 multi-layer": "#CC78BC", "PatchCore (same photos)": "#DE8F05"}
+
+
+def style(backbone: str) -> tuple[str, str, bool]:
+    """(label, colour, is_int8) for a backbone name as it appears in the CSVs."""
+    int8 = backbone.endswith("-int8")
+    name = LABELS.get(backbone.removesuffix("-int8"), backbone.removesuffix("-int8"))
+    return name + (" INT8" if int8 else ""), COLOURS.get(name, "#666666"), int8
 
 DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET", "mpdd": "MPDD"}
 
@@ -85,15 +98,17 @@ def figure_shots_vs_accuracy(rows, out_dir, dpi, dataset):
 
     fig, ax = plt.subplots(figsize=(6.4, 4.2))
     used = []
-    for i, (backbone, by_shot) in enumerate(sorted(by_backbone.items())):
+    for backbone, by_shot in sorted(by_backbone.items()):
         shots = sorted(by_shot)
         # each (category, seed) is one sample; band is the spread across them
         means = [mean(by_shot[s]) for s in shots]
         los = [min(by_shot[s]) for s in shots]
         his = [max(by_shot[s]) for s in shots]
-        colour = PALETTE[i % len(PALETTE)]
-        ax.plot(shots, means, "o-", color=colour, label=backbone, linewidth=2, markersize=6)
-        ax.fill_between(shots, los, his, color=colour, alpha=0.12)
+        label, colour, int8 = style(backbone)
+        ax.plot(shots, means, "o--" if int8 else "o-", color=colour, label=label,
+                linewidth=2, markersize=6, markerfacecolor="white" if int8 else colour)
+        if not int8:
+            ax.fill_between(shots, los, his, color=colour, alpha=0.10)
         used.append({"backbone": backbone, "shots": shots, "mean_image_auroc": means})
 
     ax.set_xlabel("labelled normal images (shots)")
@@ -151,16 +166,15 @@ def figure_frontier(rows, profiles, out_dir, dpi, dataset):
                      "total_ms_per_image": cost, "image_auroc": accuracy})
 
     fig, ax = plt.subplots(figsize=(6.8, 4.6))
-    backbones = sorted({b for b, _ in grouped})
-    for i, backbone in enumerate(backbones):
-        subset = [(c, a, l) for c, a, l in points if l.startswith(backbone)]
-        subset.sort(key=lambda t: t[1])
-        ax.scatter([c for c, _, _ in subset], [a for _, a, _ in subset],
-                   s=70, color=PALETTE[i % len(PALETTE)], label=backbone,
-                   zorder=3, edgecolor="white", linewidth=1)
-        for cost, accuracy, label in subset:
-            ax.annotate(label.split()[-1], (cost, accuracy), fontsize=7.5,
-                        xytext=(5, -3), textcoords="offset points", color="#444")
+    for backbone in sorted({b for b, _ in grouped}):
+        subset = sorted((total_cost(b, k), mean(v), k) for (b, k), v in grouped.items() if b == backbone)
+        label, colour, int8 = style(backbone)
+        ax.scatter([c for c, _, _ in subset], [a for _, a, _ in subset], s=70, label=label,
+                   facecolor="white" if int8 else colour, edgecolor=colour,
+                   linewidth=1.6 if int8 else 1, zorder=3)
+        for cost, accuracy, shots in subset:
+            ax.annotate(str(shots), (cost, accuracy), fontsize=7.5,
+                        xytext=(6, -3), textcoords="offset points", color="#444")
 
     front = pareto_front(points)
     if len(front) > 1:
@@ -168,7 +182,8 @@ def figure_frontier(rows, profiles, out_dir, dpi, dataset):
                 "--", color="#666", linewidth=1.2, zorder=2,
                 label="Pareto front")
 
-    ax.set_xlabel("CPU latency (ms per image, batch size 1: backbone + memory search)")
+    ax.set_xlabel("CPU latency (ms per image, batch size 1: backbone + memory search)\n"
+                  "numbers next to points = good photos per product; hollow = INT8")
     ax.set_ylabel("image AUROC")
     ax.set_title("Accuracy against CPU cost\n"
                  f"({DATASET_NAMES.get(dataset, dataset)}, frozen backbone + prototype memory, no GPU)",
