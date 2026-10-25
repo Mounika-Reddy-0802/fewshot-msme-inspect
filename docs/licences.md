@@ -52,3 +52,15 @@ work downloads directly from the original sources below.
 - **Citation:** Song, K. and Yan, Y., "A noise robust method based on
   completed local binary patterns for hot-rolled steel strip surface
   defects", Applied Surface Science, 2013.
+
+## MPDD (Metal Parts Defect Detection)
+
+- **Source:** https://github.com/stepanje/MPDD (Brno University of Technology); the
+  official download is a SharePoint folder. Our copy came from the Hugging Face
+  mirror `meksamiao/mpdd` and was checked against the official description:
+  6 categories, 888 training and 458 test images (1,346 in total), pixel masks.
+- **Licence:** Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+  International (CC BY-NC-SA 4.0), stated in the repository's LICENSE file.
+- **Permits:** research / non-commercial use with attribution and share-alike.
+- **Citation:** Jezek et al., "Deep learning-based defect detection of metal
+  parts: evaluating current methods in complex conditions", ICUMT 2021.

@@ -38,6 +38,7 @@ CATEGORY_SUBDIR = {
     "mvtec_ad": "",
     "visa": "visa_pytorch",
     "neu_det": "",
+    "mpdd": "",
 }
 
 
