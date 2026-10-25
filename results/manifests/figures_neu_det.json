@@ -1,7 +1,8 @@
 {
-  "source_rows": 162,
+  "source_rows": 216,
   "backbones": [
     "ViT-B-16-quickgelu",
+    "ViT-B-16-quickgelu-ml6-9-12",
     "ViT-B-32-quickgelu",
     "ViT-L-14-quickgelu"
   ],
@@ -44,6 +45,19 @@
           ]
         },
         {
+          "backbone": "ViT-B-16-quickgelu-ml6-9-12",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.8553858024691359,
+            0.8869135802469136,
+            0.9105864197530864
+          ]
+        },
+        {
           "backbone": "ViT-B-32-quickgelu",
           "shots": [
             1,
@@ -77,6 +91,30 @@
         "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_neu_det.pdf"
       ],
       "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu-ml6-9-12",
+          "shots": 1,
+          "backbone_ms": 93.73,
+          "memory_search_ms": 1.119,
+          "total_ms_per_image": 94.849,
+          "image_auroc": 0.8553858024691359
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-ml6-9-12",
+          "shots": 5,
+          "backbone_ms": 93.73,
+          "memory_search_ms": 3.181,
+          "total_ms_per_image": 96.911,
+          "image_auroc": 0.8869135802469136
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu-ml6-9-12",
+          "shots": 10,
+          "backbone_ms": 93.73,
+          "memory_search_ms": 4.414,
+          "total_ms_per_image": 98.144,
+          "image_auroc": 0.9105864197530864
+        },
         {
           "backbone": "ViT-B-16-quickgelu",
           "shots": 1,

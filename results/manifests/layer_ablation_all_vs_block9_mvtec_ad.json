@@ -1,0 +1,72 @@
+{
+  "question": "do blocks 6, 9 and 12 together beat block 9 alone on MVTec AD",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mvtec_ad_ViT-B-16-quickgelu-ml6-9-12",
+  "b": "mvtec_ad_ViT-B-16-quickgelu-ml9-sliced",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 15,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.8983,
+        "mean_b": 0.8831,
+        "paired_mean_delta": 0.0152,
+        "paired_standard_error": 0.0048,
+        "effect_over_se": 3.2,
+        "categories_favouring_a": "14/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9277,
+        "mean_b": 0.915,
+        "paired_mean_delta": 0.0127,
+        "paired_standard_error": 0.0026,
+        "effect_over_se": 4.9,
+        "categories_favouring_a": "15/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9379,
+        "mean_b": 0.9258,
+        "paired_mean_delta": 0.0121,
+        "paired_standard_error": 0.0025,
+        "effect_over_se": 4.8,
+        "categories_favouring_a": "13/15"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.9409,
+        "mean_b": 0.9314,
+        "paired_mean_delta": 0.0095,
+        "paired_standard_error": 0.0017,
+        "effect_over_se": 5.5,
+        "categories_favouring_a": "14/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9534,
+        "mean_b": 0.9436,
+        "paired_mean_delta": 0.0097,
+        "paired_standard_error": 0.0018,
+        "effect_over_se": 5.3,
+        "categories_favouring_a": "15/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9573,
+        "mean_b": 0.9476,
+        "paired_mean_delta": 0.0097,
+        "paired_standard_error": 0.0018,
+        "effect_over_se": 5.4,
+        "categories_favouring_a": "15/15"
+      }
+    }
+  }
+}

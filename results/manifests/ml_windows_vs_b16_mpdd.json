@@ -1,0 +1,72 @@
+{
+  "question": "do multi-layer features with multi-scale windows beat the final block on MPDD",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mpdd_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "mpdd_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.6896,
+        "mean_b": 0.7209,
+        "paired_mean_delta": -0.0313,
+        "paired_standard_error": 0.0201,
+        "effect_over_se": 1.6,
+        "categories_favouring_a": "2/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.7811,
+        "mean_b": 0.7792,
+        "paired_mean_delta": 0.0019,
+        "paired_standard_error": 0.0128,
+        "effect_over_se": 0.1,
+        "categories_favouring_a": "3/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.8244,
+        "mean_b": 0.8085,
+        "paired_mean_delta": 0.0159,
+        "paired_standard_error": 0.0146,
+        "effect_over_se": 1.1,
+        "categories_favouring_a": "4/6"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.9384,
+        "mean_b": 0.9459,
+        "paired_mean_delta": -0.0075,
+        "paired_standard_error": 0.0038,
+        "effect_over_se": 1.9,
+        "categories_favouring_a": "2/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.9477,
+        "mean_b": 0.9545,
+        "paired_mean_delta": -0.0068,
+        "paired_standard_error": 0.0033,
+        "effect_over_se": 2.1,
+        "categories_favouring_a": "2/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.9508,
+        "mean_b": 0.9559,
+        "paired_mean_delta": -0.0051,
+        "paired_standard_error": 0.0029,
+        "effect_over_se": 1.8,
+        "categories_favouring_a": "2/6"
+      }
+    }
+  }
+}

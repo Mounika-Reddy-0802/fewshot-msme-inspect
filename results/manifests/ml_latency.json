@@ -1,0 +1,14 @@
+{
+  "question": "what do multi-layer patch features cost per part",
+  "engine": "torch FP32, ViT-B/16, blocks 6/9/12, 6 threads, batch 1, median of 20 after 5 warm-ups",
+  "ms_per_image_runs": [
+    96.55,
+    93.73
+  ],
+  "memory_search_ms_10shot_runs": [
+    5.013,
+    4.414
+  ],
+  "patch_dim": 2304,
+  "compare_to": "ViT-B/16 last block: 88 ms (torch_latency.json)"
+}

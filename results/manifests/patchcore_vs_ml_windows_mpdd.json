@@ -1,0 +1,72 @@
+{
+  "question": "how does our ViT-B-16-quickgelu-ml6-9-12-win123 compare with few-shot PatchCore (WideResNet-50, same support photos) on mpdd",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mpdd_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "mpdd_patchcore-wideresnet502",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.6896,
+        "mean_b": 0.5686,
+        "paired_mean_delta": 0.1209,
+        "paired_standard_error": 0.043,
+        "effect_over_se": 2.8,
+        "categories_favouring_a": "5/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.7811,
+        "mean_b": 0.7053,
+        "paired_mean_delta": 0.0758,
+        "paired_standard_error": 0.0313,
+        "effect_over_se": 2.4,
+        "categories_favouring_a": "5/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.8244,
+        "mean_b": 0.7576,
+        "paired_mean_delta": 0.0667,
+        "paired_standard_error": 0.0271,
+        "effect_over_se": 2.5,
+        "categories_favouring_a": "5/6"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.9384,
+        "mean_b": 0.9359,
+        "paired_mean_delta": 0.0026,
+        "paired_standard_error": 0.0038,
+        "effect_over_se": 0.7,
+        "categories_favouring_a": "4/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.9477,
+        "mean_b": 0.9549,
+        "paired_mean_delta": -0.0071,
+        "paired_standard_error": 0.0037,
+        "effect_over_se": 1.9,
+        "categories_favouring_a": "3/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.9508,
+        "mean_b": 0.9601,
+        "paired_mean_delta": -0.0094,
+        "paired_standard_error": 0.0036,
+        "effect_over_se": 2.6,
+        "categories_favouring_a": "1/6"
+      }
+    }
+  }
+}

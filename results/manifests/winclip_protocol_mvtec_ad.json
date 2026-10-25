@@ -1,0 +1,140 @@
+{
+  "question": "WinCLIP protocol (MVTec AD, 1/2/4 shots, seeds 0-4): ours (ViT-B/16 multi-layer + windows + text) against few-shot PatchCore on identical splits",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mvtec_ad_ours-ml-win-text",
+  "b": "mvtec_ad_patchcore",
+  "seeds": [
+    0,
+    1,
+    2,
+    3,
+    4
+  ],
+  "categories": 15,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 75,
+        "mean_a": 0.8945,
+        "mean_b": 0.8399,
+        "paired_mean_delta": 0.0546,
+        "paired_standard_error": 0.0129,
+        "effect_over_se": 4.2,
+        "categories_favouring_a": "11/15"
+      },
+      "2": {
+        "n_pairs": 75,
+        "mean_a": 0.912,
+        "mean_b": 0.8705,
+        "paired_mean_delta": 0.0415,
+        "paired_standard_error": 0.0107,
+        "effect_over_se": 3.9,
+        "categories_favouring_a": "10/15"
+      },
+      "4": {
+        "n_pairs": 75,
+        "mean_a": 0.9295,
+        "mean_b": 0.8909,
+        "paired_mean_delta": 0.0385,
+        "paired_standard_error": 0.0091,
+        "effect_over_se": 4.2,
+        "categories_favouring_a": "10/15"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 75,
+        "mean_a": 0.9447,
+        "mean_b": 0.9362,
+        "paired_mean_delta": 0.0086,
+        "paired_standard_error": 0.0078,
+        "effect_over_se": 1.1,
+        "categories_favouring_a": "11/15"
+      },
+      "2": {
+        "n_pairs": 75,
+        "mean_a": 0.9524,
+        "mean_b": 0.9478,
+        "paired_mean_delta": 0.0047,
+        "paired_standard_error": 0.006,
+        "effect_over_se": 0.8,
+        "categories_favouring_a": "11/15"
+      },
+      "4": {
+        "n_pairs": 75,
+        "mean_a": 0.9573,
+        "mean_b": 0.9544,
+        "paired_mean_delta": 0.0029,
+        "paired_standard_error": 0.0053,
+        "effect_over_se": 0.5,
+        "categories_favouring_a": "9/15"
+      }
+    }
+  },
+  "ours_x100": {
+    "1": {
+      "image_auroc": 89.4,
+      "image_seed_std": 0.8,
+      "pixel_auroc": 94.5
+    },
+    "2": {
+      "image_auroc": 91.2,
+      "image_seed_std": 1.0,
+      "pixel_auroc": 95.2
+    },
+    "4": {
+      "image_auroc": 92.9,
+      "image_seed_std": 0.7,
+      "pixel_auroc": 95.7
+    }
+  },
+  "patchcore_x100": {
+    "1": {
+      "image_auroc": 84.0,
+      "image_seed_std": 1.2,
+      "pixel_auroc": 93.6
+    },
+    "2": {
+      "image_auroc": 87.1,
+      "image_seed_std": 0.4,
+      "pixel_auroc": 94.8
+    },
+    "4": {
+      "image_auroc": 89.1,
+      "image_seed_std": 0.9,
+      "pixel_auroc": 95.4
+    }
+  },
+  "published_winclip_table1": {
+    "source": "Jeong et al., CVPR 2023, arXiv 2303.14814v1 Tables 1 and 4, 5 seeds",
+    "winclip_plus": {
+      "1": {
+        "image": 93.1,
+        "pixel": 95.2
+      },
+      "2": {
+        "image": 94.4,
+        "pixel": 96.0
+      },
+      "4": {
+        "image": 95.2,
+        "pixel": 96.2
+      }
+    },
+    "patchcore": {
+      "1": {
+        "image": 83.4,
+        "sd": 3.0
+      },
+      "2": {
+        "image": 86.3,
+        "sd": 3.3
+      },
+      "4": {
+        "image": 88.8,
+        "sd": 2.6
+      }
+    }
+  },
+  "note": "our PatchCore reproduces WinCLIP's PatchCore row to within 0.8 points at every shot count, so the two protocols are comparable; WinCLIP+ uses ViT-B/16+ (LAION-400M) at 240 px and one encoder pass per window, which we do not reproduce"
+}

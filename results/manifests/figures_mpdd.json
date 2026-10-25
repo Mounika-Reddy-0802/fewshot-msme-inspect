@@ -1,0 +1,93 @@
+{
+  "source_rows": 108,
+  "backbones": [
+    "ViT-B-16-quickgelu",
+    "patchcore-wideresnet502"
+  ],
+  "categories": [
+    "bracket_black",
+    "bracket_brown",
+    "bracket_white",
+    "connector",
+    "metal_plate",
+    "tubes"
+  ],
+  "shots": [
+    1,
+    5,
+    10
+  ],
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "figures": {
+    "shots_vs_accuracy": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_mpdd.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\shots_vs_accuracy_mpdd.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.720899891678977,
+            0.7792048507660252,
+            0.8084667336666365
+          ]
+        },
+        {
+          "backbone": "patchcore-wideresnet502",
+          "shots": [
+            1,
+            5,
+            10
+          ],
+          "mean_image_auroc": [
+            0.5686473946400326,
+            0.7053389966884425,
+            0.7576336890804988
+          ]
+        }
+      ]
+    },
+    "accuracy_latency_frontier": {
+      "files": [
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_mpdd.png",
+        "C:\\Users\\HP\\fewshot-results\\figures\\accuracy_latency_frontier_mpdd.pdf"
+      ],
+      "data": [
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 1,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 0.694,
+          "total_ms_per_image": 88.574,
+          "image_auroc": 0.720899891678977
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 5,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.024,
+          "total_ms_per_image": 88.904,
+          "image_auroc": 0.7792048507660252
+        },
+        {
+          "backbone": "ViT-B-16-quickgelu",
+          "shots": 10,
+          "backbone_ms": 87.88,
+          "memory_search_ms": 1.697,
+          "total_ms_per_image": 89.577,
+          "image_auroc": 0.8084667336666365
+        }
+      ]
+    }
+  }
+}
