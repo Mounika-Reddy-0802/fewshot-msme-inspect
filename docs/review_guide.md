@@ -6,11 +6,16 @@ the questions faculty are likely to ask. Every number below comes from
 
 ## Before the review
 
-```bash
-set FEWSHOT_DATA_ROOT=C:\Users\HP\datasets
-set FEWSHOT_RESULTS_ROOT=C:\Users\HP\fewshot-results
-C:\Users\HP\venvs\fewshot-msme-inspect\Scripts\streamlit run app/demo.py
+In a PowerShell terminal (VS Code's default), from the repository folder:
+
+```powershell
+$env:FEWSHOT_DATA_ROOT = "C:\Users\HP\datasets"
+$env:FEWSHOT_RESULTS_ROOT = "C:\Users\HP\fewshot-results"
+C:\Users\HP\venvs\fewshot-msme-inspect\Scripts\python.exe -m streamlit run app/demo.py
 ```
+
+Then open http://localhost:8501. The venv has no `streamlit.exe` launcher, so
+`python -m streamlit` is the command that works.
 
 * Laptop plugged in, other heavy programs closed, OneDrive sync paused.
 * Open the app once beforehand so the model is loaded (first load takes ~20 s).
