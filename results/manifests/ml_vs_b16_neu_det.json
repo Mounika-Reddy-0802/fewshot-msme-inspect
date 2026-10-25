@@ -1,0 +1,43 @@
+{
+  "question": "do multi-layer patch features (blocks 6, 9, 12) beat the final block on NEU-DET",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "neu_det_ViT-B-16-quickgelu-ml6-9-12",
+  "b": "neu_det_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.8554,
+        "mean_b": 0.8214,
+        "paired_mean_delta": 0.034,
+        "paired_standard_error": 0.0248,
+        "effect_over_se": 1.4,
+        "categories_favouring_a": "3/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.8869,
+        "mean_b": 0.8683,
+        "paired_mean_delta": 0.0186,
+        "paired_standard_error": 0.026,
+        "effect_over_se": 0.7,
+        "categories_favouring_a": "3/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.9106,
+        "mean_b": 0.8866,
+        "paired_mean_delta": 0.024,
+        "paired_standard_error": 0.0183,
+        "effect_over_se": 1.3,
+        "categories_favouring_a": "4/6"
+      }
+    }
+  }
+}

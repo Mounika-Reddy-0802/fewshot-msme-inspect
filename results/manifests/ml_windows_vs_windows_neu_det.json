@@ -1,0 +1,43 @@
+{
+  "question": "do multi-layer features add to windows on NEU-DET",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "neu_det_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "neu_det_ViT-B-16-quickgelu-win123",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.8736,
+        "mean_b": 0.8655,
+        "paired_mean_delta": 0.0081,
+        "paired_standard_error": 0.0238,
+        "effect_over_se": 0.3,
+        "categories_favouring_a": "2/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.9061,
+        "mean_b": 0.9171,
+        "paired_mean_delta": -0.011,
+        "paired_standard_error": 0.0218,
+        "effect_over_se": 0.5,
+        "categories_favouring_a": "3/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.93,
+        "mean_b": 0.935,
+        "paired_mean_delta": -0.005,
+        "paired_standard_error": 0.0152,
+        "effect_over_se": 0.3,
+        "categories_favouring_a": "3/6"
+      }
+    }
+  }
+}

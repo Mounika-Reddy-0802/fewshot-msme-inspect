@@ -1,0 +1,43 @@
+{
+  "question": "do multi-layer features with multi-scale windows beat the final block on NEU-DET",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "neu_det_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "neu_det_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 6,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 18,
+        "mean_a": 0.8736,
+        "mean_b": 0.8214,
+        "paired_mean_delta": 0.0522,
+        "paired_standard_error": 0.0231,
+        "effect_over_se": 2.3,
+        "categories_favouring_a": "4/6"
+      },
+      "5": {
+        "n_pairs": 18,
+        "mean_a": 0.9061,
+        "mean_b": 0.8683,
+        "paired_mean_delta": 0.0378,
+        "paired_standard_error": 0.0271,
+        "effect_over_se": 1.4,
+        "categories_favouring_a": "5/6"
+      },
+      "10": {
+        "n_pairs": 18,
+        "mean_a": 0.93,
+        "mean_b": 0.8866,
+        "paired_mean_delta": 0.0434,
+        "paired_standard_error": 0.0189,
+        "effect_over_se": 2.3,
+        "categories_favouring_a": "5/6"
+      }
+    }
+  }
+}
