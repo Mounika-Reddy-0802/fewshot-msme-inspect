@@ -1,9 +1,9 @@
 {
-  "frozen_on": "2026-09-29",
-  "reason": "Blueprint week-4 architecture freeze, taken late: encoder, prototype memory, window and text scoring, adapter and export are final. Only evaluation, analysis, docs and the demo may change after this.",
+  "frozen_on": "2026-10-25",
+  "reason": "Release 1.1: freeze reopened once, deliberately, to add multi-layer patch features (FrozenCLIPEncoder layers=(6, 9, 12)) after the v1.0 evaluation showed PatchCore localising better. Only src/model/encoder.py changed; the default path (layers=None) is unchanged and is tested to reproduce the v1.0 features exactly. The v1.0 tag keeps the original frozen code.",
   "proposed_config": "configs/proposed.yaml",
   "files": {
-    "src/model/encoder.py": "c9348d79200bf6b0449b82705efca82dce8a5a744ef3f786745ede6b259ed186",
+    "src/model/encoder.py": "84406f081549151bee381ac08facad883b55c0b41923e6e6691529a18b81482c",
     "src/model/memory.py": "1f20869be69325ffee293f70f46f372f826f688ec61f73112f565dfbdfd08765",
     "src/model/windows.py": "f1e9b05ea28455309b062f85d7230b1ac9f759f792a2539289eba3261fbff346",
     "src/model/adapter.py": "7445c13132997957256faf25ed687bd694d35b2c28fe3c11c8a0687aa9d1d077",
@@ -12,5 +12,25 @@
     "configs/base.yaml": "c13a217957ff6c2131bb5f666ae9916b0a433ee54c550fee11ab319c2ca81d7b",
     "configs/prototype.yaml": "76bd7ae1f099bd7d4ca5ad4720e76b34f0d29a6bed52ee790917c76e7ec22322",
     "configs/proposed.yaml": "ca14805a88a9fe4e53c9ab7190e602fa4b45213946149678235483ab732b24cc"
-  }
+  },
+  "changed_since_previous": [
+    "src/model/encoder.py"
+  ],
+  "history": [
+    {
+      "frozen_on": "2026-09-29",
+      "reason": "Blueprint week-4 architecture freeze, taken late: encoder, prototype memory, window and text scoring, adapter and export are final. Only evaluation, analysis, docs and the demo may change after this.",
+      "files": {
+        "src/model/encoder.py": "c9348d79200bf6b0449b82705efca82dce8a5a744ef3f786745ede6b259ed186",
+        "src/model/memory.py": "1f20869be69325ffee293f70f46f372f826f688ec61f73112f565dfbdfd08765",
+        "src/model/windows.py": "f1e9b05ea28455309b062f85d7230b1ac9f759f792a2539289eba3261fbff346",
+        "src/model/adapter.py": "7445c13132997957256faf25ed687bd694d35b2c28fe3c11c8a0687aa9d1d077",
+        "src/model/export.py": "078ba885c2c0de32f216a4a391a05ad9052e57cc5c7cf051379d070e7b401db3",
+        "src/eval/scoring.py": "d1d768889b69ad6d9319a00ea396c59931d2c40356d3a703b8180c5c42e59b05",
+        "configs/base.yaml": "c13a217957ff6c2131bb5f666ae9916b0a433ee54c550fee11ab319c2ca81d7b",
+        "configs/prototype.yaml": "76bd7ae1f099bd7d4ca5ad4720e76b34f0d29a6bed52ee790917c76e7ec22322",
+        "configs/proposed.yaml": "ca14805a88a9fe4e53c9ab7190e602fa4b45213946149678235483ab732b24cc"
+      }
+    }
+  ]
 }

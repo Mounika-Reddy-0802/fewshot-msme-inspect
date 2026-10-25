@@ -59,12 +59,22 @@ class FrozenCLIPEncoder:
         pretrained: str = "openai",
         device: str = "cpu",
         project_patches: bool = True,
+        layers: tuple[int, ...] | None = None,
     ) -> None:
+        """``layers``: 1-based transformer blocks whose patch tokens are used, e.g.
+        (6, 9, 12) for ViT-B/16. Each block's tokens get the final layer norm and
+        are l2-normalised, then concatenated, so the cosine between two patches is
+        the mean of the per-block cosines. None keeps the final block only."""
         import open_clip
 
         check_backbone_pair(name, pretrained)
 
-        self.name = name
+        if layers is not None and project_patches:
+            raise ValueError("multi-layer patches are unprojected; pass project_patches=False")
+        self.backbone = name
+        self.layers = tuple(int(i) for i in layers) if layers else None
+        # the layer set is part of the identity, so its feature banks never mix
+        self.name = name if not self.layers else f"{name}-ml{'-'.join(map(str, self.layers))}"
         self.pretrained = pretrained
         self.device = device
         self.project_patches = project_patches
@@ -77,6 +87,12 @@ class FrozenCLIPEncoder:
         self.model = model
         self.preprocess = preprocess
         self.tokenizer = open_clip.get_tokenizer(name)
+
+        if self.layers:
+            depth = len(model.visual.transformer.resblocks)
+            bad = [i for i in self.layers if not 1 <= i <= depth]
+            if bad:
+                raise ValueError(f"{name} has blocks 1..{depth}; got {bad}")
 
     @property
     def grid_size(self) -> tuple[int, int]:
@@ -93,7 +109,7 @@ class FrozenCLIPEncoder:
         """Dimension of whatever ``encode_images`` returns for patches."""
         if self.project_patches:
             return int(self.model.visual.output_dim)
-        return int(self.model.visual.transformer.width)
+        return int(self.model.visual.transformer.width) * (len(self.layers) if self.layers else 1)
 
     @property
     def image_size(self) -> tuple[int, int]:
@@ -104,6 +120,19 @@ class FrozenCLIPEncoder:
     def encode_images(self, images: torch.Tensor) -> EncodedBatch:
         """Encode a preprocessed batch, (B, 3, H, W) -> pooled + patch features."""
         images = images.to(self.device)
+
+        if self.layers:
+            out = self.model.visual.forward_intermediates(
+                images, indices=[i - 1 for i in self.layers],
+                normalize_intermediates=True, output_fmt="NLC",
+            )
+            tokens = torch.cat([l2_normalise(t) for t in out["image_intermediates"]], dim=-1)
+            return EncodedBatch(
+                image=l2_normalise(out["image_features"]),
+                patches=l2_normalise(tokens),
+                grid=self.grid_size,
+            )
+
         pooled, tokens = self.model.visual(images)
 
         if self.project_patches:

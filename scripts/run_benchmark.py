@@ -98,6 +98,8 @@ def main() -> int:
                         help="768-dim raw transformer width (Member B's convention)")
     parser.add_argument("--precision", default=None, choices=["fp32", "int8"],
                         help="overrides the config; int8 runs the exported ONNX graph")
+    parser.add_argument("--layers", nargs="+", type=int, default=None,
+                        help="1-based transformer blocks for multi-layer patches, e.g. 6 9 12")
     parser.add_argument("--scales", nargs="+", type=int, default=None,
                         help="window sizes for the memory head; overrides the config")
     parser.add_argument("--text-weight", type=float, default=None,
@@ -124,7 +126,10 @@ def main() -> int:
     scoring = config["model"]["scoring"]
     scales = args.scales or scoring.get("scales", [1])
     text_weight = args.text_weight if args.text_weight is not None else scoring.get("text_weight", 0.0)
+    layers = args.layers or config["backbone"].get("layers")
     tag = backbone if precision == "fp32" else f"{backbone}-{precision}"
+    if layers:
+        tag += "-ml" + "-".join(map(str, layers))
     if scales != [1]:
         tag += "-win" + "".join(map(str, scales))
     if text_weight:
@@ -172,6 +177,7 @@ def main() -> int:
     print(f"categories {len(categories)}   shots {wanted_shots}")
     print(f"patch dim  {'768 unprojected' if not project_patches else '512 projected'}")
     print(f"precision  {precision}")
+    print(f"layers     {layers or 'final block'}")
     print(f"threads    {torch.get_num_threads()}\n")
 
     if precision == "int8":
@@ -188,7 +194,8 @@ def main() -> int:
         encoder = OnnxEncoder(graph, threads=args.threads)
     else:
         encoder = FrozenCLIPEncoder(
-            backbone, pretrained, device="cpu", project_patches=project_patches
+            backbone, pretrained, device="cpu", project_patches=project_patches,
+            layers=tuple(layers) if layers else None,
         )
     print(f"{encoder}\n")
 
@@ -261,6 +268,7 @@ def main() -> int:
         "methods": args.methods,
         "scales": scales,
         "text_weight": text_weight,
+        "layers": layers,
         "rows": len(rows),
         "threads": torch.get_num_threads(),
         "total_seconds": round(total, 1),

@@ -108,3 +108,24 @@ def test_backbone_is_frozen(encoder):
 def test_encoding_is_deterministic(encoder):
     x = torch.rand(1, 3, 224, 224)
     assert torch.allclose(encoder.encode_images(x).image, encoder.encode_images(x).image)
+
+
+def test_multi_layer_last_block_equals_default(encoder):
+    """layers=(12,) must reproduce the v1.0 features exactly, so release 1.1 cannot
+    have changed any earlier result."""
+    from src.model.encoder import FrozenCLIPEncoder
+
+    last = FrozenCLIPEncoder(encoder.name, encoder.pretrained, project_patches=False, layers=(12,))
+    base = FrozenCLIPEncoder(encoder.name, encoder.pretrained, project_patches=False)
+    x = torch.randn(2, 3, *base.image_size, generator=torch.Generator().manual_seed(0))
+    assert torch.allclose(last.encode_images(x).patches, base.encode_images(x).patches, atol=1e-5)
+
+
+def test_multi_layer_concatenates_unit_blocks(encoder):
+    from src.model.encoder import FrozenCLIPEncoder
+
+    ml = FrozenCLIPEncoder(encoder.name, encoder.pretrained, project_patches=False, layers=(6, 9, 12))
+    out = ml.encode_images(torch.zeros(1, 3, *ml.image_size))
+    assert out.patches.shape[-1] == ml.embed_dim == 3 * 768
+    assert torch.allclose(out.patches.norm(dim=-1), torch.ones(1, ml.num_patches), atol=1e-4)
+    assert ml.name.endswith("-ml6-9-12")
