@@ -25,7 +25,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from src.utils.paths import results_root  # noqa: E402
 
 METRICS = ("image_auroc", "pixel_auroc", "image_f1_max", "pixel_f1_max")
-DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET"}
+DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET", "mpdd": "MPDD"}
 
 
 def load_rows(benchmark_dir: Path, dataset: str) -> list[dict]:

@@ -17,7 +17,7 @@ import pandas as pd
 
 from src.utils.paths import repo_root
 
-DATASETS = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET"}
+DATASETS = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET", "mpdd": "MPDD"}
 
 BACKBONE_LABELS = {
     "ViT-B-32-quickgelu": "ViT-B/32",
@@ -73,7 +73,7 @@ def _paired(name: str, metric: str = "image_auroc") -> dict:
 def versus_patchcore(dataset: str) -> pd.DataFrame:
     """Ours against few-shot PatchCore given the same photos."""
     configs = [("b_16", "ViT-B/16"), ("b_16_windows", "ViT-B/16 + windows"), ("l_14", "ViT-L/14"),
-               ("ml", "ViT-B/16 multi-layer + windows")]
+               ("ml", "ViT-B/16 multi-layer"), ("ml_windows", "ViT-B/16 multi-layer + windows")]
     rows = []
     for metric in ("image_auroc", "pixel_auroc"):
         pc_done = set()

@@ -30,16 +30,17 @@ ENGINES = {
     "b16": {"label": "ViT-B/16 (small defects, ~88 ms)", "backbone": "ViT-B-16-quickgelu",
             "kind": "torch", "store": "ViT-B-16-quickgelu.pt",
             "note": "Needed when defects are tiny, like VisA's (0.04-0.9% of the photo)."},
-    "b16ml": {"label": "ViT-B/16 multi-layer (blocks 6, 9, 12)", "backbone": "ViT-B-16-quickgelu",
+    "b16ml": {"label": "ViT-B/16 multi-layer (most accurate, ~90 ms)", "backbone": "ViT-B-16-quickgelu",
               "kind": "torch", "layers": (6, 9, 12), "store": "ViT-B-16-quickgelu-ml6-9-12.pt",
-              "note": "Patch features from blocks 6, 9 and 12: finer localisation (release 1.1)."},
+              "note": "Patch features from blocks 6, 9 and 12 instead of the last block only. "
+                      "Best accuracy and localisation in the benchmark (release 1.1)."},
     "b32int8": {"label": "ViT-B/32 INT8 via ONNX (~33 ms, no descriptions)",
                 "backbone": "ViT-B-32-quickgelu", "kind": "onnx",
                 "store": "ViT-B-32-quickgelu-int8.pt",
                 "note": "4x smaller model, 1.3x faster; costs about 0.013 AUROC. Text descriptions "
                         "need CLIP's text tower, which is not exported."},
 }
-DATASETS = {"MVTec AD": "mvtec_ad", "VisA": "visa", "NEU-DET": "neu_det"}
+DATASETS = {"MVTec AD": "mvtec_ad", "VisA": "visa", "NEU-DET": "neu_det", "MPDD": "mpdd"}
 
 
 def onnx_graph(backbone: str) -> Path:
@@ -66,7 +67,7 @@ def load_encoder(engine_id: str):
 
 
 def engine_id() -> str:
-    return st.session_state.get("engine", "b32")
+    return st.session_state.get("engine", "b16ml")
 
 
 def scales() -> tuple[int, ...]:

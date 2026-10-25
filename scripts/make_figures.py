@@ -33,7 +33,7 @@ from src.utils.paths import repo_root, results_root  # noqa: E402
 # colourblind-safe, and distinguishable in greyscale print
 PALETTE = ["#0173B2", "#DE8F05", "#029E73", "#CC78BC", "#CA9161"]
 
-DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET"}
+DATASET_NAMES = {"mvtec_ad": "MVTec AD", "visa": "VisA", "neu_det": "NEU-DET", "mpdd": "MPDD"}
 
 
 def read_csv(path: Path) -> list[dict]:

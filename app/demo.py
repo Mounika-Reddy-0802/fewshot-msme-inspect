@@ -43,7 +43,7 @@ with st.sidebar:
     st.markdown("**Model for the live demo**")
     engines = S.available_engines()
     ids = list(engines)
-    current = st.session_state.get("engine", "b32")
+    current = st.session_state.get("engine", "b16ml")
     st.session_state["engine"] = st.radio(
         "Model", ids, index=ids.index(current) if current in ids else 0,
         format_func=lambda k: engines[k]["label"], label_visibility="collapsed")
