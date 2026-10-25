@@ -60,12 +60,15 @@ def main() -> int:
     parser.add_argument("--temperature", type=float, default=0.07)
     parser.add_argument("--threads", type=int, default=6)
     parser.add_argument("--scales", nargs="+", type=int, default=[1])
+    parser.add_argument("--layers", nargs="+", type=int, default=None,
+                        help="multi-layer features, e.g. 6 9 12 (needs their cached banks)")
     args = parser.parse_args()
     scales = tuple(args.scales)
 
     torch.set_num_threads(args.threads)
-    encoder = FrozenCLIPEncoder(args.backbone, "openai", device="cpu", project_patches=False)
-    record = {"backbone": args.backbone, "scales": list(scales), "weights": list(WEIGHTS),
+    encoder = FrozenCLIPEncoder(args.backbone, "openai", device="cpu", project_patches=False,
+                                layers=tuple(args.layers) if args.layers else None)
+    record = {"backbone": encoder.name, "scales": list(scales), "weights": list(WEIGHTS),
               "temperature": args.temperature, "datasets": {}}
 
     for dataset in args.datasets:
@@ -75,7 +78,7 @@ def main() -> int:
         # (shots, w) -> list over (category, seed) of AUROC; paired by position
         auroc = defaultdict(list)
         for category in categories(manifests[0]):
-            bank = FeatureBank.load(bank_path(results_root(), args.backbone, category,
+            bank = FeatureBank.load(bank_path(results_root(), encoder.name, category,
                                               encoder.embed_dim))
             text = category_text_embeddings(encoder, OBJECT_NAMES.get(category, category))
             for manifest in manifests:
@@ -120,7 +123,8 @@ def main() -> int:
                 cells.append(f"{r['mean_image_auroc']:.3f}{tag:<9}")
             print(f"{shots:>5}  " + " ".join(cells))
 
-    suffix = "" if scales == (1,) else "_win" + "".join(map(str, scales))
+    suffix = ("" if not args.layers else "_ml" + "-".join(map(str, args.layers))) + (
+        "" if scales == (1,) else "_win" + "".join(map(str, scales)))
     out = repo_root() / "results" / "manifests" / f"text_fusion{suffix}.json"
     out.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
     print(f"\nmanifest -> {out}")
