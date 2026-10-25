@@ -1,0 +1,72 @@
+{
+  "question": "do multi-layer patch features (blocks 6, 9, 12) beat the final block on VisA",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-B-16-quickgelu-ml6-9-12",
+  "b": "visa_ViT-B-16-quickgelu",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.8073,
+        "mean_b": 0.7734,
+        "paired_mean_delta": 0.0339,
+        "paired_standard_error": 0.009,
+        "effect_over_se": 3.8,
+        "categories_favouring_a": "8/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8573,
+        "mean_b": 0.8108,
+        "paired_mean_delta": 0.0464,
+        "paired_standard_error": 0.0087,
+        "effect_over_se": 5.3,
+        "categories_favouring_a": "11/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8723,
+        "mean_b": 0.8311,
+        "paired_mean_delta": 0.0412,
+        "paired_standard_error": 0.0091,
+        "effect_over_se": 4.5,
+        "categories_favouring_a": "10/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.9453,
+        "mean_b": 0.9339,
+        "paired_mean_delta": 0.0113,
+        "paired_standard_error": 0.0026,
+        "effect_over_se": 4.3,
+        "categories_favouring_a": "9/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9586,
+        "mean_b": 0.9472,
+        "paired_mean_delta": 0.0114,
+        "paired_standard_error": 0.0024,
+        "effect_over_se": 4.7,
+        "categories_favouring_a": "9/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.9617,
+        "mean_b": 0.951,
+        "paired_mean_delta": 0.0107,
+        "paired_standard_error": 0.0026,
+        "effect_over_se": 4.1,
+        "categories_favouring_a": "9/12"
+      }
+    }
+  }
+}

@@ -1,0 +1,72 @@
+{
+  "question": "do multi-layer features add to windows on VisA",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "visa_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "visa_ViT-B-16-quickgelu-win123",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 12,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.8264,
+        "mean_b": 0.7894,
+        "paired_mean_delta": 0.037,
+        "paired_standard_error": 0.0068,
+        "effect_over_se": 5.5,
+        "categories_favouring_a": "10/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.8677,
+        "mean_b": 0.8315,
+        "paired_mean_delta": 0.0361,
+        "paired_standard_error": 0.0067,
+        "effect_over_se": 5.4,
+        "categories_favouring_a": "11/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.8814,
+        "mean_b": 0.8507,
+        "paired_mean_delta": 0.0308,
+        "paired_standard_error": 0.0069,
+        "effect_over_se": 4.5,
+        "categories_favouring_a": "11/12"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 36,
+        "mean_a": 0.942,
+        "mean_b": 0.9289,
+        "paired_mean_delta": 0.0131,
+        "paired_standard_error": 0.0032,
+        "effect_over_se": 4.1,
+        "categories_favouring_a": "10/12"
+      },
+      "5": {
+        "n_pairs": 36,
+        "mean_a": 0.9563,
+        "mean_b": 0.9449,
+        "paired_mean_delta": 0.0114,
+        "paired_standard_error": 0.0022,
+        "effect_over_se": 5.2,
+        "categories_favouring_a": "10/12"
+      },
+      "10": {
+        "n_pairs": 36,
+        "mean_a": 0.9597,
+        "mean_b": 0.9492,
+        "paired_mean_delta": 0.0105,
+        "paired_standard_error": 0.0022,
+        "effect_over_se": 4.7,
+        "categories_favouring_a": "9/12"
+      }
+    }
+  }
+}
