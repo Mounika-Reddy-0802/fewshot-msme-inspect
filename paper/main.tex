@@ -451,8 +451,11 @@ WinCLIP comparison uses five. We fixed the blocks in advance, but we decided to 
 multi-layer features after seeing PatchCore's lead in localisation, and they
 helped on two of the four datasets. The NEU-DET protocol is our own. All timings come from one laptop
 model; a different cooling design will throttle differently. The suggested
-threshold is a heuristic: in the application it rejected 9 of 20 good bottles with
-five photos, and with three photos of \texttt{metal\_nut} it missed every defect.
+threshold is a heuristic. In the application, with five photos and last-block
+features, it rejected 9 of 20 good bottles; with multi-layer features and windows
+it rejected 1 of 20 and missed none of the 63 defective bottles. With three photos
+of \texttt{metal\_nut} and last-block features it missed every defect. One product
+at a time is not evidence that the threshold is reliable.
 
 \section{Limitations and future work}
 Defects thinner than a patch remain hard (\texttt{screw} reaches 0.792 with L/14).

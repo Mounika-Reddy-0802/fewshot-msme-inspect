@@ -94,8 +94,11 @@ masks and metric code, with coreset subsampling off (its strongest setting here)
 
 **Why is the suggested threshold sometimes wrong?** It is the highest score among
 the good photos scored against each other. With 3-5 photos that estimate is noisy:
-it can reject good parts or miss defects. The app shows where each part sits and
-lets the operator move the line. A calibrated threshold is listed as future work.
+it can reject good parts or miss defects. On the bottle with 5 photos it rejected
+9 of 20 good parts with last-block features, but only 1 of 20 (and missed no
+defect, 98.8% accuracy) with multi-layer features and windows. The app shows where
+each part sits and lets the operator move the line. A calibrated threshold is
+listed as future work.
 
 **Would it work in a real factory?** Not shown yet. MPDD (metal parts under varied
 lighting) is the closest public test; real workshop photos are the next step.
@@ -103,7 +106,7 @@ lighting) is the closest public test; real workshop photos are the next step.
 **How do you know the numbers are right?** Re-extraction from raw images reproduces
 every result row; a second laptop reproduced MVTec and VisA to three decimals from a
 fresh install; NEU-DET was reproduced across machines; Colab reproduces a product
-exactly; 200+ automated tests.
+exactly; 208 automated tests.
 
 **Was AI used?** Yes, an AI assistant helped with code, experiment organisation and
 drafting text; this is stated in the paper. All experiments ran on our machines and
