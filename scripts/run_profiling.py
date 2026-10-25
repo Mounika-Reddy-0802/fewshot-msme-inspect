@@ -51,6 +51,8 @@ def main() -> int:
     parser.add_argument("--iters", type=int, default=None)
     parser.add_argument("--threads", type=int, default=None)
     parser.add_argument("--engine", default="torch", choices=["torch", "onnx-fp32", "onnx-int8"])
+    parser.add_argument("--layers", nargs="+", type=int, default=None,
+                        help="torch engine: multi-layer patch features, e.g. 6 9 12")
     parser.add_argument("--out", default=None)
     parser.add_argument("--manifest", default=None,
                         help="also write the rows to results/manifests/<name> (committed)")
@@ -79,6 +81,7 @@ def main() -> int:
                 encoder = FrozenCLIPEncoder(
                     name, pretrained, device="cpu",
                     project_patches=config["backbone"].get("project_patches", True),
+                    layers=tuple(args.layers) if args.layers else None,
                 )
             else:
                 import open_clip
@@ -137,6 +140,8 @@ def main() -> int:
         return 1
 
     stem = "backbones" if args.engine == "torch" else f"backbones_{args.engine.replace('-', '_')}"
+    if args.layers:
+        stem += "_ml" + "-".join(map(str, args.layers))
     out_path = Path(args.out) if args.out else results_root() / "profiling" / f"{stem}.csv"
     out_path.parent.mkdir(parents=True, exist_ok=True)
 

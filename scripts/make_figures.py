@@ -212,7 +212,8 @@ def main() -> int:
     # every point is a real way to run the model: torch FP32, and the ONNX INT8
     # graph (whose rows are named <backbone>-int8, matching its benchmark rows)
     profiles = (read_csv(results_root() / "profiling" / "backbones.csv")
-                + read_csv(results_root() / "profiling" / "backbones_onnx_int8.csv"))
+                + read_csv(results_root() / "profiling" / "backbones_onnx_int8.csv")
+                + read_csv(results_root() / "profiling" / "backbones_ml6-9-12.csv"))
 
     out_dir = Path(args.out) if args.out else results_root() / "figures"
     manifest = {
