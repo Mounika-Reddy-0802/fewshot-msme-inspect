@@ -1,4 +1,4 @@
-# Results: frozen CLIP + prototype memory on MVTec AD, VisA and NEU-DET
+# Results: frozen CLIP + prototype memory on MVTec AD, VisA, NEU-DET and MPDD
 
 Reproducible from the committed manifests and the scripts in `scripts/`. Raw CSVs
 live outside the repo (gitignored); the manifests identifying each run are
@@ -20,7 +20,11 @@ convention (section 3 measures what that choice is worth).
 
 One consequence of that convention, stated up front: **there is no 0-shot
 column.** 768-dim patch tokens are not in the joint image-text space, so a text
-prompt cannot score a patch. Section 12 covers what that costs -- little.
+prompt cannot score a patch. Section 13 covers what that costs -- little.
+
+**Release 1.1** (section 12) reopens the architecture freeze once, to describe each
+patch with three blocks of the encoder instead of the last one. Sections 1-11 are
+the v1.0 results and are unchanged.
 
 ---
 
@@ -718,7 +722,118 @@ category).
 
 ---
 
-## 12. Limitations, stated plainly
+## 12. Release 1.1: multi-layer features
+
+Records: `ml_vs_b16_*.json`, `ml_windows_vs_b16_*.json`, `ml_windows_vs_windows_*.json`,
+`patchcore_vs_ml_*.json`, `patchcore_vs_ml_windows_*.json`, `layer_ablation_*_mvtec_ad.json`,
+`text_fusion_ml6-9-12_win123.json`, `winclip_protocol_mvtec_ad.json`, `ml_latency.json`.
+Code: `FrozenCLIPEncoder(layers=(6, 9, 12))`, `scripts/run_benchmark.py --layers 6 9 12`,
+`scripts/run_layer_ablation.py`.
+
+**Why.** Section 11 left one clear gap: PatchCore localises better. Its features come
+from the middle of a CNN; ours came from the last transformer block, which has mixed
+every patch with the whole image by the time it is read. Earlier blocks keep more
+local detail. So each patch is now described by blocks 6, 9 and 12 of the same
+frozen ViT-B/16, each L2-normalised and concatenated (2,304 numbers). The cosine
+between two such vectors is the mean of the three per-block cosines. Nothing is
+trained; the memory, the score and the append-only property are unchanged. A test
+checks that `layers=(12,)` reproduces the v1.0 features exactly.
+
+**Results, ViT-B/16, 3 seeds, image / pixel AUROC.**
+
+| | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec, last block (v1.0) | 0.856 / 0.916 | 0.888 / 0.932 | 0.904 / 0.936 |
+| MVTec, multi-layer | 0.898 / 0.941 | 0.928 / 0.953 | 0.938 / 0.957 |
+| MVTec, multi-layer + windows | 0.892 / **0.945** | **0.934** / **0.958** | **0.945** / **0.962** |
+| VisA, last block (v1.0) | 0.773 / 0.934 | 0.811 / 0.947 | 0.831 / 0.951 |
+| VisA, multi-layer | 0.807 / **0.945** | 0.857 / **0.959** | 0.872 / **0.962** |
+| VisA, multi-layer + windows | **0.826** / 0.942 | **0.868** / 0.956 | **0.881** / 0.960 |
+| NEU-DET, last block (v1.0) | 0.821 | 0.868 | 0.887 |
+| NEU-DET, multi-layer | 0.855 | 0.887 | 0.911 |
+| NEU-DET, windows (v1.0) | 0.866 | **0.917** | **0.935** |
+| NEU-DET, multi-layer + windows | **0.874** | 0.906 | 0.930 |
+| MPDD, last block | **0.721** / 0.946 | 0.779 / 0.955 | 0.808 / 0.956 |
+| MPDD, multi-layer + windows | 0.690 / 0.938 | 0.781 / 0.948 | 0.824 / 0.951 |
+
+Paired against the last block (delta, paired SE multiple):
+
+* **MVTec:** image +0.043 (3.5x), +0.040 (4.8x), +0.034 (5.8x); pixel +0.025 (7.9x),
+  +0.022 (7.7x), +0.021 (7.7x). Every one of the 15 categories improves at 5 and
+  10 shots, and at pixel level at every shot count.
+* **VisA:** image +0.034 (3.8x), +0.046 (5.3x), +0.041 (4.5x); pixel +0.011 (4.1-4.7x).
+* **NEU-DET:** +0.034 (1.4x), +0.019 (0.7x), +0.024 (1.3x) -- not significant, and
+  multi-layer + windows is level with windows alone (-0.005, 0.3x at 10 shots).
+* **MPDD:** multi-layer + windows -0.031 (1.6x), +0.002 (0.1x), +0.016 (1.1x) -- a tie.
+  Pixel AUROC is slightly lower (-0.005 to -0.007, ~2x).
+
+So the gain is large and consistent on the two datasets with object-level defects
+(MVTec, VisA), and absent on steel textures and on MPDD's metal parts. We report
+it as dataset-dependent, not as a general improvement.
+
+**Which block does the work (MVTec, sliced from the same cached features).**
+
+| features | image AUROC 1 / 5 / 10 | pixel AUROC 1 / 5 / 10 |
+|---|---|---|
+| block 12 (v1.0) | 0.856 / 0.888 / 0.904 | 0.916 / 0.932 / 0.936 |
+| block 9 | 0.883 / 0.915 / 0.926 | 0.931 / 0.944 / 0.948 |
+| block 6 | 0.890 / 0.924 / 0.936 | **0.944** / **0.959** / **0.963** |
+| blocks 6 + 9 + 12 | **0.898** / **0.928** / **0.938** | 0.941 / 0.953 / 0.957 |
+
+Block 6 alone gives almost all of the image gain and the best localisation of any
+single setting (all three blocks are +0.002 to +0.009 better at image level, 0.4-1.7x
+SE, but 0.003-0.006 worse at pixel level, 2.0-3.7x SE). The three-block default was
+kept because it was chosen before the slice was measured; block 6 alone would be a
+fair and slightly cheaper choice for localisation.
+
+**Text on top of multi-layer features** (`text_fusion_ml6-9-12_win123.json`, weight
+0.5): +0.007 at 1 shot on MVTec and +0.015 on VisA (3.0-3.4x SE), and nothing at 5
+or 10 shots (+0.001 and 0.000). With richer image features, the text prompt matters
+only when there is a single photo.
+
+**Against PatchCore given the same photos** (multi-layer + windows minus PatchCore):
+
+| | 1-shot | 5-shot | 10-shot |
+|---|---|---|---|
+| MVTec image | **+0.050 (3.2x)** | **+0.035 (3.2x)** | **+0.018 (2.1x)** |
+| MVTec pixel | +0.006 (0.6x) | +0.001 (0.1x) | -0.003 (0.6x) |
+| VisA image | **+0.034 (2.5x)** | **+0.020 (2.3x)** | **+0.016 (2.2x)** |
+| VisA pixel | -0.003 (0.7x) | **-0.008 (2.8x)** | **-0.010 (3.7x)** |
+| MPDD image | **+0.121 (2.8x)** | **+0.076 (2.4x)** | **+0.067 (2.5x)** |
+| MPDD pixel | +0.003 (0.7x) | -0.007 (1.9x) | **-0.009 (2.6x)** |
+
+Detection is now ahead of PatchCore on all three datasets at every shot count.
+Localisation is level on MVTec; PatchCore keeps a lead of about 0.01 on VisA (whose
+defects are 0.04-0.9% of the image) and at 10 shots on MPDD. Section 11's
+conclusion -- PatchCore localises better -- holds now only for very small defects.
+
+**Against WinCLIP, on WinCLIP's protocol** (`winclip_protocol_mvtec_ad.json`). MVTec
+AD, 1/2/4 shots, five seeds (0-4), new split manifests in
+`results/manifests/splits_winclip/`. Ours: multi-layer + windows + text. AUROC x 100:
+
+| | 1-shot | 2-shot | 4-shot |
+|---|---|---|---|
+| ours, image / pixel | 89.4 / 94.5 | 91.2 / 95.2 | 92.9 / 95.7 |
+| PatchCore, our run, image / pixel | 84.0 / 93.6 | 87.1 / 94.8 | 89.1 / 95.4 |
+| PatchCore, WinCLIP's Table 1, image | 83.4 | 86.3 | 88.8 |
+| WinCLIP+, published, image / pixel | 93.1 / 95.2 | 94.4 / 96.0 | 95.2 / 96.2 |
+
+Our PatchCore run is within 0.8 points of the PatchCore row WinCLIP published, so
+the two protocols agree. On it we are ahead of PatchCore by +5.5 / +4.2 / +3.9 image
+points (3.9-4.2x SE) and level at pixel level (0.5-1.1x SE). We are 2.3-3.7 image
+points and 0.5-0.8 pixel points below WinCLIP+, which we did not re-run: it uses a
+LAION-400M ViT-B/16+ at 240 px and runs the encoder once per window, many encoder
+passes per image against our one.
+
+**Cost** (`ml_latency.json`). ViT-B/16 multi-layer, torch FP32, 6 threads, batch 1:
+94-97 ms per image (two runs) against 88 ms for the last block, about +7%: the
+blocks are computed anyway and only kept. The memory search grows with the
+feature width, 4.4-5.0 ms at 10 shots. RAM for the memory triples (2,304 floats per
+patch): 196 patches x 10 shots x 9.2 KB = 18 MB per product.
+
+---
+
+## 13. Limitations, stated plainly
 
 **Five categories are still not monotonic in shots.** 10/15 improve
 monotonically across three seeds. The five exceptions are small -- `toothbrush`
@@ -754,8 +869,9 @@ each patch spans ~16px of an already-downsampled image, so the defect is smaller
 than the model's spatial resolution. ViT-L/14's finer grid lifts it to 0.792 (section 8),
 which supports that reading.
 
-**Not yet done:** MPDD, static INT8,
-and a reproduction of WinCLIP / AnomalyCLIP.
+**Not yet done:** static INT8 and an INT8 graph of the multi-layer encoder; a
+re-run of WinCLIP+ itself (only its published numbers are compared); AnomalyCLIP;
+and photographs from a real workshop -- MPDD is the closest public stand-in.
 
 ---
 
@@ -791,6 +907,14 @@ python scripts/compare_paired.py mvtec_ad_ViT-B-16-quickgelu mvtec_ad_ViT-B-16-q
 python scripts/run_benchmark.py --dataset visa --precision int8 --threads 6   # and --backbone ViT-B-32-quickgelu
 python scripts/run_profiling.py --engine onnx-fp32 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
 python scripts/run_profiling.py --engine onnx-int8 --threads 6 --backbones ViT-B-32-quickgelu ViT-B-16-quickgelu
+
+# Release 1.1 (section 12)
+python scripts/run_benchmark.py --layers 6 9 12 --threads 6               # --dataset visa / neu_det / mpdd
+python scripts/run_benchmark.py --layers 6 9 12 --scales 1 2 3 --threads 6
+python scripts/run_layer_ablation.py --blocks 6          # and --blocks 9
+python scripts/run_text_fusion.py --layers 6 9 12 --scales 1 2 3
+python scripts/generate_splits.py --shots 1 2 4 --seeds 0 1 2 3 4 --out-dir results/manifests/splits_winclip
+python scripts/run_profiling.py --layers 6 9 12 --backbones ViT-B-16-quickgelu --threads 6
 ```
 
 Everything above, one target per section: `python scripts/reproduce.py --list`.

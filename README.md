@@ -15,15 +15,25 @@ windows, and optional fusion with typed text prompts -- benchmarked for accuracy
 | ViT-B/16, memory | 0.904 / 0.936 | 0.831 / 0.951 | 0.887 | 88 (ONNX INT8: 72) |
 | ViT-B/16 + windows | 0.921 / 0.939 | 0.851 / 0.949 | **0.935** | ~90 (est.) |
 | ViT-B/16 + windows + text | 0.925 / 0.939 | 0.855 / 0.949 | 0.881 | ~90 (est.) |
-| ViT-L/14, memory | **0.933** / 0.945 | 0.843 / **0.964** | 0.897 | 397 |
-| *Baseline: PatchCore, same photos* | 0.926 / **0.965** | **0.865** / **0.969** | -- | 93 |
+| ViT-L/14, memory | 0.933 / 0.945 | 0.843 / 0.964 | 0.897 | 397 |
+| **v1.1: ViT-B/16 multi-layer** | 0.938 / 0.957 | 0.872 / 0.962 | 0.911 | 94-97 |
+| **v1.1: multi-layer + windows** | **0.945** / 0.962 | **0.881** / 0.960 | 0.930 | ~100 (est.) |
+| *Baseline: PatchCore, same photos* | 0.926 / **0.965** | 0.865 / **0.969** | -- | 93 |
 
-Against few-shot PatchCore given the same photos, detection is a statistical tie
-and PatchCore localises better (its feature map is twice as fine); what this
-method adds is append-only products, typed descriptions and a measured CPU cost.
-Text fusion helps on products with a meaningful "normal" (MVTec, VisA) and hurts
-on NEU-DET, where the normal class is itself a defect type. A laptop throttles to
-5-6x the burst latency under continuous use.
+MPDD (6 metal parts, varied lighting), 10 photos: ViT-B/16 0.808 / 0.956,
+multi-layer + windows 0.824 / 0.951, PatchCore 0.758 / 0.960.
+
+**Release 1.1** describes each patch with blocks 6, 9 and 12 of the frozen ViT
+instead of the last block alone. On MVTec AD and VisA this is the largest single
+gain in the project (+0.034 to +0.046 image AUROC, 3.5-5.8x paired SE); on NEU-DET
+and MPDD it is a tie. With it, detection is ahead of few-shot PatchCore given the
+same photos on MVTec, VisA and MPDD at 1, 5 and 10 shots (2.1-3.2x SE), and
+localisation is level on MVTec; PatchCore keeps a ~0.01 pixel-AUROC lead on VisA's
+tiny defects. On WinCLIP's protocol (MVTec, 1/2/4 shots, 5 seeds) we score 89.4 /
+91.2 / 92.9 against WinCLIP+'s published 93.1 / 94.4 / 95.2. Text fusion helps on
+products with a meaningful "normal" (MVTec, VisA) and hurts on NEU-DET, where the
+normal class is itself a defect type. A laptop throttles to 5-6x the burst latency
+under continuous use.
 
 Adding a product is bit-identical to building it in from scratch and leaves all
 other products' scores unchanged. Details, statistics and caveats:
@@ -40,7 +50,8 @@ headline claims we are building evidence for:
   appending prototypes, not by retraining;
 * a **zero-cost feasibility analysis** for a small manufacturer.
 
-Datasets: MVTec AD, VisA, NEU-DET (1/5/10-shot seeded splits, 3 seeds), MPDD optional.
+Datasets: MVTec AD, VisA, NEU-DET, MPDD (1/5/10-shot seeded splits, 3 seeds), plus
+WinCLIP's MVTec protocol (1/2/4 shots, 5 seeds).
 Baselines: PatchCore / PaDiM via anomalib, plus CLIP zero-shot prompting.
 
 ## Layout
