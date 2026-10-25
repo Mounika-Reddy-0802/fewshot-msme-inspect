@@ -1,0 +1,72 @@
+{
+  "question": "do multi-layer features add to windows on MVTec AD",
+  "design": "paired: identical (category, shots, seed) splits; delta is a - b",
+  "a": "mvtec_ad_ViT-B-16-quickgelu-ml6-9-12-win123",
+  "b": "mvtec_ad_ViT-B-16-quickgelu-win123",
+  "seeds": [
+    1,
+    2,
+    42
+  ],
+  "categories": 15,
+  "per_metric": {
+    "image_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.8922,
+        "mean_b": 0.866,
+        "paired_mean_delta": 0.0262,
+        "paired_standard_error": 0.0091,
+        "effect_over_se": 2.9,
+        "categories_favouring_a": "11/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9344,
+        "mean_b": 0.9075,
+        "paired_mean_delta": 0.0269,
+        "paired_standard_error": 0.0053,
+        "effect_over_se": 5.1,
+        "categories_favouring_a": "11/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9445,
+        "mean_b": 0.9212,
+        "paired_mean_delta": 0.0233,
+        "paired_standard_error": 0.005,
+        "effect_over_se": 4.6,
+        "categories_favouring_a": "12/15"
+      }
+    },
+    "pixel_auroc": {
+      "1": {
+        "n_pairs": 45,
+        "mean_a": 0.9445,
+        "mean_b": 0.9157,
+        "paired_mean_delta": 0.0287,
+        "paired_standard_error": 0.0043,
+        "effect_over_se": 6.7,
+        "categories_favouring_a": "14/15"
+      },
+      "5": {
+        "n_pairs": 45,
+        "mean_a": 0.9582,
+        "mean_b": 0.9342,
+        "paired_mean_delta": 0.024,
+        "paired_standard_error": 0.0036,
+        "effect_over_se": 6.8,
+        "categories_favouring_a": "14/15"
+      },
+      "10": {
+        "n_pairs": 45,
+        "mean_a": 0.9622,
+        "mean_b": 0.9386,
+        "paired_mean_delta": 0.0236,
+        "paired_standard_error": 0.0035,
+        "effect_over_se": 6.8,
+        "categories_favouring_a": "14/15"
+      }
+    }
+  }
+}
